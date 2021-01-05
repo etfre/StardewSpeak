@@ -45,11 +45,11 @@ namespace StardewBot
                 {
                     if (gl.warps != null && gl.warps.Count > 0)
                     {
-                        //Mod.instance.Monitor.Log("Learning about " + key, LogLevel.Alert);
+                        ModEntry.Log("Learning about " + key);
                         returnValue[key] = new HashSet<string>();
                         foreach (var w in gl.warps) returnValue[key].Add(w.TargetName);
                         foreach (var d in gl.doors.Values) returnValue[key].Add(d);
-                        //foreach (var s in MapConnections[key]) Mod.instance.Monitor.Log("It connects to " + s, LogLevel.Warn);
+                       // foreach (var s in MapConnections[key]) ModEntry.Log("It connects to " + s, LogLevel.Warn);
                     }
                 }
                 if (gl is StardewValley.Locations.BuildableGameLocation)
@@ -57,6 +57,7 @@ namespace StardewBot
                     StardewValley.Locations.BuildableGameLocation bl = gl as StardewValley.Locations.BuildableGameLocation;
                     foreach (var b in bl.buildings)
                     {
+                        if (b.indoors.Value == null) continue;
                         if (!returnValue.ContainsKey(key)) returnValue[key] = new HashSet<string>();
                         returnValue[key].Add(b.indoors.Value.NameOrUniqueName);
                         //add the way in

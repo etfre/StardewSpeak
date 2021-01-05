@@ -51,6 +51,7 @@
     <Compile Include="Core.cs" />
     <Compile Include="ModEntry.cs" />
     <Compile Include="Objective.cs" />
+    <Compile Include="Objectives\ObjectiveForage.cs" />
     <Compile Include="Objectives\ObjectiveSleep.cs" />
     <Compile Include="Pathfinding.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

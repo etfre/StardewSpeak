@@ -58,12 +58,12 @@ namespace StardewBot
         private static void ResetObjectivePool()
         {
             ObjectivePool.Clear();
-            //  ObjectivePool.Add(new Objectives.ObjectiveForage("BusStop"));
-            //ObjectivePool.Add(new Objectives.ObjectiveForage("Beach"));
-            //ObjectivePool.Add(new Objectives.ObjectiveForage("Forest"));
-            //ObjectivePool.Add(new Objectives.ObjectiveForage("Backwoods"));
-            //ObjectivePool.Add(new Objectives.ObjectiveForage("Mountain"));
-            //ObjectivePool.Add(new Objectives.ObjectiveForage("Town"));
+             ObjectivePool.Add(new Objectives.ObjectiveForage("BusStop"));
+            ObjectivePool.Add(new Objectives.ObjectiveForage("Beach"));
+            ObjectivePool.Add(new Objectives.ObjectiveForage("Forest"));
+            ObjectivePool.Add(new Objectives.ObjectiveForage("Backwoods"));
+            ObjectivePool.Add(new Objectives.ObjectiveForage("Mountain"));
+            ObjectivePool.Add(new Objectives.ObjectiveForage("Town"));
             //ObjectivePool.Add(new Objectives.ObjectiveClearDebris("Farm"));
         }
 

@@ -29,6 +29,7 @@ namespace StardewBot.Pathfinder
             var openList = new List<Location>();
             var closedList = new List<Location>();
             int g = 0;
+            var openGates = OpenGates();
 
             // start by adding the original position to the open list  
             openList.Add(start);
@@ -108,6 +109,19 @@ namespace StardewBot.Pathfinder
             returnPath.Reverse();
             return returnPath;
         }
+
+        static HashSet<Tuple<int, int>> OpenGates() {
+            var gates = new HashSet<Tuple<int, int>>();
+            var objects = Game1.player.currentLocation.Objects;
+            foreach (StardewValley.Object obj in objects.Values)
+            {
+                ModEntry.Log($"{obj.DisplayName}, x: {obj.TileLocation.X}, y: {obj.TileLocation.Y}");
+                if (obj.DisplayName == "Gate")
+                {
+                }
+            }
+            return gates;
+        } 
 
         static List<Location> GetWalkableAdjacentSquares(int x, int y, GameLocation map, List<Location> openList)
         {
