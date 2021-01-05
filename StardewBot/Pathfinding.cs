@@ -54,7 +54,7 @@ namespace StardewBot.Pathfinder
                     return null;
                 }
 
-                var adjacentSquares = GetWalkableAdjacentSquares(current.X, current.Y, location, openList);
+                var adjacentSquares = GetWalkableAdjacentSquares(current.X, current.Y, location, openList, openGates);
                 g = current.G + 1;
 
                 foreach (var adjacentSquare in adjacentSquares)
@@ -115,40 +115,44 @@ namespace StardewBot.Pathfinder
             var objects = Game1.player.currentLocation.Objects;
             foreach (StardewValley.Object obj in objects.Values)
             {
-                ModEntry.Log($"{obj.DisplayName}, x: {obj.TileLocation.X}, y: {obj.TileLocation.Y}");
-                if (obj.DisplayName == "Gate")
+                if (obj.Name == "Gate")
                 {
+                    var gate = obj as Fence;
+                    if (gate.gatePosition.Value != 0) // open gate
+                    {
+                        gates.Add(new Tuple<int, int>((int)gate.TileLocation.X, (int)gate.TileLocation.Y));
+                    }
                 }
             }
             return gates;
         } 
 
-        static List<Location> GetWalkableAdjacentSquares(int x, int y, GameLocation map, List<Location> openList)
+        static List<Location> GetWalkableAdjacentSquares(int x, int y, GameLocation map, List<Location> openList, HashSet<Tuple<int, int>> openGates)
         {
             List<Location> list = new List<Location>();
 
-            if (IsPassable(map, x, y - 1))
+            if (IsPassable(map, x, y - 1, openGates))
             {
                 Location node = openList.Find(l => l.X == x && l.Y == y - 1);
                 if (node == null) list.Add(new Location() { Preferable = IsPreferableWalkingSurface(map, x, y), X = x, Y = y - 1 });
                 else list.Add(node);
             }
 
-            if (IsPassable(map, x, y + 1))
+            if (IsPassable(map, x, y + 1, openGates))
             {
                 Location node = openList.Find(l => l.X == x && l.Y == y + 1);
                 if (node == null) list.Add(new Location() { Preferable = IsPreferableWalkingSurface(map, x, y), X = x, Y = y + 1 });
                 else list.Add(node);
             }
 
-            if (IsPassable(map, x - 1, y))
+            if (IsPassable(map, x - 1, y, openGates))
             {
                 Location node = openList.Find(l => l.X == x - 1 && l.Y == y);
                 if (node == null) list.Add(new Location() { Preferable = IsPreferableWalkingSurface(map, x, y), X = x - 1, Y = y });
                 else list.Add(node);
             }
 
-            if (IsPassable(map, x + 1, y))
+            if (IsPassable(map, x + 1, y, openGates))
             {
                 Location node = openList.Find(l => l.X == x + 1 && l.Y == y);
                 if (node == null) list.Add(new Location() { Preferable = IsPreferableWalkingSurface(map, x, y), X = x + 1, Y = y });
@@ -164,7 +168,7 @@ namespace StardewBot.Pathfinder
             return false;
         }
 
-        static bool IsPassable(GameLocation location, int x, int y)
+        static bool IsPassable(GameLocation location, int x, int y, HashSet<Tuple<int, int>> openGates)
         {
             var v = new Vector2(x, y);
             bool isWarp = false;
@@ -172,8 +176,13 @@ namespace StardewBot.Pathfinder
             {
                 if (w.X == x && w.Y == y) isWarp = true;
             }
+            var tup = new Tuple<int, int>(x, y);
+            if (openGates.Contains(tup)) 
+            {
+                return true;
+            }
             bool isOnMap = location.isTileOnMap(v);
-            bool isOccupied = location.isTileOccupiedIgnoreFloors(v, "");
+            bool isOccupied = location.isTileOccupiedIgnoreFloors(v, "") || openGates.Contains(tup);
             bool isPassable = location.isTilePassable(new xTile.Dimensions.Location((int)x, (int)y), Game1.viewport);
             //check for bigresourceclumps on the farm
             if (location is Farm)

@@ -11,7 +11,7 @@ namespace StardewBot
     public class ModEntry : Mod
     {
         internal static bool BotActive = false;
-
+        SpeechEngine speechEngine;
         public static Action<string, LogLevel> log { get; private set; }
 
         /*********
@@ -24,6 +24,7 @@ namespace StardewBot
             helper.Events.Input.ButtonPressed += this.OnButtonPressed;
             helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
             ModEntry.log = this.Monitor.Log;
+            this.speechEngine = new SpeechEngine();
         }
 
 
@@ -50,8 +51,6 @@ namespace StardewBot
             }
             if (pressed == "P")
             {
-                // Core.Reset();
-                //this.Monitor.Log(Game1.player.);
                 this.Monitor.Log("pressed p");
                 if (Routing.Ready)
                 {
@@ -73,6 +72,7 @@ namespace StardewBot
                     }
                     watch.Stop();
                     var elapsedMs = watch.ElapsedMilliseconds;
+                    ModEntry.Log($"{elapsedMs}");
                     }
                 else
                 {
@@ -90,22 +90,18 @@ namespace StardewBot
                 //var location = Game1.player.currentLocation;
                 var v = new Vector2(x, y);
                 var rec = new xTile.Dimensions.Location(x, y);
-                foreach (StardewValley.Object obj in location.Objects.Values) {
-                    this.Monitor.Log($"{obj.DisplayName}, x: {obj.TileLocation.X}, y: {obj.TileLocation.Y}", LogLevel.Debug);
-                    if (obj.DisplayName == "Gate") { 
-                    }
-                }
             }
         }
         private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)
         {
-            //if (!BotActive) return;
-            //Core.Update(this);
-            if (Core.WantsToStop)
-            {   
-                //Monitor.Log("Bot is going to stop itself to prevent further complications.", LogLevel.Warn);
-                //ToggleBot();
-            }
+            //if (e.IsMultipleOf(30))
+            //{
+            //    var location = Game1.player.currentLocation;
+            //    var point = Game1.currentCursorTile;
+            //    var x = (int)point.X;
+            //    var y = (int)point.Y;
+            //    this.Monitor.Log($"Current Location: x: {x}, y: {y}", LogLevel.Debug);
+            //}
         }
         private void ToggleBot()
         {
