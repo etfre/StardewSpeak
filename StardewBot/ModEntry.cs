@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
+using StardewBot.Pathfinder;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
@@ -10,7 +12,7 @@ namespace StardewBot
     /// <summary>The mod entry point.</summary>
     public class ModEntry : Mod
     {
-        internal static bool BotActive = false;
+        internal static bool FeedLocation = false;
         SpeechEngine speechEngine;
         public static Action<string, LogLevel> log { get; private set; }
 
@@ -25,8 +27,8 @@ namespace StardewBot
             helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
             ModEntry.log = this.Monitor.Log;
             this.speechEngine = new SpeechEngine();
+            this.speechEngine.LaunchProcess();
         }
-
 
         public static void Log(string msg) {
             ModEntry.log(msg, LogLevel.Debug);
@@ -44,8 +46,8 @@ namespace StardewBot
                 //return;
             // print button presses to the console window
             string pressed = e.Button.ToString();
-            this.Monitor.Log($"{Game1.player.Name} presseddd {e.Button}.", LogLevel.Debug);
-            this.Monitor.Log(e.Button.ToString(), LogLevel.Debug);
+            //this.Monitor.Log($"{Game1.player.Name} presseddd {e.Button}.", LogLevel.Debug);
+            //this.Monitor.Log(e.Button.ToString(), LogLevel.Debug);
             if (pressed == "M") {
                 var menu = Game1.activeClickableMenu;
             }
@@ -94,20 +96,23 @@ namespace StardewBot
         }
         private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)
         {
-            //if (e.IsMultipleOf(30))
-            //{
-            //    var location = Game1.player.currentLocation;
-            //    var point = Game1.currentCursorTile;
-            //    var x = (int)point.X;
-            //    var y = (int)point.Y;
-            //    this.Monitor.Log($"Current Location: x: {x}, y: {y}", LogLevel.Debug);
-            //}
+            if (e.IsMultipleOf(6))
+            {
+                string location = Game1.player.currentLocation == null ? null : Game1.player.currentLocation.Name;
+                GameState.PlayerPosition = new Position(location, Game1.player.getTileX(), Game1.player.getTileY());
+                //^ModEntry.Log($"{GameState.PlayerPosition.x}, {GameState.PlayerPosition.y}, {GameState.PlayerPosition.location}");
+                //    var location = Game1.player.currentLocation;
+                //    var point = Game1.currentCursorTile;
+                //    var x = (int)point.X;
+                //    var y = (int)point.Y;
+                //    this.Monitor.Log($"Current Location: x: {x}, y: {y}", LogLevel.Debug);
+            }
         }
         private void ToggleBot()
         {
-            BotActive = !BotActive;
-            Monitor.Log("Toggled bot status. Bot is now " + (BotActive ? "ON." : "OFF."), LogLevel.Warn);
-            if (!BotActive)
+            FeedLocation = !FeedLocation;
+            Monitor.Log("Toggled bot status. Bot is now " + (FeedLocation ? "ON." : "OFF."), LogLevel.Warn);
+            if (!FeedLocation)
             {
                 //Input.UninstallSimulator();
                 Core.ReleaseKeys();
