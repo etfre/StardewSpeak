@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
 using StardewBot.Pathfinder;
@@ -15,6 +16,7 @@ namespace StardewBot
         internal static bool FeedLocation = false;
         SpeechEngine speechEngine;
         public static Action<string, LogLevel> log { get; private set; }
+        public static Dictionary<string, Stream> Streams { get; set; }
 
         /*********
 ** Public methods
@@ -26,8 +28,10 @@ namespace StardewBot
             helper.Events.Input.ButtonPressed += this.OnButtonPressed;
             helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
             ModEntry.log = this.Monitor.Log;
+            ModEntry.Streams = new Dictionary<string, Stream>();
             this.speechEngine = new SpeechEngine();
             this.speechEngine.LaunchProcess();
+            
         }
 
         public static void Log(string msg) {
@@ -96,6 +100,17 @@ namespace StardewBot
         }
         private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)
         {
+            foreach (var pair in ModEntry.Streams)
+            {
+                var id = pair.Key;
+                var stream = pair.Value;
+                if (e.IsMultipleOf(stream.Ticks)) 
+                {
+                    var value = stream.Gather(e);
+                    var message = new { stream_id = id, value };
+                    this.speechEngine.SendMessage("STREAM_MESSAGE", message);
+                }
+            }
             if (e.IsMultipleOf(6))
             {
                 string location = Game1.player.currentLocation == null ? null : Game1.player.currentLocation.Name;
@@ -106,21 +121,6 @@ namespace StardewBot
                 //    var x = (int)point.X;
                 //    var y = (int)point.Y;
                 //    this.Monitor.Log($"Current Location: x: {x}, y: {y}", LogLevel.Debug);
-            }
-        }
-        private void ToggleBot()
-        {
-            FeedLocation = !FeedLocation;
-            Monitor.Log("Toggled bot status. Bot is now " + (FeedLocation ? "ON." : "OFF."), LogLevel.Warn);
-            if (!FeedLocation)
-            {
-                //Input.UninstallSimulator();
-                Core.ReleaseKeys();
-            }
-            else
-            {
-                //Input.InstallSimulator();
-                Core.Reset();
             }
         }
     }

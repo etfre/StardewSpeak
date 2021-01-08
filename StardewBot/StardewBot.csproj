@@ -51,7 +51,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ChildProcessTracker.cs" />
     <Compile Include="Core.cs" />
     <Compile Include="GameState.cs" />
     <Compile Include="ModEntry.cs" />
@@ -62,6 +61,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Routing.cs" />
     <Compile Include="SpeechEngine.cs" />
+    <Compile Include="Stream.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

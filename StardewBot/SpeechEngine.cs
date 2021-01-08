@@ -92,6 +92,8 @@ namespace StardewBot
             }
             string msgType = msg.type;
             string msgId = msg.id;
+            dynamic data = msg.data;
+            string streamId;
             switch (msgType) 
             {
                 case "LOG":
@@ -104,7 +106,21 @@ namespace StardewBot
                 case "PLAYER_POSITION":
                     this.SendResponse(msgId, GameState.PlayerPosition);
                     break;
-                    //ModEntry.
+                case "FACE_DIRECTION":
+                    string direction = msg.data;
+                    Game1.player.faceDirection(1);
+                    break;
+                case "NEW_STREAM":
+                    streamId = data.stream_id;
+                    string streamName = data.name;
+                    uint ticks = data.ticks;
+                    var stream = new Stream(streamName, streamId, ticks);
+                    ModEntry.Streams.Add(streamId, stream);
+                    break;
+                case "STOP_STREAM":
+                    streamId = data;
+                    ModEntry.Streams.Remove(streamId);
+                    break;
 
             }
         }
@@ -119,7 +135,7 @@ namespace StardewBot
             var respData = new ResponseData(id, value);
             this.SendMessage("RESPONSE", respData);
         }
-        void SendMessage(string msgType, object data = null) 
+        public void SendMessage(string msgType, object data = null) 
         {
             var message = new MessageToEngine(msgType, data);
             string msgStr = JsonConvert.SerializeObject(message);
