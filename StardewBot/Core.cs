@@ -220,7 +220,7 @@ namespace StardewBot
             PathfindingDestinationX = x;
             PathfindingDestinationY = y;
             PathfindingOpenDoor = openDoor;
-            Path = path;
+            //Path = path;
             return true;
         }
 

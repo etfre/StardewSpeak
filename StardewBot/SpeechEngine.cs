@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using StardewBot.Pathfinder;
 using StardewModdingAPI;
 using StardewValley;
 using System;
@@ -107,8 +108,8 @@ namespace StardewBot
                     this.SendResponse(msgId, GameState.PlayerPosition);
                     break;
                 case "FACE_DIRECTION":
-                    string direction = msg.data;
-                    Game1.player.faceDirection(1);
+                    int direction = msg.data;
+                    Game1.player.faceDirection(direction);
                     break;
                 case "NEW_STREAM":
                     streamId = data.stream_id;
@@ -120,6 +121,17 @@ namespace StardewBot
                 case "STOP_STREAM":
                     streamId = data;
                     ModEntry.Streams.Remove(streamId);
+                    break;
+                case "PATHFIND_FROM_PLAYER_RELATIVE":
+                    int dx = data.dx;
+                    int dy = data.dy;
+                    int playerX = Game1.player.getTileX();
+                    int playerY = Game1.player.getTileY();
+                    int targetX = playerX + dx;
+                    int targetY = playerY + dy;
+                    var path = Pathfinder.Pathfinder.FindPath(Game1.player.currentLocation, playerX, playerY, targetX, targetY);
+                    var resp = new { path };
+                    this.SendResponse(msgId, resp);
                     break;
 
             }

@@ -19,9 +19,20 @@ namespace StardewBot.Pathfinder
         public bool Preferable = false;
     }
 
+    public class Point 
+    {
+        public int X;
+        public int Y;
+
+        public Point(int x, int y) {
+            this.X = x;
+            this.Y = y;
+        }
+    }
+
     public class Pathfinder
     {
-        public static List<Tuple<int, int>> FindPath(GameLocation location, int startX, int startY, int targetX, int targetY, int cutoff = -1)
+        public static List<Point> FindPath(GameLocation location, int startX, int startY, int targetX, int targetY, int cutoff = -1)
         {
             Location current = null;
             Location start = new Location { X = startX, Y = startY };
@@ -100,10 +111,10 @@ namespace StardewBot.Pathfinder
             }
 
             // if path exists, let's pack it up for return
-            var returnPath = new List<Tuple<int, int>>();
+            var returnPath = new List<Point>();
             while (current != null)
             {
-                returnPath.Add(new Tuple<int, int>(current.X, current.Y));
+                returnPath.Add(new Point(current.X, current.Y));
                 current = current.Parent;
             }
             returnPath.Reverse();

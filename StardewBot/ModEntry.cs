@@ -7,6 +7,7 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
+using StardewValley.Tools;
 
 namespace StardewBot
 {
@@ -37,6 +38,7 @@ namespace StardewBot
         public static void Log(string msg) {
             ModEntry.log(msg, LogLevel.Debug);
         }
+
         /*********
         ** Private methods
         *********/
@@ -54,6 +56,7 @@ namespace StardewBot
             //this.Monitor.Log(e.Button.ToString(), LogLevel.Debug);
             if (pressed == "M") {
                 var menu = Game1.activeClickableMenu;
+                var pa = Game1.player.CurrentTool as Pickaxe;
             }
             if (pressed == "P")
             {
@@ -73,7 +76,7 @@ namespace StardewBot
                     }
                     else { 
                         foreach(var node in path) {
-                            ModEntry.Log($"{node.Item1}, {node.Item2}");
+                            ModEntry.Log($"{node.X}, {node.Y}");
                         }
                     }
                     watch.Stop();
@@ -110,17 +113,6 @@ namespace StardewBot
                     var message = new { stream_id = id, value };
                     this.speechEngine.SendMessage("STREAM_MESSAGE", message);
                 }
-            }
-            if (e.IsMultipleOf(6))
-            {
-                string location = Game1.player.currentLocation == null ? null : Game1.player.currentLocation.Name;
-                GameState.PlayerPosition = new Position(location, Game1.player.getTileX(), Game1.player.getTileY());
-                //^ModEntry.Log($"{GameState.PlayerPosition.x}, {GameState.PlayerPosition.y}, {GameState.PlayerPosition.location}");
-                //    var location = Game1.player.currentLocation;
-                //    var point = Game1.currentCursorTile;
-                //    var x = (int)point.X;
-                //    var y = (int)point.Y;
-                //    this.Monitor.Log($"Current Location: x: {x}, y: {y}", LogLevel.Debug);
             }
         }
     }

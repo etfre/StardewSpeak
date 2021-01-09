@@ -29,9 +29,11 @@ namespace StardewBot
                     string location = Game1.player.currentLocation?.Name;
                     var position = new { location = location, x = Game1.player.getTileX(), y = Game1.player.getTileY() };
                     var facingDirection = Game1.player.FacingDirection;
+                    var isMoving = Game1.player.isMoving();
                     var status = new {
                         position = position,
-                        facingDirection
+                        facingDirection,
+                        isMoving
                     };
                     return status;
 
