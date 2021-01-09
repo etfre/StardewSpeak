@@ -17,7 +17,14 @@ namespace StardewBot
         internal static bool FeedLocation = false;
         SpeechEngine speechEngine;
         public static Action<string, LogLevel> log { get; private set; }
-        public static Dictionary<string, Stream> Streams { get; set; }
+        public static Dictionary<string, Stream> _streams = new Dictionary<string, Stream>();
+        private static object streamsLock = new object();
+        public static Dictionary<string, Stream> Streams {
+            get 
+            { 
+                lock (streamsLock) { return _streams; } 
+            }
+        }
 
         /*********
 ** Public methods
@@ -29,10 +36,9 @@ namespace StardewBot
             helper.Events.Input.ButtonPressed += this.OnButtonPressed;
             helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
             ModEntry.log = this.Monitor.Log;
-            ModEntry.Streams = new Dictionary<string, Stream>();
             this.speechEngine = new SpeechEngine();
             this.speechEngine.LaunchProcess();
-            
+
         }
 
         public static void Log(string msg) {
