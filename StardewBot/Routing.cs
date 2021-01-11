@@ -35,6 +35,16 @@ namespace StardewBot
             }
         }
 
+        public static GameLocation FindLocationByName(string name)
+        {
+            foreach (var gl in Game1.locations) {
+                if (gl.NameOrUniqueName == name) {
+                    return gl;
+                }
+            }
+            throw new InvalidOperationException($"Missing location {name}");
+        }
+
         public static Dictionary<string, HashSet<string>> BuildRouteCache()
         {
             var returnValue = new Dictionary<string, HashSet<string>>();

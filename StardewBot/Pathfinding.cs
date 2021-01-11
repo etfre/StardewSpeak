@@ -193,8 +193,8 @@ namespace StardewBot.Pathfinder
                 return true;
             }
             bool isOnMap = location.isTileOnMap(v);
-            bool isOccupied = location.isTileOccupiedIgnoreFloors(v, "") || openGates.Contains(tup);
-            bool isPassable = location.isTilePassable(new xTile.Dimensions.Location((int)x, (int)y), Game1.viewport);
+            bool isOccupied = location.isTileOccupiedIgnoreFloors(v, "");
+            bool isPassable = location.isTilePassable(new xTile.Dimensions.Location((int)x, (int)y), Game1.viewport) || IsShoreTile(location, x, y);
             //check for bigresourceclumps on the farm
             if (location is Farm)
             {
@@ -221,6 +221,13 @@ namespace StardewBot.Pathfinder
                 if (location.isCollidingPosition(new Rectangle((x * 64) + 2, (y * 64) + 2, 60, 60), Game1.viewport, true, 0, false, null, false, false, true)) return false;
             }
             return (isWarp || (isOnMap && !isOccupied && isPassable)); //warps must be passable even off-map
+        }
+
+        public static bool IsShoreTile(GameLocation loc, int x, int y) 
+        {
+            if (!loc.isWaterTile(x, y) || loc.isOpenWater(x, y)) return false;
+            bool hasAdjacentLand = !(loc.isWaterTile(x, y + 1) && loc.isWaterTile(x + 1, y) && loc.isWaterTile(x, y - 1) && loc.isWaterTile(x - 1, y));
+            return hasAdjacentLand;
         }
 
         static int ComputeHScore(bool preferable, int x, int y, int targetX, int targetY)

@@ -87,7 +87,7 @@ namespace StardewBot
             {
                 msg = JsonConvert.DeserializeObject(messageText);
             }
-            catch 
+            catch
             {
                 return;
             }
@@ -95,10 +95,13 @@ namespace StardewBot
             string msgId = msg.id;
             dynamic data = msg.data;
             string streamId;
-            switch (msgType) 
+            var player = Game1.player;
+            int playerX = player.getTileX();
+            int playerY = player.getTileY();
+            switch (msgType)
             {
                 case "LOG":
-                    string toLog = msg.data;
+                    string toLog = data;
                     ModEntry.Log($"Speech engine message: {toLog}");
                     break;
                 case "HEARTBEAT": // engine will shutdown if heartbeat not received after 10 seconds
@@ -122,17 +125,54 @@ namespace StardewBot
                     streamId = data;
                     ModEntry.Streams.Remove(streamId);
                     break;
+                case "PATHFIND_TO_LOCATION":
+                    {
+                        int targetX = data.x;
+                        int targetY = data.y;
+                        string toLocationStr = data.location;
+                        GameLocation toLocation = Routing.FindLocationByName(toLocationStr);
+                        var resp = this.pathfindResponse(player.currentLocation, toLocation, playerX, playerY, targetX, targetY);
+                        this.SendResponse(msgId, resp);
+                        break;
+                    }
                 case "PATHFIND_FROM_PLAYER_RELATIVE":
-                    int dx = data.dx;
-                    int dy = data.dy;
-                    int playerX = Game1.player.getTileX();
-                    int playerY = Game1.player.getTileY();
-                    int targetX = playerX + dx;
-                    int targetY = playerY + dy;
-                    var path = Pathfinder.Pathfinder.FindPath(Game1.player.currentLocation, playerX, playerY, targetX, targetY);
-                    var resp = new { path };
-                    this.SendResponse(msgId, resp);
+                    {
+                        int dx = data.dx;
+                        int dy = data.dy;
+                        int targetX = playerX + dx;
+                        int targetY = playerY + dy;
+                        var resp = this.pathfindResponse(player.currentLocation, player.currentLocation, playerX, playerY, targetX, targetY);
+                        this.SendResponse(msgId, resp);
+                    }
+                    //var path = Pathfinder.Pathfinder.FindPath(Game1.player.currentLocation, playerX, playerY, targetX, targetY);
+                    //var locationTransitions = new List<string>();
+                    //if (path == null)
+                    //{
+                    //    this.SendResponse(msgId, null);
+                    //}
+                    //else
+                    //{
+                    //    var resp = new { path, locationTransitions };
+                    //    this.SendResponse(msgId, resp);
+
+                    //}
                     break;
+
+            }
+        }
+
+        object pathfindResponse(GameLocation fromLocation, GameLocation toLocation, int fromX, int fromY, int toX, int toY) 
+        {
+            var path = Pathfinder.Pathfinder.FindPath(fromLocation, fromX, fromY, toX, toY);
+            var locationTransitions = new List<string>();
+            if (path == null)
+            {
+                return null;
+            }
+            else
+            {
+                var resp = new { path, locationTransitions };
+                return resp;
 
             }
         }
