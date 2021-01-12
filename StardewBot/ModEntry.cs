@@ -7,6 +7,7 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
 using StardewValley;
+using StardewValley.Buildings;
 using StardewValley.Tools;
 
 namespace StardewBot
@@ -35,6 +36,7 @@ namespace StardewBot
         {
             helper.Events.Input.ButtonPressed += this.OnButtonPressed;
             helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
+            helper.Events.Player.Warped += this.OnWarped;
             ModEntry.log = this.Monitor.Log;
             this.speechEngine = new SpeechEngine();
             this.speechEngine.LaunchProcess();
@@ -44,6 +46,17 @@ namespace StardewBot
         public static void Log(string msg) {
             ModEntry.log(msg, LogLevel.Debug);
         }
+
+        private void OnWarped(object sender, WarpedEventArgs e)
+        {
+            long milliseconds = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+            var oldLocation = e.OldLocation.NameOrUniqueName;
+            var newLocation = e.NewLocation.NameOrUniqueName;
+            var warpEvent = new { timestamp = milliseconds, oldLocation, newLocation };
+            this.speechEngine.SendEvent("ON_WARPED", warpEvent);
+            Log($"Warped to {e.NewLocation}");
+        }
+
 
         /*********
         ** Private methods
@@ -99,12 +112,14 @@ namespace StardewBot
             {
                 var location = Game1.player.currentLocation;
                 var point = Game1.currentCursorTile;
-                var x = (int)point.X;
-                var y = (int)point.Y;
-                this.Monitor.Log($"Current Location: x: {x}, y: {y}", LogLevel.Debug);
+                var tileX = (int)point.X;
+                var tileY = (int)point.Y;
+                var x = Game1.player.Position.X / Game1.tileSize;
+                var y = Game1.player.Position.Y / Game1.tileSize;
+                this.Monitor.Log($"Current tiles: x: {Game1.player.getTileX()}, y: {Game1.player.getTileY()} --- {x}, {y}", LogLevel.Debug);
                 //var location = Game1.player.currentLocation;
-                var v = new Vector2(x, y);
-                var rec = new xTile.Dimensions.Location(x, y);
+                var v = new Vector2(tileX, tileY);
+                var rec = new xTile.Dimensions.Location(tileX, tileY);
             }
         }
         private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)

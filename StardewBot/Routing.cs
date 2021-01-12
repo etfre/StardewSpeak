@@ -45,6 +45,16 @@ namespace StardewBot
             throw new InvalidOperationException($"Missing location {name}");
         }
 
+        public static Warp FindWarp(GameLocation from, GameLocation to) {
+            foreach (var warp in from.warps) 
+            {
+                if (warp.TargetName == to.NameOrUniqueName) {
+                    return warp;
+                }
+            }
+            throw new InvalidOperationException($"Unable to find warp from {from.NameOrUniqueName} to {to.NameOrUniqueName}");
+        }
+
         public static Dictionary<string, HashSet<string>> BuildRouteCache()
         {
             var returnValue = new Dictionary<string, HashSet<string>>();
@@ -116,11 +126,13 @@ namespace StardewBot
 
         public static List<string> GetRoute(string destination)
         {
+            if (!Ready) Reset();
             return GetRoute(Game1.player.currentLocation.NameOrUniqueName, destination);
         }
 
         public static List<string> GetRoute(string start, string destination)
         {
+            if (!Ready) Reset();
             var result = SearchRoute(start, destination);
             if (result != null) result.Add(destination);
             return result;

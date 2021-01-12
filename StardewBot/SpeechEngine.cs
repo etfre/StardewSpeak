@@ -163,18 +163,46 @@ namespace StardewBot
 
         object pathfindResponse(GameLocation fromLocation, GameLocation toLocation, int fromX, int fromY, int toX, int toY) 
         {
-            var path = Pathfinder.Pathfinder.FindPath(fromLocation, fromX, fromY, toX, toY);
-            var locationTransitions = new List<string>();
-            if (path == null)
+            var locations = new List<GameLocation>();
+            var pathsToPlot = new List<dynamic>();
+            if (fromLocation.NameOrUniqueName != toLocation.NameOrUniqueName)
             {
-                return null;
+                locations = Routing.GetRoute(fromLocation.NameOrUniqueName, toLocation.NameOrUniqueName).Select(loc => Routing.FindLocationByName(loc)).ToList();
+                GameLocation location = locations[0];
+                foreach (GameLocation nextLocation in locations.Skip(1))
+                {
+                    var warp = Routing.FindWarp(location, nextLocation);
+                    pathsToPlot.Add(new { location, fromX, fromY, toX = warp.X, toY = warp.Y });
+                    fromX = warp.TargetX;
+                    fromY = warp.TargetY;
+                    location = nextLocation;
+                }
             }
-            else
+            pathsToPlot.Add(new { location = toLocation, fromX, fromY, toX, toY });
+            var paths = new List<dynamic>();
+            foreach (var pathDetails in pathsToPlot)
             {
-                var resp = new { path, locationTransitions };
-                return resp;
+                var path = Pathfinder.Pathfinder.FindPath(pathDetails.location, pathDetails.fromX, pathDetails.fromY, pathDetails.toX, pathDetails.toY);
+                if (path == null) 
+                {
+                    return null;
+                }
+                paths.Add(new { path, location = pathDetails.location.NameOrUniqueName });
+            }
+            return paths;
+            //var path = Pathfinder.Pathfinder.FindPath(fromLocation, fromX, fromY, toX, toY);
+            //locations = new List<string>();
+            //locations.Add(fromLocation.NameOrUniqueName);
+            //if (path == null)
+            //{
+            //    return null;
+            //}
+            //else
+            //{
+            //    var resp = new { path, locations };
+            //    return resp;
 
-            }
+            //}
         }
 
         void onError(string data)
@@ -187,11 +215,17 @@ namespace StardewBot
             var respData = new ResponseData(id, value);
             this.SendMessage("RESPONSE", respData);
         }
-        public void SendMessage(string msgType, object data = null) 
+        public void SendMessage(string msgType, object data = null)     
         {
             var message = new MessageToEngine(msgType, data);
             string msgStr = JsonConvert.SerializeObject(message);
             this.Proc.StandardInput.WriteLine(msgStr);
+        }
+
+        public void SendEvent(string eventType, object data = null) {
+            var msg = new { eventType, data };
+            this.SendMessage("ON_EVENT", msg);
+
         }
     }
     class MessageToEngine 
