@@ -179,6 +179,7 @@ namespace StardewBot.Pathfinder
             return false;
         }
 
+        // This needs work. Feels like there should just be a magical method to call but what?
         static bool IsPassable(GameLocation location, int x, int y, HashSet<Tuple<int, int>> openGates)
         {
             var v = new Vector2(x, y);
@@ -194,7 +195,8 @@ namespace StardewBot.Pathfinder
             }
             bool isOnMap = location.isTileOnMap(v);
             bool isOccupied = location.isTileOccupiedIgnoreFloors(v, "");
-            bool isPassable = location.isTilePassable(new xTile.Dimensions.Location((int)x, (int)y), Game1.viewport) || IsShoreTile(location, x, y);
+            //bool isPassable = location.isTilePassable(new xTile.Dimensions.Location((int)x, (int)y), Game1.viewport) || IsShoreTile(location, x, y);
+            bool isPassable = location.isTilePassable(new xTile.Dimensions.Location((int)x, (int)y), Game1.viewport);
             //check for bigresourceclumps on the farm
             if (location is Farm)
             {

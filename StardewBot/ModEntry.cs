@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
 using StardewBot.Pathfinder;
@@ -18,14 +19,7 @@ namespace StardewBot
         internal static bool FeedLocation = false;
         SpeechEngine speechEngine;
         public static Action<string, LogLevel> log { get; private set; }
-        public static Dictionary<string, Stream> _streams = new Dictionary<string, Stream>();
-        private static object streamsLock = new object();
-        public static Dictionary<string, Stream> Streams {
-            get 
-            { 
-                lock (streamsLock) { return _streams; } 
-            }
-        }
+        public static Dictionary<string, Stream> Streams { get; set; } = new Dictionary<string, Stream>();
 
         /*********
 ** Public methods
@@ -53,8 +47,17 @@ namespace StardewBot
             var oldLocation = e.OldLocation.NameOrUniqueName;
             var newLocation = e.NewLocation.NameOrUniqueName;
             var warpEvent = new { timestamp = milliseconds, oldLocation, newLocation };
-            this.speechEngine.SendEvent("ON_WARPED", warpEvent);
-            Log($"Warped to {e.NewLocation}");
+            foreach (var pair in ModEntry.Streams)
+            {
+                var id = pair.Key;
+                var stream = pair.Value;
+                if (stream.Name == "ON_WARPED") {
+                    var message = new { stream_id = id, value = warpEvent };
+                    this.speechEngine.SendMessage("STREAM_MESSAGE", message);
+                    Log($"Warped to {e.NewLocation}");
+                }
+            }
+            //this.speechEngine.SendEvent("ON_WARPED", warpEvent);
         }
 
 
@@ -128,12 +131,10 @@ namespace StardewBot
             {
                 var id = pair.Key;
                 var stream = pair.Value;
-                if (e.IsMultipleOf(stream.Ticks)) 
-                {
-                    var value = stream.Gather(e);
-                    var message = new { stream_id = id, value };
-                    this.speechEngine.SendMessage("STREAM_MESSAGE", message);
-                }
+                if (stream.Name != "UPDATE_TICKED" || !e.IsMultipleOf((uint)stream.Data.ticks)) continue;
+                var value = stream.Gather(e);
+                var message = new { stream_id = id, value };
+                this.speechEngine.SendMessage("STREAM_MESSAGE", message);
             }
         }
     }

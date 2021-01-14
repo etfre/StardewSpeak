@@ -115,24 +115,58 @@ namespace StardewBot
                     Game1.player.faceDirection(direction);
                     break;
                 case "NEW_STREAM":
-                    streamId = data.stream_id;
-                    string streamName = data.name;
-                    uint ticks = data.ticks;
-                    var stream = new Stream(streamName, streamId, ticks);
-                    ModEntry.Streams.Add(streamId, stream);
-                    break;
+                    {
+                        streamId = data.stream_id;
+                        string streamName = data.name;
+                        object streamData = data.data;
+                        var stream = new Stream(streamName, streamId, streamData);
+                        // shallow copy as naive but simple way to avoid multithreading issues
+                        var newStreams = new Dictionary<string, Stream>(ModEntry.Streams);
+                        newStreams.Add(streamId, stream);
+                        ModEntry.Streams = newStreams;
+                        break;
+                    }
                 case "STOP_STREAM":
-                    streamId = data;
-                    ModEntry.Streams.Remove(streamId);
-                    break;
-                case "PATHFIND_TO_LOCATION":
+                    {
+                        streamId = data;
+                        // shallow copy as naive but simple way to avoid multithreading issues
+                        var newStreams = new Dictionary<string, Stream>(ModEntry.Streams);
+                        newStreams.Remove(streamId);
+                        ModEntry.Streams = newStreams;
+                        break;
+                    }
+                case "ROUTE":
+                    {
+                        GameLocation fromLocation = player.currentLocation;
+                        string toLocationStr = data.toLocation;
+                        GameLocation toLocation = Routing.FindLocationByName(toLocationStr);
+                        var resp = new List<string>();
+                        if (fromLocation.NameOrUniqueName == toLocation.NameOrUniqueName)
+                        {
+                            resp.Add(toLocation.NameOrUniqueName);
+                        }
+                        else {
+                            resp = Routing.GetRoute(fromLocation.NameOrUniqueName, toLocation.NameOrUniqueName);
+                        }
+                        this.SendResponse(msgId, resp);
+                        break;
+                    }
+                case "PATH_TO_POSITION":
                     {
                         int targetX = data.x;
                         int targetY = data.y;
-                        string toLocationStr = data.location;
+                        var path = Pathfinder.Pathfinder.FindPath(player.currentLocation, playerX, playerY, targetX, targetY);
+                        this.SendResponse(msgId, path);
+                        break;
+                    }
+                case "PATH_TO_WARP":
+                    {
+                        GameLocation fromLocation = player.currentLocation;
+                        string toLocationStr = data.toLocation;
                         GameLocation toLocation = Routing.FindLocationByName(toLocationStr);
-                        var resp = this.pathfindResponse(player.currentLocation, toLocation, playerX, playerY, targetX, targetY);
-                        this.SendResponse(msgId, resp);
+                        var warp = Routing.FindWarp(fromLocation, toLocation);
+                        var path = Pathfinder.Pathfinder.FindPath(fromLocation, playerX, playerY, warp.X, warp.Y);
+                        this.SendResponse(msgId, path);
                         break;
                     }
                 case "PATHFIND_FROM_PLAYER_RELATIVE":
@@ -141,8 +175,8 @@ namespace StardewBot
                         int dy = data.dy;
                         int targetX = playerX + dx;
                         int targetY = playerY + dy;
-                        var resp = this.pathfindResponse(player.currentLocation, player.currentLocation, playerX, playerY, targetX, targetY);
-                        this.SendResponse(msgId, resp);
+                        var path = this.pathfindResponse(player.currentLocation, player.currentLocation, playerX, playerY, targetX, targetY);
+                        this.SendResponse(msgId, path);
                     }
                     //var path = Pathfinder.Pathfinder.FindPath(Game1.player.currentLocation, playerX, playerY, targetX, targetY);
                     //var locationTransitions = new List<string>();

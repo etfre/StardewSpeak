@@ -14,17 +14,18 @@ namespace StardewBot
     {
         public string Name;
         public string Id;
-        public uint Ticks;
-        public Stream(string name, string id, uint ticks) 
+        public dynamic Data;
+        public Stream(string name, string id, dynamic streamData) 
         {
             this.Name = name;
             this.Id = id;
-            this.Ticks = ticks;
+            this.Data = streamData;
         }
 
         public object Gather(UpdateTickedEventArgs e)
         {
-            switch (this.Name) 
+            string state = this.Data.state;
+            switch (state) 
             {
                 case "PLAYER_STATUS":
                     return GameState.PlayerStatus();
