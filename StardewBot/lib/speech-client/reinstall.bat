@@ -1,0 +1,1 @@
+pip freeze > requirements2.txt && pip uninstall -y -r requirements2.txt && del /f requirements2.txt && pip install -r requirements.txt
