@@ -1,1 +1,1 @@
--e git://github.com/evfredericksen/srabuilder.git#egg=srabuilder
+git+https://github.com/evfredericksen/srabuilder.git#egg=srabuilder

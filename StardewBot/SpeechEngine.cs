@@ -25,9 +25,8 @@ namespace StardewBot
         public void LaunchProcess()
         {
             ModEntry.Log("start wait");
-            var fileName = "C:\\Users\\evfre\\AppData\\Local\\Programs\\Python\\Python38\\python.exe";
-            var arguments = "C:\\Users\\evfre\\wp\\df\\df\\main.py";
-            //var arguments = "C:\\Users\\evfre\\wp\\df\\df\\test.py";
+            var fileName = "\"" + Path.Combine(Environment.CurrentDirectory, @"Mods\StardewBot\StardewBot\lib\speech-client\Scripts\python.exe") + "\"";
+            var arguments = "\"" + Path.Combine(Environment.CurrentDirectory, @"Mods\StardewBot\StardewBot\lib\speech-client\speech-client\main.py") + "\"";
             ModEntry.Log("end wait");
             Task.Factory.StartNew(() => RunProcessAsync(fileName, arguments));
             //await this.RunProcessAsync(fileName, arguments);
