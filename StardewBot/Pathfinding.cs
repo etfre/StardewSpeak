@@ -243,6 +243,10 @@ namespace StardewBot.Pathfinder
                     var yy = y;
                     if (xx > r.X && xx < r.X + r.Width && yy > r.Y && yy < r.Y + r.Height) return false;
                 }
+                if (fff.getBuildingAt(vec) != null) 
+                {
+                    return false;
+                }
             }
             foreach (var rc in loc.resourceClumps)
             {
