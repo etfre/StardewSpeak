@@ -15,6 +15,7 @@ from srabuilder import rules
 from srabuilder.actions import directinput
 import constants
 
+loop = asyncio.new_event_loop()
 active_objective = None
 pending_objective = None
 streams = weakref.WeakValueDictionary()
@@ -279,6 +280,25 @@ async def pathfind_to_position(
             )
         is_done = move_along_path(path, player_status)
     stop_moving()
+
+async def pathfind_to_adjacent(x, y, status_stream: Stream):
+    player_status = await status_stream.next()
+    current_tile = player_status["tileX"], player_status["tileY"]
+    adjacent_tiles = [(x, y - 1), (x + 1, y), (x, y + 1), (x - 1, y)]
+    adjacent_tiles.sort(key=lambda t: distance_between_tiles(current_tile, t))
+    potential_paths = []
+    for adjacent_tile in adjacent_tiles:
+        try:
+            path = path_to_position(adjacent_tile[0], adjacent_tile[1])
+        except RuntimeError:
+            pass
+    if not potential_paths:
+        raise RuntimeError(f"No path found adjacent to {x}, {y}")
+    adjacent_tiles.sort(key=lambda t: distance_between_tiles(current_tile, t))
+    
+def distance_between_tiles(t1, t2):
+    # pathfinding doesn't move diagonally for simplicity so just sum differences between x and y
+    return abs(t1[0] - t2[0]) + abs(t1[1] - t2[1]) 
 
 
 def move_along_path(path, player_status):
@@ -586,10 +606,6 @@ def handle_event(event_type, data):
 def log(msg):
     to_send = msg if isinstance(msg, str) else json.dumps(msg)
     return send_message("LOG", to_send)
-
-
-loop = asyncio.new_event_loop()
-
 
 def rule_builder():
     setup_async_loop(loop)
