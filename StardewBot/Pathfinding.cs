@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using xTile.ObjectModel;
+using xTile.Tiles;
 
 namespace StardewBot.Pathfinder
 {
@@ -121,7 +123,7 @@ namespace StardewBot.Pathfinder
             return returnPath;
         }
 
-        static HashSet<Tuple<int, int>> OpenGates() {
+        public static HashSet<Tuple<int, int>> OpenGates() {
             var gates = new HashSet<Tuple<int, int>>();
             var objects = Game1.player.currentLocation.Objects;
             foreach (StardewValley.Object obj in objects.Values)
@@ -180,27 +182,60 @@ namespace StardewBot.Pathfinder
         }
 
         // This needs work. Feels like there should just be a magical method to call but what?
-        static bool IsPassable(GameLocation location, int x, int y, HashSet<Tuple<int, int>> openGates)
+        public static bool IsPassable(GameLocation loc, int x, int y, HashSet<Tuple<int, int>> openGates)
         {
-            var v = new Vector2(x, y);
-            bool isWarp = false;
-            foreach (var w in location.warps)
+            foreach (var w in loc.warps)
             {
-                if (w.X == x && w.Y == y) isWarp = true;
+                if (w.X == x && w.Y == y) return true;
             }
             var tup = new Tuple<int, int>(x, y);
             if (openGates.Contains(tup)) 
             {
                 return true;
             }
-            bool isOnMap = location.isTileOnMap(v);
-            bool isOccupied = location.isTileOccupiedIgnoreFloors(v, "");
-            //bool isPassable = location.isTilePassable(new xTile.Dimensions.Location((int)x, (int)y), Game1.viewport) || IsShoreTile(location, x, y);
-            bool isPassable = location.isTilePassable(new xTile.Dimensions.Location((int)x, (int)y), Game1.viewport);
-            //check for bigresourceclumps on the farm
-            if (location is Farm)
+            var vec = new Vector2(x, y);
+            if (loc.isTileOccupiedIgnoreFloors(vec) || !loc.isTileOnMap(vec)) 
             {
-                var fff = location as Farm;
+                return false;
+            }
+            var tile = loc.Map.GetLayer("Buildings").Tiles[x, y];
+            if (tile != null && tile.TileIndex != -1)
+            {
+                PropertyValue property = null;
+                string value2 = null;
+                tile.TileIndexProperties.TryGetValue("Action", out property);
+                if (property == null)
+                {
+                    tile.Properties.TryGetValue("Action", out property);
+                }
+                if (property != null)
+                {
+                    value2 = property.ToString();
+                    if (value2.StartsWith("LockedDoorWarp"))
+                    {
+                        return false;
+                    }
+                    if (!value2.Contains("Door") && !value2.Contains("Passable"))
+                    {
+                        return false;
+                    }
+                }
+                else if (loc.doesTileHaveProperty(x, y, "Passable", "Buildings") == null)
+                {
+                    return false;
+                }
+            }
+            if (loc.doesTileHaveProperty(x, y, "NoPath", "Back") != null)
+            {
+                return false;
+            }
+            if (loc.isTerrainFeatureAt(x, y))
+            {
+                return false;
+            }
+            if (loc is Farm)
+            {
+                var fff = loc as Farm;
                 foreach (var brc in fff.largeTerrainFeatures)
                 {
                     var r = brc.getBoundingBox();
@@ -209,27 +244,21 @@ namespace StardewBot.Pathfinder
                     if (xx > r.X && xx < r.X + r.Width && yy > r.Y && yy < r.Y + r.Height) return false;
                 }
             }
-            if (location is StardewValley.Locations.BuildableGameLocation)
+            foreach (var rc in loc.resourceClumps)
             {
-                var bgl = location as StardewValley.Locations.BuildableGameLocation;
-                foreach (var b in bgl.buildings)
+                if (rc.occupiesTile(x, y))
                 {
-                    if (!b.isTilePassable(v)) return false;
+                    return false;
                 }
             }
-            if (location is StardewValley.Locations.BuildableGameLocation || location is Farm)
+            foreach (var obj in loc.Objects.Values)
             {
-                //more aggressive test. doesn't like floors
-                if (location.isCollidingPosition(new Rectangle((x * 64) + 2, (y * 64) + 2, 60, 60), Game1.viewport, true, 0, false, null, false, false, true)) return false;
+                if (obj.TileLocation.X == x && obj.TileLocation.Y == y)
+                {
+                    return false;
+                }
             }
-            return (isWarp || (isOnMap && !isOccupied && isPassable)); //warps must be passable even off-map
-        }
-
-        public static bool IsShoreTile(GameLocation loc, int x, int y) 
-        {
-            if (!loc.isWaterTile(x, y) || loc.isOpenWater(x, y)) return false;
-            bool hasAdjacentLand = !(loc.isWaterTile(x, y + 1) && loc.isWaterTile(x + 1, y) && loc.isWaterTile(x, y - 1) && loc.isWaterTile(x - 1, y));
-            return hasAdjacentLand;
+            return true;
         }
 
         static int ComputeHScore(bool preferable, int x, int y, int targetX, int targetY)

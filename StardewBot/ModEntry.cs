@@ -131,15 +131,18 @@ namespace StardewBot
                 var point = Game1.currentCursorTile;
                 var tileX = (int)point.X;
                 var tileY = (int)point.Y;
-                var x = Game1.player.Position.X / Game1.tileSize;
-                var y = Game1.player.Position.Y / Game1.tileSize;
-                this.Monitor.Log($"Current tiles: x: {Game1.player.getTileX()}, y: {Game1.player.getTileY()} --- {x}, {y}", LogLevel.Debug);
-                //var location = Game1.player.currentLocation;
-                var v = new Vector2(tileX, tileY);
+                var vec = new Vector2(tileX, tileY);
+                Log($"Current tiles: x: {tileX}, y: {tileY}");
+                var og = Pathfinder.Pathfinder.OpenGates();
+                var isPassable = Pathfinder.Pathfinder.IsPassable(location, tileX, tileY, og);
+                var isOccupied = location.isTileOccupiedIgnoreFloors(vec);
+                Log($"isPassable: {isPassable}");
+                Log($"isOccupied: {isOccupied}\n");
                 var rec = new xTile.Dimensions.Location(tileX, tileY);
                 var pl = Game1.player;
-                WriteJson("debris.json", Game1.currentLocation.debris.ToList());
-                WriteJson("objects.json", Game1.currentLocation.Objects.Values.ToList());
+                WriteJson("debris.json", location.debris.ToList());
+                WriteJson("objects.json", location.Objects.Values.ToList());
+                WriteJson("resourceClumps.json", location.resourceClumps.ToList());
             }
         }
         private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)
