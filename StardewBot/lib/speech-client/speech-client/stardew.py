@@ -322,7 +322,7 @@ async def ensure_moving(direction: int, stream: server.Stream):
     if not player_status["isMoving"]:
         key_to_press = nums_to_keys[direction]
         directinput.press(key_to_press)
-        await server.stream_wait(lambda x: x["isMoving"], stream)
+        await stream.wait(lambda x: x["isMoving"])
 
 
 async def sleep_forever():
@@ -339,17 +339,13 @@ def stop_moving():
 
 async def ensure_not_moving(stream: server.Stream):
     stop_moving()
-    await server.stream_wait(lambda status: not status["isMoving"], stream)
-
-
-async def move_to(location: str, x: int, y: int):
-    pass
+    await stream.wait(lambda status: not status["isMoving"])
 
 
 async def face_direction(direction: int, stream: server.Stream):
     await ensure_not_moving(stream)
     await server.request("FACE_DIRECTION", direction)
-    await server.stream_wait(lambda s: s["facingDirection"] == direction, stream)
+    await stream.wait(lambda s: s["facingDirection"] == direction)
 
 
 async def cancel_active_objective():

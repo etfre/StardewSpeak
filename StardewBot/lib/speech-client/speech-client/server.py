@@ -80,6 +80,13 @@ class Stream:
         return self.latest_value
 
 
+    async def wait(self, condition):
+        item = await self.current()
+        while not condition(item):
+            item = await self.next()
+        return item
+
+
 def player_status_stream(ticks=1):
     return Stream("UPDATE_TICKED", data={"state": "PLAYER_STATUS", "ticks": ticks})
 
@@ -96,11 +103,6 @@ def create_stream_next_task(awaitable):
 
     return loop.create_task(to_call(awaitable))
 
-async def stream_wait(condition, stream: Stream):
-    item = await stream.current()
-    while not condition(item):
-        item = await stream.next()
-    return item
 
 
 class AsyncFunction(ActionBase):
