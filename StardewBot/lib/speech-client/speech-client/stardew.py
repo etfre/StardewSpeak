@@ -11,11 +11,9 @@ import json
 from dragonfly import *
 from srabuilder import rules
 
-# from actions import directinput
 from srabuilder.actions import directinput
-import constants
+import constants, server
 
-loop = asyncio.new_event_loop()
 active_objective = None
 pending_objective = None
 streams = weakref.WeakValueDictionary()
@@ -25,65 +23,6 @@ class GameState:
     def __init__(self):
         self.last_warp = None
 
-
-class Stream:
-    def __init__(self, name, data=None):
-        self.has_value = False
-        self.latest_value = None
-        self.future = loop.create_future()
-        self.name = name
-        self.id = f"{name}_{str(uuid.uuid4())}"
-        self.closed = False
-        self.open(data)
-
-    def set_value(self, value):
-        self.latest_value = value
-        self.has_value = True
-        try:
-            self.future.set_result(None)
-        except asyncio.InvalidStateError:
-            pass
-
-    def open(self, data):
-        streams[self.id] = self
-        send_message(
-            "NEW_STREAM",
-            {
-                "name": self.name,
-                "stream_id": self.id,
-                "data": data,
-            },
-        )
-
-    def close(self):
-        if not self.closed:
-            self.closed = True
-            send_message("STOP_STREAM", self.id)
-            del streams[self.id]
-            self.set_value(None)
-
-    async def current(self):
-        if self.has_value:
-            return self.latest_value
-        return await self.next()
-
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, exc_type, exc, tb):
-        self.close()
-
-    async def next(self):
-        if self.closed:
-            log("Stream is already closed")
-            return
-        if not self.future.done():
-            await self.future
-        if self.closed:
-            log(f"Stream {self.name} closed while waiting for next value")
-            return
-        self.future = loop.create_future()
-        return self.latest_value
 
 
 class ObjectiveFailedError(BaseException):
@@ -100,20 +39,20 @@ class Objective:
 
     async def run_and_cancel(self):
         name = self.__class__.__name__
-        log(f"Starting objective {name}")
+        server.log(f"Starting objective {name}")
         self.run_task = asyncio.create_task(self.run())
         try:
             await self.run_task
         except (Exception, ObjectiveFailedError) as e:
             err = e
             tb = traceback.format_exc()
-            log(f"Objective {name} errored: \n{tb}")
+            server.log(f"Objective {name} errored: \n{tb}")
         except asyncio.CancelledError as e:
             err = e
-            log(f"Canceling objective {name}")
+            server.log(f"Canceling objective {name}")
         else:
             err = None
-            log(f"Successfully completed objective {name}")
+            server.log(f"Successfully completed objective {name}")
         await self.cleanup(err)
 
     async def cleanup(self, exception):
@@ -145,7 +84,7 @@ class FaceDirectionObjective(Objective):
         self.direction = direction
 
     async def run(self):
-        async with player_status_stream() as stream:
+        async with server.player_status_stream() as stream:
             await face_direction(self.direction, stream)
 
 
@@ -155,7 +94,7 @@ class MoveNTilesObjective(Objective):
         self.n = n
 
     async def run(self):
-        async with player_status_stream(ticks=1) as stream:
+        async with server.player_status_stream(ticks=1) as stream:
             status = await stream.current()
             await ensure_not_moving(stream)
             from_x, from_y = status["tileX"], status["tileY"]
@@ -171,12 +110,12 @@ class MoveNTilesObjective(Objective):
             else:
                 raise ValueError(f"Unexpected direction {self.direction}")
             path = await path_to_position(to_x, to_y)
-            log(path.tiles)
+            server.log(path.tiles)
             await pathfind_to_position(path, status['location'], stream)
 
     async def cleanup(self, exception):
         if exception:
-            async with player_status_stream() as stream:
+            async with server.player_status_stream() as stream:
                 await ensure_not_moving(stream)
 
 
@@ -189,12 +128,12 @@ class MoveToLocationObjective(Objective):
         self.location = location
 
     async def run(self):
-        async with player_status_stream() as stream:
+        async with server.player_status_stream() as stream:
             await ensure_not_moving(stream)
             route = await request_route(self.location, self.x, self.y)
             for i, location in enumerate(route[:-1]):
                 next_location = route[i + 1]
-                log(f"Getting path to next location {next_location}")
+                server.log(f"Getting path to next location {next_location}")
                 path = await path_to_warp(next_location)
                 await pathfind_to_warp(path, location, next_location, stream)
 
@@ -203,7 +142,7 @@ class MoveToLocationObjective(Objective):
 
     async def cleanup(self, exception):
         if exception:
-            async with player_status_stream() as stream:
+            async with server.player_status_stream() as stream:
                 await ensure_not_moving(stream)
 
 
@@ -224,21 +163,21 @@ class Path:
 
 
 async def request_route(location: str, x: int, y: int):
-    route = await request("ROUTE", {"toLocation": location})
+    route = await server.request("ROUTE", {"toLocation": location})
     if route is None:
         raise RuntimeError(f"Cannot pathfind to {x}, {y} at location {location}")
     return route
 
 
 async def path_to_warp(location: str):
-    path = await request("PATH_TO_WARP", {"toLocation": location})
+    path = await server.request("PATH_TO_WARP", {"toLocation": location})
     if path is None:
         raise RuntimeError(f"Cannot pathfind to warp to location {location}")
     return Path(path)
 
 
 async def path_to_position(x, y):
-    path = await request("PATH_TO_POSITION", {"x": x, "y": y})
+    path = await server.request("PATH_TO_POSITION", {"x": x, "y": y})
     if path is None:
         raise RuntimeError(f"Cannot pathfind to {x}, {y} to location {location}")
     return Path(path)
@@ -248,7 +187,7 @@ async def pathfind_to_warp(
     path: Path,
     location: str,
     next_location: str,
-    status_stream: Stream,
+    status_stream: server.Stream,
 ):
     is_done = False
     while not is_done:
@@ -267,9 +206,9 @@ async def pathfind_to_warp(
 async def pathfind_to_position(
     path: Path,
     location: str,
-    status_stream: Stream,
+    status_stream: server.Stream,
 ):
-    # warped_task = create_stream_next_task(warped_stream.next())
+    # warped_task = server.create_stream_next_task(warped_stream.next())
     is_done = False
     while not is_done:
         player_status = await status_stream.next()
@@ -281,7 +220,7 @@ async def pathfind_to_position(
         is_done = move_along_path(path, player_status)
     stop_moving()
 
-async def pathfind_to_adjacent(x, y, status_stream: Stream):
+async def pathfind_to_adjacent(x, y, status_stream: server.Stream):
     player_status = await status_stream.next()
     current_tile = player_status["tileX"], player_status["tileY"]
     adjacent_tiles = [(x, y - 1), (x + 1, y), (x, y + 1), (x - 1, y)]
@@ -375,7 +314,7 @@ def start_moving(direction: int):
         directinput.press(key_to_press)
 
 
-async def ensure_moving(direction: int, stream: Stream):
+async def ensure_moving(direction: int, stream: server.Stream):
     player_status = await stream.current()
     if direction != player_status["facingDirection"]:
         await ensure_not_moving(stream)
@@ -383,25 +322,7 @@ async def ensure_moving(direction: int, stream: Stream):
     if not player_status["isMoving"]:
         key_to_press = nums_to_keys[direction]
         directinput.press(key_to_press)
-        await stream_wait(lambda x: x["isMoving"], stream)
-
-
-def create_stream_next_task(awaitable):
-    async def to_call(awaitable):
-        try:
-            return await awaitable
-        except ValueError as e:
-            pass
-
-    return loop.create_task(to_call(awaitable))
-
-
-def player_status_stream(ticks=1):
-    return Stream("UPDATE_TICKED", data={"state": "PLAYER_STATUS", "ticks": ticks})
-
-
-def on_warped_stream(ticks=1):
-    return Stream("ON_WARPED", data={"state": "PLAYER_STATUS", "ticks": ticks})
+        await server.stream_wait(lambda x: x["isMoving"], stream)
 
 
 async def sleep_forever():
@@ -416,19 +337,19 @@ def stop_moving():
             directinput.release(key)
 
 
-async def ensure_not_moving(stream: Stream):
+async def ensure_not_moving(stream: server.Stream):
     stop_moving()
-    await stream_wait(lambda status: not status["isMoving"], stream)
+    await server.stream_wait(lambda status: not status["isMoving"], stream)
 
 
 async def move_to(location: str, x: int, y: int):
     pass
 
 
-async def face_direction(direction: int, stream: Stream):
+async def face_direction(direction: int, stream: server.Stream):
     await ensure_not_moving(stream)
-    send_message("FACE_DIRECTION", direction)
-    await stream_wait(lambda s: s["facingDirection"] == direction, stream)
+    await server.request("FACE_DIRECTION", direction)
+    await server.stream_wait(lambda s: s["facingDirection"] == direction, stream)
 
 
 async def cancel_active_objective():
@@ -448,28 +369,6 @@ async def new_active_objective(new_objective: Objective):
         pending_objective = None
         active_objective = new_objective
         await new_objective.wrap_run()
-
-
-async def stream_wait(condition, stream: Stream):
-    item = await stream.current()
-    while not condition(item):
-        item = await stream.next()
-    return item
-
-
-class AsyncFunction(ActionBase):
-    def __init__(self, coro, format_args=None):
-        super().__init__()
-        self.coro = coro
-        self.format_args = format_args
-
-    def execute(self, data=None):
-        assert isinstance(data, dict)
-        kwargs = {k: v for k, v in data.items() if not k.startswith("_")}
-        if self.format_args:
-            args = self.format_args(**kwargs)
-            return call_soon(self.coro, *args)
-        return call_soon(self.coro, **kwargs)
 
 
 direction_keys = {
@@ -493,122 +392,18 @@ nums_to_keys = {
 directions = {k: k for k in direction_keys}
 
 
-def call_soon(coro, *args, **kw):
-    loop.call_soon_threadsafe(_do_create_task, coro, *args, **kw)
-
-
-def _do_create_task(coro, *args, **kw):
-    loop.create_task(coro(*args, **kw))
-
-
 repeat_mapping = {}
 
 
-mod_requests = {}
 
 game_state = GameState()
 
 
-def setup_async_loop(loop):
-    def async_setup(l):
-        l.set_exception_handler(exception_handler)
-        l.create_task(async_readline())
-        l.create_task(heartbeat(60))
-        l.run_forever()
-
-    def exception_handler(loop, context):
-        # This only works when there are no references to the above tasks.
-        # https://bugs.python.org/issue39256y'
-        get_engine().disconnect()
-        raise context["exception"]
-
-    async_thread = threading.Thread(target=async_setup, daemon=True, args=(loop,))
-    async_thread.start()
 
 
-async def heartbeat(timeout):
-    while True:
-        fut = request("HEARTBEAT")
-        try:
-            resp = await asyncio.wait_for(fut, timeout=timeout)
-        except asyncio.TimeoutError as e:
-            raise e
-        await asyncio.sleep(timeout)
-
-
-async def async_readline():
-    # Is there a better way to read async stdin on Windows?
-    q = queue.Queue()
-
-    def _run(future_queue):
-        while True:
-            fut = future_queue.get()
-            line = sys.stdin.readline()
-            loop.call_soon_threadsafe(fut.set_result, line)
-
-    threading.Thread(target=_run, daemon=True, args=(q,)).start()
-    while True:
-        fut = loop.create_future()
-        q.put(fut)
-        line = await fut
-        on_message(line)
-
-
-def request(msg_type, msg=None):
-    sent_msg = send_message(msg_type, msg)
-    fut = loop.create_future()
-    mod_requests[sent_msg["id"]] = fut
-    return fut
-
-
-def send_message(msg_type, msg=None):
-    msg_id = str(uuid.uuid4())
-    full_msg = {"type": msg_type, "id": msg_id, "data": msg}
-    print(json.dumps(full_msg), flush=True)
-    return full_msg
-
-
-def on_message(msg_str):
-    try:
-        msg = json.loads(msg_str)
-    except json.JSONDecodeError:
-        raise RuntimeError(f"Got invalid message from mod {msg_str}")
-    msg_type = msg["type"]
-    msg_data = msg["data"]
-    if msg_type == "RESPONSE":
-        fut = mod_requests.pop(msg_data["id"])
-        resp_value = msg_data["value"]
-        fut.set_result(resp_value)
-    elif msg_type == "STREAM_MESSAGE":
-        stream_id = msg_data["stream_id"]
-        stream = streams.get(stream_id)
-        if stream is None:
-            log(f"Can't find {stream_id}")
-            send_message("STOP_STREAM", stream_id)
-            return
-        stream.set_value(msg_data["value"])
-        stream.latest_value = msg_data["value"]
-        try:
-            stream.future.set_result(None)
-        except asyncio.InvalidStateError:
-            pass
-    elif msg_type == "ON_EVENT":
-        handle_event(msg_data["eventType"], msg_data["data"])
-    else:
-        raise RuntimeError(f"Unhandled message type from mod: {msg_type}")
-
-
-def handle_event(event_type, data):
-    if event_type == "ON_WARPED":
-        game_state.last_warp = data
-
-
-def log(msg):
-    to_send = msg if isinstance(msg, str) else json.dumps(msg)
-    return send_message("LOG", to_send)
 
 def rule_builder():
-    setup_async_loop(loop)
+    server.setup_async_loop()
     builder = rules.RuleBuilder()
     builder.basic.append(
         rules.ParsedRule(
@@ -631,13 +426,13 @@ def rule_builder():
 
 def objective_action(objective_cls, *args):
     format_args = lambda **kw: [objective_cls(*[kw[a] for a in args])]
-    return AsyncFunction(new_active_objective, format_args=format_args)
+    return server.AsyncFunction(new_active_objective, format_args=format_args)
 
 
 non_repeat_mapping = {
     "<direction_keys>": objective_action(HoldKeyObjective, "direction_keys"),
     "face <direction_nums>": objective_action(FaceDirectionObjective, "direction_nums"),
-    "stop": AsyncFunction(cancel_active_objective, format_args=lambda **kw: []),
+    "stop": server.AsyncFunction(cancel_active_objective, format_args=lambda **kw: []),
     "tool": Function(lambda: directinput.send("c")),
     "(action|check)": Function(lambda: directinput.send("x")),
     "(escape | menu)": Function(lambda: directinput.send("esc")),

@@ -97,6 +97,7 @@ namespace StardewBot
             var player = Game1.player;
             int playerX = player.getTileX();
             int playerY = player.getTileY();
+            dynamic resp = null;
             switch (msgType)
             {
                 case "LOG":
@@ -104,14 +105,14 @@ namespace StardewBot
                     ModEntry.Log($"Speech engine message: {toLog}");
                     break;
                 case "HEARTBEAT": // engine will shutdown if heartbeat not received after 10 seconds
-                    this.SendResponse(msgId);
                     break;
                 case "PLAYER_POSITION":
-                    this.SendResponse(msgId, GameState.PlayerPosition);
+                    resp = GameState.PlayerPosition;
                     break;
                 case "FACE_DIRECTION":
                     int direction = msg.data;
                     Game1.player.faceDirection(direction);
+                    resp = true;
                     break;
                 case "NEW_STREAM":
                     {
@@ -139,7 +140,7 @@ namespace StardewBot
                         GameLocation fromLocation = player.currentLocation;
                         string toLocationStr = data.toLocation;
                         GameLocation toLocation = Routing.FindLocationByName(toLocationStr);
-                        var resp = new List<string>();
+                        resp = new List<string>();
                         if (fromLocation.NameOrUniqueName == toLocation.NameOrUniqueName)
                         {
                             resp.Add(toLocation.NameOrUniqueName);
@@ -147,7 +148,6 @@ namespace StardewBot
                         else {
                             resp = Routing.GetRoute(fromLocation.NameOrUniqueName, toLocation.NameOrUniqueName);
                         }
-                        this.SendResponse(msgId, resp);
                         break;
                     }
                 case "PATH_TO_POSITION":
@@ -155,7 +155,7 @@ namespace StardewBot
                         int targetX = data.x;
                         int targetY = data.y;
                         var path = Pathfinder.Pathfinder.FindPath(player.currentLocation, playerX, playerY, targetX, targetY);
-                        this.SendResponse(msgId, path);
+                        resp = path;
                         break;
                     }
                 case "PATH_TO_WARP":
@@ -165,12 +165,11 @@ namespace StardewBot
                         GameLocation toLocation = Routing.FindLocationByName(toLocationStr);
                         var warp = Routing.FindWarp(fromLocation, toLocation);
                         var path = Pathfinder.Pathfinder.FindPath(fromLocation, playerX, playerY, warp.X, warp.Y);
-                        this.SendResponse(msgId, path);
+                        resp = path;
                         break;
                     }
-                    break;
-
             }
+            this.SendResponse(msgId, resp);
         }
 
         void onError(string data)
