@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
+using Newtonsoft.Json;
 using StardewBot.Pathfinder;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -39,6 +41,18 @@ namespace StardewBot
 
         public static void Log(string msg) {
             ModEntry.log(msg, LogLevel.Debug);
+        }
+
+        public static void WriteJson(string fname, object obj) 
+        {
+            var settings = new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
+            settings.Error = (serializer, err) => err.ErrorContext.Handled = true;
+            string objStr = JsonConvert.SerializeObject(obj, Formatting.None, settings);
+            string path = @"C:\Program Files (x86)\GOG Galaxy\Games\Stardew Valley\Mods\StardewBot\StardewBot\lib\speech-client\debug\" + fname;
+            using (var writetext = new StreamWriter(path))
+            {
+                writetext.WriteLine(objStr);
+            }
         }
 
         private void OnWarped(object sender, WarpedEventArgs e)
@@ -123,6 +137,9 @@ namespace StardewBot
                 //var location = Game1.player.currentLocation;
                 var v = new Vector2(tileX, tileY);
                 var rec = new xTile.Dimensions.Location(tileX, tileY);
+                var pl = Game1.player;
+                WriteJson("debris.json", Game1.currentLocation.debris.ToList());
+                WriteJson("objects.json", Game1.currentLocation.Objects.Values.ToList());
             }
         }
         private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)

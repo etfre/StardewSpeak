@@ -13,7 +13,7 @@ from srabuilder import rules
 
 # from actions import directinput
 from srabuilder.actions import directinput
-
+import constants
 
 active_objective = None
 pending_objective = None
@@ -154,12 +154,11 @@ class MoveNTilesObjective(Objective):
         self.n = n
 
     async def run(self):
-        async with player_status_stream(ticks=15) as stream:
+        async with player_status_stream(ticks=1) as stream:
+            status = await stream.current()
             await ensure_not_moving(stream)
-            status = await stream.latest()
             from_x, from_y = status["tileX"], status["tileY"]
             to_x, to_y = from_x, from_y
-            dx, dy = 0, 0
             if self.direction == "north":
                 to_y -= self.n
             elif self.direction == "east":
@@ -170,10 +169,9 @@ class MoveNTilesObjective(Objective):
                 to_x -= self.n
             else:
                 raise ValueError(f"Unexpected direction {self.direction}")
-            route = await request("PATHFIND_FROM_PLAYER_RELATIVE", {"dx": dx, "dy": dy})
-            if route is None:
-                self.fail(f"Cannot pathfind {self.n} tiles {self.direction}")
-            await route_to(route, stream)
+            path = await path_to_position(to_x, to_y)
+            log(path.tiles)
+            await pathfind_to_position(path, status['location'], stream)
 
     async def cleanup(self, exception):
         if exception:
@@ -245,15 +243,6 @@ async def path_to_position(x, y):
     return Path(path)
 
 
-# async def request_route(location: str, x: int, y: int):
-#     mod_paths = await request(
-#         "PATHFIND_TO_LOCATION", {"x": x, "y": y, "location": location}
-#     )
-#     if mod_paths is None:
-#         raise RuntimeError(f"Cannot pathfind to {x}, {y} at location {location}")
-#     return Route(mod_paths)
-
-
 async def pathfind_to_warp(
     path: Path,
     location: str,
@@ -301,7 +290,7 @@ def move_along_path(path, player_status):
         target_tile = path.tiles[current_tile_index + 1]
     except IndexError:
         # Last tile, all done!
-        if player_status["isMoving"] and moving_towards_tile_center(player_status):
+        if player_status["isMoving"] and facing_tile_center(player_status):
             return False
         return True
     direction_to_move = direction_from_tiles(current_tile, target_tile)
@@ -311,25 +300,25 @@ def move_along_path(path, player_status):
         player_status["isMoving"]
         and abs(current_direction - direction_to_move) % 2 == 1
     )
-    if turn_coming and moving_towards_tile_center(player_status):
+    if turn_coming and facing_tile_center(player_status):
         return False
     start_moving(direction_to_move)
 
 
 def direction_from_tiles(tile, target_tile):
-    if tile[1] - 1 == target_tile[1]:  # north
-        return 0
-    elif tile[0] + 1 == target_tile[0]:  # east
-        return 1
-    elif tile[1] + 1 == target_tile[1]:  # south
-        return 2
-    elif tile[0] - 1 == target_tile[0]:  # west
-        return 3
+    if tile[1] - 1 == target_tile[1]:
+        return constants.NORTH
+    elif tile[0] + 1 == target_tile[0]:
+        return constants.EAST
+    elif tile[1] + 1 == target_tile[1]:
+        return constants.SOUTH
+    elif tile[0] - 1 == target_tile[0]:
+        return constants.WEST
     else:
         raise RuntimeError(f"Points are incorrect: {tile}, {target_tile}")
 
 
-def moving_towards_tile_center(player_status):
+def facing_tile_center(player_status):
     """Keep moving towards center of tile before a turn for smoother pathfinding"""
     tile_size = 64  # TODO: get this info from the mod
     position = player_status["position"]
@@ -345,13 +334,13 @@ def moving_towards_tile_center(player_status):
     current_direction = player_status["facingDirection"]
     # start turning when at least 45% into the tile
     offset_from_mid = 0.05
-    if current_direction == 0:  # north
+    if current_direction == constants.NORTH:
         return y + offset_from_mid <= 0
-    if current_direction == 1:  # east
+    if current_direction == constants.EAST:
         return x + offset_from_mid <= 0
-    if current_direction == 2:  # south
+    if current_direction == constants.SOUTH:
         return y - offset_from_mid >= 0
-    if current_direction == 3:  # west
+    if current_direction == constants.WEST:
         return x - offset_from_mid >= 0
     return False
 

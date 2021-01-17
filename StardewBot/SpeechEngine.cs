@@ -168,74 +168,9 @@ namespace StardewBot
                         this.SendResponse(msgId, path);
                         break;
                     }
-                case "PATHFIND_FROM_PLAYER_RELATIVE":
-                    {
-                        int dx = data.dx;
-                        int dy = data.dy;
-                        int targetX = playerX + dx;
-                        int targetY = playerY + dy;
-                        var path = this.pathfindResponse(player.currentLocation, player.currentLocation, playerX, playerY, targetX, targetY);
-                        this.SendResponse(msgId, path);
-                    }
-                    //var path = Pathfinder.Pathfinder.FindPath(Game1.player.currentLocation, playerX, playerY, targetX, targetY);
-                    //var locationTransitions = new List<string>();
-                    //if (path == null)
-                    //{
-                    //    this.SendResponse(msgId, null);
-                    //}
-                    //else
-                    //{
-                    //    var resp = new { path, locationTransitions };
-                    //    this.SendResponse(msgId, resp);
-
-                    //}
                     break;
 
             }
-        }
-
-        object pathfindResponse(GameLocation fromLocation, GameLocation toLocation, int fromX, int fromY, int toX, int toY) 
-        {
-            var locations = new List<GameLocation>();
-            var pathsToPlot = new List<dynamic>();
-            if (fromLocation.NameOrUniqueName != toLocation.NameOrUniqueName)
-            {
-                locations = Routing.GetRoute(fromLocation.NameOrUniqueName, toLocation.NameOrUniqueName).Select(loc => Routing.FindLocationByName(loc)).ToList();
-                GameLocation location = locations[0];
-                foreach (GameLocation nextLocation in locations.Skip(1))
-                {
-                    var warp = Routing.FindWarp(location, nextLocation);
-                    pathsToPlot.Add(new { location, fromX, fromY, toX = warp.X, toY = warp.Y });
-                    fromX = warp.TargetX;
-                    fromY = warp.TargetY;
-                    location = nextLocation;
-                }
-            }
-            pathsToPlot.Add(new { location = toLocation, fromX, fromY, toX, toY });
-            var paths = new List<dynamic>();
-            foreach (var pathDetails in pathsToPlot)
-            {
-                var path = Pathfinder.Pathfinder.FindPath(pathDetails.location, pathDetails.fromX, pathDetails.fromY, pathDetails.toX, pathDetails.toY);
-                if (path == null) 
-                {
-                    return null;
-                }
-                paths.Add(new { path, location = pathDetails.location.NameOrUniqueName });
-            }
-            return paths;
-            //var path = Pathfinder.Pathfinder.FindPath(fromLocation, fromX, fromY, toX, toY);
-            //locations = new List<string>();
-            //locations.Add(fromLocation.NameOrUniqueName);
-            //if (path == null)
-            //{
-            //    return null;
-            //}
-            //else
-            //{
-            //    var resp = new { path, locations };
-            //    return resp;
-
-            //}
         }
 
         void onError(string data)
