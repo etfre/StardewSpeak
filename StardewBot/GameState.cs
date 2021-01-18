@@ -1,4 +1,5 @@
 ﻿using StardewValley;
+using StardewValley.TerrainFeatures;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,6 +31,25 @@ namespace StardewBot
                 lastWarp = LastWarp
             };
             return status;
+        }
+
+        public static object Trees() 
+        {
+            var features = new List<dynamic>();
+            foreach (var tf in Game1.currentLocation.terrainFeatures.Values) 
+            {
+                if (tf is Tree)
+                {
+                    var tree = tf as Tree;
+                    var tileLocation = tree.currentTileLocation;
+                    features.Add(new { type = "tree", treeType = tree.treeType.Value, tileX = (int)tileLocation.X, tileY = (int)tileLocation.Y, tapped = tree.tapped.Value, stump = tree.stump.Value });
+                }
+                else 
+                {
+                
+                }
+            }
+            return features;
         }
 
         public static object GameValues() 

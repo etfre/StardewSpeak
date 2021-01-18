@@ -34,5 +34,22 @@ namespace StardewBot
             return null;
         }
 
+        public static List<dynamic> MessageStreams(Dictionary<string, Stream> streams, string streamName, dynamic messageValue) 
+        {
+            var messages = new List<dynamic>();
+            foreach (var pair in streams)
+            {
+                var id = pair.Key;
+                var stream = pair.Value;
+                if (stream.Name == streamName)
+                {
+                    var message = new { stream_id = id, value = messageValue };
+                    messages.Add(message);
+                    //this.speechEngine.SendMessage("STREAM_MESSAGE", message);
+                }
+            }
+            return messages;
+        }
+
     }
 }

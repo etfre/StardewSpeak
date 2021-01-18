@@ -33,6 +33,7 @@ namespace StardewBot
             helper.Events.Input.ButtonPressed += this.OnButtonPressed;
             helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
             helper.Events.Player.Warped += this.OnWarped;
+            helper.Events.World.TerrainFeatureListChanged += this.OnTerrainFeatureListChanged;
             ModEntry.log = this.Monitor.Log;
             this.speechEngine = new SpeechEngine();
             this.speechEngine.LaunchProcess();
@@ -71,6 +72,25 @@ namespace StardewBot
                     Log($"Warped to {e.NewLocation}");
                 }
             }
+            //this.speechEngine.SendEvent("ON_WARPED", warpEvent);
+        }
+
+        private void MessageStreams(string streamName, dynamic messageValue) 
+        {
+            var messages = Stream.MessageStreams(ModEntry.Streams, streamName, messageValue);
+            foreach(var message in messages) 
+            {
+                this.speechEngine.SendMessage("STREAM_MESSAGE", message);
+            }
+        }
+
+        private void OnTerrainFeatureListChanged(object sender, TerrainFeatureListChangedEventArgs e)
+
+        {
+            var removed = e.Removed.Select(x => new { x.Value.currentTileLocation });
+            var changedEvent = new { location = e.Location.NameOrUniqueName, removed };
+            this.MessageStreams("ON_TERRAIN_FEATURE_LIST_CHANGED", changedEvent);
+            Log($"ON_TERRAIN_FEATURE_LIST_CHANGED");
             //this.speechEngine.SendEvent("ON_WARPED", warpEvent);
         }
 

@@ -168,6 +168,11 @@ namespace StardewBot
                         resp = path;
                         break;
                     }
+                case "GET_TREES": 
+                    {
+                        resp = GameState.Trees();
+                        break;
+                    }
             }
             this.SendResponse(msgId, resp);
         }

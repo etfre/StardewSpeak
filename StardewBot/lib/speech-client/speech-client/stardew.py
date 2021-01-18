@@ -1,4 +1,5 @@
 import time
+import contextlib
 import traceback
 import weakref
 import functools
@@ -12,7 +13,7 @@ from dragonfly import *
 from srabuilder import rules
 
 from srabuilder.actions import directinput
-import constants, server
+import constants, server, game
 
 active_objective = None
 pending_objective = None
@@ -69,15 +70,9 @@ class HoldKeyObjective(Objective):
         self.keys = keys
 
     async def run(self):
-        for k in self.keys:
-            directinput.press(k)
-        # infinite loop to indicate that the objective isn't done until task is canceled
-        await sleep_forever()
-
-    async def cleanup(self, exception):
-        for k in self.keys[::-1]:
-            directinput.release(k)
-
+        with press_and_release(self.keys):
+            # infinite loop to indicate that the objective isn't done until task is canceled
+            await sleep_forever()
 
 class FaceDirectionObjective(Objective):
     def __init__(self, direction):
@@ -145,6 +140,27 @@ class MoveToLocationObjective(Objective):
             async with server.player_status_stream() as stream:
                 await ensure_not_moving(stream)
 
+class ChopTreesObjective(Objective):
+
+    def __init__(self):
+        pass
+
+    async def run(self):
+        async with server.player_status_stream() as stream:
+            current_location = await stream.next()
+            s = time.time()
+            trees = await game.get_trees('')
+            e = time.time()
+            server.log(e-s)
+            target_tree = trees[0]
+            server.log(target_tree)
+            await pathfind_to_adjacent(target_tree['tileX'], target_tree['tileY'], stream)
+            async with server.on_terrain_feature_list_changed_stream() as terrain_stream:
+                with press_and_release('c'):
+                    event = await terrain_stream.next()
+
+        while trees:
+            break
 
 class Route:
     def __init__(self, mod_paths):
@@ -161,6 +177,8 @@ class Path:
             self.tile_indices[tile] = i
         self.tiles = tuple(tiles)
 
+def harvest_priority():
+    pass
 
 async def request_route(location: str, x: int, y: int):
     route = await server.request("ROUTE", {"toLocation": location})
@@ -228,12 +246,17 @@ async def pathfind_to_adjacent(x, y, status_stream: server.Stream):
     potential_paths = []
     for adjacent_tile in adjacent_tiles:
         try:
-            path = path_to_position(adjacent_tile[0], adjacent_tile[1])
+            path = await path_to_position(adjacent_tile[0], adjacent_tile[1])
         except RuntimeError:
             pass
+        else:
+            potential_paths.append(path)
     if not potential_paths:
         raise RuntimeError(f"No path found adjacent to {x}, {y}")
-    adjacent_tiles.sort(key=lambda t: distance_between_tiles(current_tile, t))
+    path = min(potential_paths, key=lambda x: len(x.tiles))
+    await pathfind_to_position(path, player_status['location'], status_stream)
+    direction_to_face = direction_from_tiles(path.tiles[-1], (x, y))
+    await face_direction(direction_to_face, status_stream)
     
 def distance_between_tiles(t1, t2):
     # pathfinding doesn't move diagonally for simplicity so just sum differences between x and y
@@ -303,6 +326,17 @@ def facing_tile_center(player_status):
         return x - offset_from_mid >= 0
     return False
 
+@contextlib.contextmanager
+def press_and_release(keys):
+    for k in keys:
+        directinput.press(k)
+    try:
+        yield
+    except (BaseException, Exception) as e:
+        raise e
+    finally:
+        for k in reversed(keys):
+            directinput.release(k)
 
 def start_moving(direction: int):
     key_to_press = nums_to_keys[direction]
@@ -434,4 +468,5 @@ non_repeat_mapping = {
     "(escape | menu)": Function(lambda: directinput.send("esc")),
     "<n> <directions>": objective_action(MoveNTilesObjective, "directions", "n"),
     "go to mailbox": objective_action(MoveToLocationObjective),
+    "start chopping trees": objective_action(ChopTreesObjective),
 }

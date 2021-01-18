@@ -94,6 +94,9 @@ def player_status_stream(ticks=1):
 def on_warped_stream(ticks=1):
     return Stream("ON_WARPED", data={"state": "PLAYER_STATUS", "ticks": ticks})
 
+def on_terrain_feature_list_changed_stream():
+    return Stream("ON_TERRAIN_FEATURE_LIST_CHANGED", data={})
+
 def create_stream_next_task(awaitable):
     async def to_call(awaitable):
         try:
