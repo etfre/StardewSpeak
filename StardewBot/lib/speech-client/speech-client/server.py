@@ -233,3 +233,7 @@ def handle_event(event_type, data):
 def log(msg):
     to_send = msg if isinstance(msg, str) else json.dumps(msg)
     return send_message("LOG", to_send)
+
+async def sleep_forever():
+    while True:
+        await asyncio.sleep(3600)

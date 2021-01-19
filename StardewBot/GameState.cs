@@ -52,6 +52,27 @@ namespace StardewBot
             return features;
         }
 
+
+        public static object Debris()
+        {
+            var debris = new List<dynamic>();
+            foreach (var d in Game1.currentLocation.debris)
+            {
+                var chunkType = d.chunkType.Value;
+                var debrisType = d.debrisType.Value;
+                var movingTowardsPlayer = d.chunksMoveTowardPlayer;
+                foreach(var chunk in d.Chunks) 
+                {
+                    var tileX = (int)(chunk.position.X / Game1.tileSize);
+                    var tileY = (int)(chunk.position.Y / Game1.tileSize);
+                    var isMoving = chunk.xVelocity > 0 || chunk.yVelocity > 0;
+                    var debrisObj = new { chunkType, debrisType, tileX, tileY, movingTowardsPlayer, isMoving };
+                    debris.Add(debrisObj);
+                }
+            }
+            return debris;
+        }
+
         public static object GameValues() 
         {
             var values = new

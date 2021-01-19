@@ -173,6 +173,11 @@ namespace StardewBot
                         resp = GameState.Trees();
                         break;
                     }
+                case "GET_DEBRIS":
+                    {
+                        resp = GameState.Debris();
+                        break;
+                    }
             }
             this.SendResponse(msgId, resp);
         }

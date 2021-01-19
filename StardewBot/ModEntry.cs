@@ -148,11 +148,15 @@ namespace StardewBot
             else if (pressed == "L")
             {
                 var location = Game1.player.currentLocation;
+                var mouseX = Game1.getMouseX();
+                var mouseY = Game1.getMouseY();
                 var point = Game1.currentCursorTile;
                 var tileX = (int)point.X;
                 var tileY = (int)point.Y;
                 var vec = new Vector2(tileX, tileY);
                 Log($"Current tiles: x: {tileX}, y: {tileY}");
+                Log($"Current mouse position: x: {mouseX}, y: {mouseY}");
+
                 var og = Pathfinder.Pathfinder.OpenGates();
                 var isPassable = Pathfinder.Pathfinder.IsPassable(location, tileX, tileY, og);
                 var isOccupied = location.isTileOccupiedIgnoreFloors(vec);
