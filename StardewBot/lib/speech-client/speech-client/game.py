@@ -62,6 +62,7 @@ async def gather_debris(radius):
         location = player_status['location']
         start_tile = player_status["tileX"], player_status["tileY"]
         visited_tiles = set([start_tile])
+        invalid_tiles = set()
         tiles_moving = True
         while True:
             debris = await server.request('GET_DEBRIS', {"location": "location"})
@@ -71,31 +72,36 @@ async def gather_debris(radius):
                 tiles_moving = False
             player_status = await stream.next()
             current_tile = player_status["tileX"], player_status["tileY"]
-            target_debris = []
+            test_tiles = []
             for d in debris_in_range:
                 debris_tile = d['tileX'], d['tileY']
-                if debris_tile not in visited_tiles:
-                    target_debris.append(d)
-            if not target_debris:
+                adj = adjacent_tiles(debris_tile)
+                for tile in [debris_tile] + adj:
+                    if not (tile in visited_tiles or tile in invalid_tiles):
+                        test_tiles.append(tile)
+            if not test_tiles:
                 return
-            target_debris.sort(key=lambda d: sort_objects_by_distance(start_tile, current_tile, (d['tileX'], d['tileY'])))
-            path = await pathfind_to_resource(target_debris, location, stream)
+            test_tiles.sort(key=lambda t: sort_objects_by_distance(start_tile, current_tile, t))
+            path, invalid = await pathfind_to_resource(test_tiles, location, stream)
             if path is None:
-                raise RuntimeError(f'Unable to gather {len(target_debris)} in radius {radius}')
+                raise RuntimeError(f'Unable to gather {len(test_tiles)} in radius {radius}')
             for tile in path.tiles:
                 visited_tiles.add(tile)
-            server.log(path.tiles)
+            for tile in invalid:
+                invalid_tiles.add(tile)
 
-async def pathfind_to_resource(debris, location, stream):
-    for d in debris:
-        dtile = d['tileX'], d['tileY']
+async def pathfind_to_resource(tiles, location, stream):
+    path = None
+    invalid = []
+    for tile in tiles:
         try:
-            return await pathfind_to_position(dtile, location, stream)
+            server.log(tile)
+            path = await pathfind_to_position(tile, location, stream)
         except RuntimeError as e:
-            try:
-                return await pathfind_to_adjacent(d['tileX'], d['tileY'], stream)
-            except RuntimeError:
-                pass
+            invalid.append(tile)
+        else:
+            break
+    return path, invalid
 
 async def request_route(location: str, x: int, y: int):
     route = await server.request("ROUTE", {"toLocation": location})
@@ -156,6 +162,10 @@ async def pathfind_to_position(
         is_done = move_along_path(path, player_status)
     stop_moving()
     return path
+
+def adjacent_tiles(tile):
+    x, y = tile
+    return [(x, y - 1), (x + 1, y), (x, y + 1), (x - 1, y)]
 
 async def pathfind_to_adjacent(x, y, status_stream: server.Stream):
     player_status = await status_stream.next()
