@@ -198,7 +198,8 @@ def on_message(msg_str):
     try:
         msg = json.loads(msg_str)
     except json.JSONDecodeError:
-        raise RuntimeError(f"Got invalid message from mod {msg_str}")
+        log(f"Got invalid message from mod {msg_str}")
+        return
     msg_type = msg["type"]
     msg_data = msg["data"]
     if msg_type == "RESPONSE":

@@ -149,18 +149,18 @@ class ChopTreesObjective(Objective):
         async with server.player_status_stream() as stream:
             player_status = await stream.next()
             start_tile = player_status["tileX"], player_status["tileY"]
-            current_tile = start_tile
-            trees = await game.get_trees('')
-            if not trees:
-                return
-            target_tree = min(trees, key=lambda t: game.sort_objects_by_distance(start_tile, current_tile, (t['tileX'], t['tileY'])))
-            await game.pathfind_to_adjacent(target_tree['tileX'], target_tree['tileY'], stream)
-            async with server.on_terrain_feature_list_changed_stream() as terrain_stream:
-                with press_and_release('c'):
-                    event = await terrain_stream.next()
-            await game.gather_debris(15)
-        while trees:
-            break
+            while True:
+                player_status = await stream.next()
+                current_tile = player_status["tileX"], player_status["tileY"]
+                trees = await game.get_trees('')
+                if not trees:
+                    return
+                target_tree = min(trees, key=lambda t: game.sort_objects_by_distance(start_tile, current_tile, (t['tileX'], t['tileY'])))
+                await game.pathfind_to_adjacent(target_tree['tileX'], target_tree['tileY'], stream)
+                async with server.on_terrain_feature_list_changed_stream() as terrain_stream:
+                    with press_and_release('c'):
+                        event = await terrain_stream.next()
+                await game.gather_debris(15)
 
 @contextlib.contextmanager
 def press_and_release(keys):

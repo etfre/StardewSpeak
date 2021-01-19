@@ -241,20 +241,20 @@ namespace StardewBot.Pathfinder
             {
                 return false;
             }
-            if (loc.isTerrainFeatureAt(x, y))
-            {
-                return false;
-            }
+            //if (loc.isTerrainFeatureAt(x, y))
+            //{
+            //    return false;
+            //}
             if (loc is Farm)
             {
                 var fff = loc as Farm;
-                foreach (var brc in fff.largeTerrainFeatures)
-                {
-                    var r = brc.getBoundingBox();
-                    var xx = x;
-                    var yy = y;
-                    if (xx > r.X && xx < r.X + r.Width && yy > r.Y && yy < r.Y + r.Height) return false;
-                }
+                //foreach (var brc in fff.largeTerrainFeatures)
+                //{
+                //    var r = brc.getBoundingBox();
+                //    var xx = x;
+                //    var yy = y;
+                //    if (xx > r.X && xx < r.X + r.Width && yy > r.Y && yy < r.Y + r.Height) return false;
+                //}
                 if (fff.getBuildingAt(vec) != null)
                 {
                     return false;
@@ -262,18 +262,19 @@ namespace StardewBot.Pathfinder
             }
             foreach (var rc in loc.resourceClumps)
             {
+                
                 if (rc.occupiesTile(x, y))
                 {
                     return false;
                 }
             }
-            foreach (var obj in loc.Objects.Values)
-            {
-                if (obj.TileLocation.X == x && obj.TileLocation.Y == y)
-                {
-                    return false;
-                }
-            }
+            //foreach (var obj in loc.Objects.Values)
+            //{
+            //    if (obj.TileLocation.X == x && obj.TileLocation.Y == y)
+            //    {
+            //        return false;
+            //    }
+            //}
             return true;
         }
 

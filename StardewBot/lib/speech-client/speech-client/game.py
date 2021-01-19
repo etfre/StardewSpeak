@@ -1,4 +1,5 @@
 import time
+import collections
 import asyncio
 from srabuilder.actions import directinput
 import server, constants
@@ -62,34 +63,50 @@ async def gather_debris(radius):
         player_status = await stream.next()
         location = player_status['location']
         start_tile = player_status["tileX"], player_status["tileY"]
-        visited_tiles = set([start_tile])
-        invalid_tiles = set()
-        tiles_moving = True
+        tile_blacklist = set([start_tile])
         while True:
+            debris_to_gather = collections.defaultdict(int)
             debris = await server.request('GET_DEBRIS', {"location": "location"})
-            debris_in_range = [d for d in debris if distance_between_tiles(start_tile, (d['tileX'], d['tileY'])) < radius]
-            if tiles_moving and not any([d['isMoving'] for d in debris_in_range]):
-                visited_tiles.clear()
-                tiles_moving = False
+            test_tiles_set = set()
+            for d in debris:
+                within_radius = distance_between_tiles(start_tile, (d['tileX'], d['tileY'])) < radius
+                if within_radius:
+                    debris_tile = d['tileX'], d['tileY']
+                    for tile in adjacent_tiles(debris_tile) + [debris_tile]:
+                        debris_to_gather[tile] += 1
+                        if tile not in tile_blacklist:
+                            test_tiles_set.add(tile)
+            if not test_tiles_set:
+                return
             player_status = await stream.next()
             current_tile = player_status["tileX"], player_status["tileY"]
-            test_tiles = []
-            for d in debris_in_range:
-                debris_tile = d['tileX'], d['tileY']
-                adj = adjacent_tiles(debris_tile)
-                for tile in [debris_tile] + adj:
-                    if not (tile in visited_tiles or tile in invalid_tiles):
-                        test_tiles.append(tile)
-            if not test_tiles:
-                return
-            test_tiles.sort(key=lambda t: sort_objects_by_distance(start_tile, current_tile, t))
+            test_tiles = sort_test_tiles(test_tiles_set, start_tile, current_tile, debris_to_gather)
             path, invalid = await pathfind_to_resource(test_tiles, location, stream)
             if path is None:
                 raise RuntimeError(f'Unable to gather {len(test_tiles)} in radius {radius}')
             for tile in path.tiles:
-                visited_tiles.add(tile)
+                tile_blacklist.add(tile)
             for tile in invalid:
-                invalid_tiles.add(tile)
+                tile_blacklist.add(tile)
+
+def sort_test_tiles(tiles, start_tile, current_tile, debris_to_gather):
+    sorted_tiles = []
+    # get maxes for weighted average
+    max_start_distance = -1
+    max_current_distance = -1
+    max_resources_on_tile = -1
+    for tile in tiles:
+        max_start_distance = max(max_start_distance, distance_between_tiles(start_tile, tile))
+        max_current_distance = max(max_current_distance, distance_between_tiles(current_tile, tile))
+        max_resources_on_tile = max(max_resources_on_tile, debris_to_gather[tile])
+
+    def score_tile(t):
+        start_score = distance_between_tiles(start_tile, t) / max_start_distance
+        current_score = distance_between_tiles(current_tile, t) / max_current_distance
+        resources_score = debris_to_gather[t] / max_resources_on_tile
+        return 0.1*start_score + 0.3*current_score + 0.6*resources_score
+
+    return sorted(tiles, key=score_tile)
 
 async def pathfind_to_resource(tiles, location, stream):
     path = None
@@ -119,7 +136,10 @@ async def path_to_warp(location: str):
 
 
 async def path_to_position(x, y, location):
+    s = time.time()
     path = await server.request("PATH_TO_POSITION", {"x": x, "y": y, "location": location})
+    e = time.time()
+    server.log('pathfind ' + str(e-s))
     if path is None:
         raise RuntimeError(f"Cannot pathfind to {x}, {y} at location {location}")
     return Path(path)
