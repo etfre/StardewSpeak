@@ -46,7 +46,7 @@ def distance_between_tiles(t1, t2):
     return abs(t1[0] - t2[0]) + abs(t1[1] - t2[1]) 
 
 
-def sort_objects_by_distance(start_tile, current_tile, obj_tile, start_weight=0.5, current_weight=0.5):
+def sort_objects_by_distance(start_tile, current_tile, obj_tile, start_weight=0.25, current_weight=0.75):
     assert start_weight + current_weight == 1
     distance_from_start = distance_between_tiles(start_tile, obj_tile)
     distance_from_current = distance_between_tiles(current_tile, obj_tile)
@@ -83,7 +83,8 @@ async def gather_debris(radius):
             test_tiles = sort_test_tiles(test_tiles_set, start_tile, current_tile, debris_to_gather)
             path, invalid = await pathfind_to_resource(test_tiles, location, stream)
             if path is None:
-                raise RuntimeError(f'Unable to gather {len(test_tiles)} in radius {radius}')
+                server.log(f'Unable to gather {len(test_tiles)} in radius {radius}')
+                return
             for tile in path.tiles:
                 tile_blacklist.add(tile)
             for tile in invalid:
@@ -104,7 +105,7 @@ def sort_test_tiles(tiles, start_tile, current_tile, debris_to_gather):
         start_score = distance_between_tiles(start_tile, t) / max_start_distance
         current_score = distance_between_tiles(current_tile, t) / max_current_distance
         resources_score = debris_to_gather[t] / max_resources_on_tile
-        return 0.1*start_score + 0.3*current_score + 0.6*resources_score
+        return 0.05*start_score + 0.25*current_score + 0.7*resources_score
 
     return sorted(tiles, key=score_tile)
 

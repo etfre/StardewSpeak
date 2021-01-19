@@ -155,12 +155,19 @@ class ChopTreesObjective(Objective):
                 trees = await game.get_trees('')
                 if not trees:
                     return
-                target_tree = min(trees, key=lambda t: game.sort_objects_by_distance(start_tile, current_tile, (t['tileX'], t['tileY'])))
-                await game.pathfind_to_adjacent(target_tree['tileX'], target_tree['tileY'], stream)
-                async with server.on_terrain_feature_list_changed_stream() as terrain_stream:
-                    with press_and_release('c'):
-                        event = await terrain_stream.next()
-                await game.gather_debris(15)
+                tree_path = None
+                for tree in sorted(trees, key=lambda t: game.sort_objects_by_distance(start_tile, current_tile, (t['tileX'], t['tileY']))):
+                    try:
+                        tree_path = await game.pathfind_to_adjacent(tree['tileX'], tree['tileY'], stream)
+                    except RuntimeError:
+                        continue
+                    else:
+                        async with server.on_terrain_feature_list_changed_stream() as terrain_stream:
+                            with press_and_release('c'):
+                                event = await terrain_stream.next()
+                        await game.gather_debris(15)
+                if not tree_path:
+                    return
 
 @contextlib.contextmanager
 def press_and_release(keys):
