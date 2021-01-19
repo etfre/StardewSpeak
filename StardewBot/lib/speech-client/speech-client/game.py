@@ -1,3 +1,4 @@
+import time
 import asyncio
 from srabuilder.actions import directinput
 import server, constants
@@ -181,9 +182,13 @@ async def pathfind_to_adjacent(x, y, status_stream: server.Stream):
             continue
         tested_tiles.add(adjacent_tile)
         try:
+            s = time.time()
             path = await path_to_position(adjacent_tile[0], adjacent_tile[1], location)
         except RuntimeError:
             continue
+        finally:
+            e = time.time()
+            server.log(e-s)
         # shortcut if path goes through another adjacent tile
         tile_indices = {}
         for i, tile in enumerate(path.tiles[:-1]):

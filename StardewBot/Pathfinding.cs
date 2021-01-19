@@ -21,12 +21,13 @@ namespace StardewBot.Pathfinder
         public bool Preferable = false;
     }
 
-    public class Point 
+    public class Point
     {
         public int X;
         public int Y;
 
-        public Point(int x, int y) {
+        public Point(int x, int y)
+        {
             this.X = x;
             this.Y = y;
         }
@@ -42,6 +43,7 @@ namespace StardewBot.Pathfinder
             var openList = new List<Location>();
             var closedList = new List<Location>();
             int g = 0;
+            var passableCache = new Dictionary<Tuple<int, int>, bool>();
             var openGates = OpenGates();
 
             // start by adding the original position to the open list  
@@ -66,8 +68,7 @@ namespace StardewBot.Pathfinder
                     //Mod.instance.Monitor.Log("Breaking out of pathfinding, cutoff exceeded");
                     return null;
                 }
-
-                var adjacentSquares = GetWalkableAdjacentSquares(current.X, current.Y, location, openList, openGates);
+                var adjacentSquares = GetWalkableAdjacentSquares(current.X, current.Y, location, openList, openGates, passableCache);
                 g = current.G + 1;
 
                 foreach (var adjacentSquare in adjacentSquares)
@@ -123,7 +124,8 @@ namespace StardewBot.Pathfinder
             return returnPath;
         }
 
-        public static HashSet<Tuple<int, int>> OpenGates() {
+        public static HashSet<Tuple<int, int>> OpenGates()
+        {
             var gates = new HashSet<Tuple<int, int>>();
             var objects = Game1.player.currentLocation.Objects;
             foreach (StardewValley.Object obj in objects.Values)
@@ -138,34 +140,34 @@ namespace StardewBot.Pathfinder
                 }
             }
             return gates;
-        } 
+        }
 
-        static List<Location> GetWalkableAdjacentSquares(int x, int y, GameLocation map, List<Location> openList, HashSet<Tuple<int, int>> openGates)
+        static List<Location> GetWalkableAdjacentSquares(int x, int y, GameLocation map, List<Location> openList, HashSet<Tuple<int, int>> openGates, Dictionary<Tuple<int, int>, bool> passableCache)
         {
             List<Location> list = new List<Location>();
 
-            if (IsPassable(map, x, y - 1, openGates))
+            if (IsPassable(map, x, y - 1, openGates, passableCache))
             {
                 Location node = openList.Find(l => l.X == x && l.Y == y - 1);
                 if (node == null) list.Add(new Location() { Preferable = IsPreferableWalkingSurface(map, x, y), X = x, Y = y - 1 });
                 else list.Add(node);
             }
 
-            if (IsPassable(map, x, y + 1, openGates))
+            if (IsPassable(map, x, y + 1, openGates, passableCache))
             {
                 Location node = openList.Find(l => l.X == x && l.Y == y + 1);
                 if (node == null) list.Add(new Location() { Preferable = IsPreferableWalkingSurface(map, x, y), X = x, Y = y + 1 });
                 else list.Add(node);
             }
 
-            if (IsPassable(map, x - 1, y, openGates))
+            if (IsPassable(map, x - 1, y, openGates, passableCache))
             {
                 Location node = openList.Find(l => l.X == x - 1 && l.Y == y);
                 if (node == null) list.Add(new Location() { Preferable = IsPreferableWalkingSurface(map, x, y), X = x - 1, Y = y });
                 else list.Add(node);
             }
 
-            if (IsPassable(map, x + 1, y, openGates))
+            if (IsPassable(map, x + 1, y, openGates, passableCache))
             {
                 Location node = openList.Find(l => l.X == x + 1 && l.Y == y);
                 if (node == null) list.Add(new Location() { Preferable = IsPreferableWalkingSurface(map, x, y), X = x + 1, Y = y });
@@ -181,7 +183,17 @@ namespace StardewBot.Pathfinder
             return false;
         }
 
-        // This needs work. Feels like there should just be a magical method to call but what?
+        public static bool IsPassable(GameLocation loc, int x, int y, HashSet<Tuple<int, int>> openGates, Dictionary<Tuple<int, int>, bool> passableCache) 
+        {
+            bool passable;
+            var key = new Tuple<int, int>(x, y);
+            if (!passableCache.TryGetValue(key, out passable)) {
+                passable = IsPassable(loc, x, y, openGates);
+                passableCache.Add(key, passable);
+            }
+            return passable;
+        }
+
         public static bool IsPassable(GameLocation loc, int x, int y, HashSet<Tuple<int, int>> openGates)
         {
             foreach (var w in loc.warps)
@@ -189,12 +201,12 @@ namespace StardewBot.Pathfinder
                 if (w.X == x && w.Y == y) return true;
             }
             var tup = new Tuple<int, int>(x, y);
-            if (openGates.Contains(tup)) 
+            if (openGates.Contains(tup))
             {
                 return true;
             }
             var vec = new Vector2(x, y);
-            if (loc.isTileOccupiedIgnoreFloors(vec) || !loc.isTileOnMap(vec)) 
+            if (loc.isTileOccupiedIgnoreFloors(vec) || !loc.isTileOnMap(vec))
             {
                 return false;
             }
@@ -243,7 +255,7 @@ namespace StardewBot.Pathfinder
                     var yy = y;
                     if (xx > r.X && xx < r.X + r.Width && yy > r.Y && yy < r.Y + r.Height) return false;
                 }
-                if (fff.getBuildingAt(vec) != null) 
+                if (fff.getBuildingAt(vec) != null)
                 {
                     return false;
                 }

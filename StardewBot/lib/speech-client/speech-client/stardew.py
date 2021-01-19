@@ -150,14 +150,10 @@ class ChopTreesObjective(Objective):
             player_status = await stream.next()
             start_tile = player_status["tileX"], player_status["tileY"]
             current_tile = start_tile
-            s = time.time()
             trees = await game.get_trees('')
             if not trees:
                 return
-            e = time.time()
-            server.log(e-s)
             target_tree = min(trees, key=lambda t: game.sort_objects_by_distance(start_tile, current_tile, (t['tileX'], t['tileY'])))
-            server.log(target_tree)
             await game.pathfind_to_adjacent(target_tree['tileX'], target_tree['tileY'], stream)
             async with server.on_terrain_feature_list_changed_stream() as terrain_stream:
                 with press_and_release('c'):
