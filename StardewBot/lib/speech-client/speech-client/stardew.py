@@ -202,9 +202,13 @@ async def new_active_objective(new_objective: Objective):
 
 direction_keys = {
     "north": "w",
+    "main": "wd",
     "east": "d",
+    "floor": "ds",
     "south": "s",
+    "air": "as",
     "west": "a",
+    "wash": "aw",
 }
 direction_nums = {
     "north": 0,
@@ -219,6 +223,13 @@ nums_to_keys = {
     3: "a",
 }
 directions = {k: k for k in direction_keys}
+tools = {
+    "axe": "Axe",
+    "hoe": "Hoe",
+    "pickaxe": "Pickaxe",
+    "scythe": "Scythe",
+    "watering can": "Watering Can",
+}
 repeat_mapping = {}
 
 def rule_builder():
@@ -233,6 +244,7 @@ def rule_builder():
                 Choice("direction_keys", direction_keys),
                 Choice("direction_nums", direction_nums),
                 Choice("directions", directions),
+                Choice("tools", tools),
             ],
             defaults={"n": 1},
         )
@@ -258,4 +270,5 @@ non_repeat_mapping = {
     "<n> <directions>": objective_action(MoveNTilesObjective, "directions", "n"),
     "go to mailbox": objective_action(MoveToLocationObjective),
     "start chopping trees": objective_action(ChopTreesObjective),
+    "equip <tools>": server.AsyncFunction(game.equip_item, format_args=lambda **kw: [kw['tools']]),
 }

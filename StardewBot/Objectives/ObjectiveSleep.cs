@@ -31,7 +31,7 @@ namespace StardewBot.Objectives
             //step one: route to the homelocation
             if (Game1.player.homeLocation != Game1.player.currentLocation.NameOrUniqueName)
             {
-                Core.RouteTo(Game1.player.homeLocation, critical: true);
+                Actions.RouteTo(Game1.player.homeLocation, critical: true);
                 return;
             }
 
@@ -46,7 +46,7 @@ namespace StardewBot.Objectives
             var fh = Game1.player.currentLocation as StardewValley.Locations.FarmHouse;
             var bed = fh.getBedSpot();
 
-            Core.RouteTo(Game1.player.currentLocation.NameOrUniqueName, bed.X, bed.Y, true);
+            Actions.RouteTo(Game1.player.currentLocation.NameOrUniqueName, bed.X, bed.Y, true);
         }
 
         public override void CantMoveUpdate()
@@ -55,8 +55,8 @@ namespace StardewBot.Objectives
             if (Game1.dialogueUp)
             {
                 //Mod.instance.Monitor.Log("Bed prompt activated. Choosing yes...", StardewModdingAPI.LogLevel.Info);
-                Core.AnswerGameLocationDialogue(0);
-                Core.IsSleeping = true;
+                Actions.AnswerGameLocationDialogue(0);
+                Actions.IsSleeping = true;
                 IsComplete = true;
             }
         }

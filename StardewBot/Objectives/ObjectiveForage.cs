@@ -45,11 +45,11 @@ namespace StardewBot.Objectives
             //step one: are we on the beach? no? route to the beach.
             if(Game1.player.currentLocation.NameOrUniqueName != targetMap)
             {
-                if (!Core.IsRouting)
+                if (!Actions.IsRouting)
                 {
                     int tx = -3, ty = -3;
                     Utility.getDefaultWarpLocation(targetMap, ref tx, ref ty);
-                    Core.RouteTo(targetMap, tx, ty, true);
+                    Actions.RouteTo(targetMap, tx, ty, true);
                 }
                 return;
             }
@@ -86,7 +86,7 @@ namespace StardewBot.Objectives
                 WasRoutingToForage = true;
 
                 //check hotbar for hoe
-                if(spot.Item3) Core.EquipToolIfOnHotbar("Hoe"); //in case of worms
+                if(spot.Item3) Actions.EquipToolIfOnHotbar("Hoe"); //in case of worms
 
                 int x = spot.Item1;
                 int y = spot.Item2;
@@ -97,16 +97,16 @@ namespace StardewBot.Objectives
                 sides.Add(new Tuple<string, int, int>(targetMap, x + 1, y));
                 sides.Add(new Tuple<string, int, int>(targetMap, x - 1, y));
                 //sides.Shuffle();
-                if (!Core.RouteTo(sides[0].Item1, sides[0].Item2, sides[0].Item3))
+                if (!Actions.RouteTo(sides[0].Item1, sides[0].Item2, sides[0].Item3))
                 {
                     //try to route to the tile above it
-                    if(!Core.RouteTo(sides[1].Item1, sides[1].Item2, sides[1].Item3))
+                    if(!Actions.RouteTo(sides[1].Item1, sides[1].Item2, sides[1].Item3))
                     {
                         //try to route to the tile right of it
-                        if(!Core.RouteTo(sides[2].Item1, sides[2].Item2, sides[2].Item3))
+                        if(!Actions.RouteTo(sides[2].Item1, sides[2].Item2, sides[2].Item3))
                         {
                             //try the tile left of it
-                            if(!Core.RouteTo(sides[3].Item1, sides[3].Item2, sides[3].Item3))
+                            if(!Actions.RouteTo(sides[3].Item1, sides[3].Item2, sides[3].Item3))
                             {
                                 //we can't reach this one. remove it from the list
                                 ForageSpots.RemoveAt(0);
@@ -135,7 +135,7 @@ namespace StardewBot.Objectives
                     int px = Game1.player.getTileX();
                     int py = Game1.player.getTileY();
 
-                    Core.FaceTile(x, y);
+                    Actions.FaceTile(x, y);
 
                     WasRoutingToForage = false;
                     return;
@@ -143,10 +143,10 @@ namespace StardewBot.Objectives
 
                 //pick
                 bool hoeSpot = spot.Item3;
-                Core.FaceTile(spot.Item1, spot.Item2);
+                Actions.FaceTile(spot.Item1, spot.Item2);
                 
-                if (hoeSpot) Core.SwingTool();
-                else Core.DoActionButton();
+                if (hoeSpot) Actions.SwingTool();
+                else Actions.DoActionButton();
                 //Mod.instance.Monitor.Log("Pick!", StardewModdingAPI.LogLevel.Warn);
                 ForageSpots.RemoveAt(0);
                 RoutingComplete = false;

@@ -178,6 +178,13 @@ namespace StardewBot
                         resp = GameState.Debris();
                         break;
                     }
+                case "EQUIP_ITEM":
+                    {
+                        string item = data.item;
+                        resp = Actions.EquipToolIfOnHotbar(item);
+                        break;
+                    }
+
             }
             this.SendResponse(msgId, resp);
         }

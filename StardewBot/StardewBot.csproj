@@ -51,7 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Core.cs" />
+    <Compile Include="Actions.cs" />
     <Compile Include="GameState.cs" />
     <Compile Include="ModEntry.cs" />
     <Compile Include="Objective.cs" />

@@ -120,7 +120,7 @@ namespace StardewBot
             {
                 string task = e.ReadAs<string>();
                 //Mod.instance.Monitor.Log("Another player has taken task: " + task);
-                Core.ObjectivePool.RemoveAll(x => x.UniquePoolId == task);
+                Actions.ObjectivePool.RemoveAll(x => x.UniquePoolId == task);
             }
         }
 

@@ -9,7 +9,7 @@ using System.Reflection;
 
 namespace StardewBot
 {
-    public static class Core
+    public static class Actions
     {
         public static bool WantsToStop = false;
 

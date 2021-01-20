@@ -337,3 +337,6 @@ async def face_direction(direction: int, stream: server.Stream):
     await ensure_not_moving(stream)
     await server.request("FACE_DIRECTION", direction)
     await stream.wait(lambda s: s["facingDirection"] == direction)
+
+async def equip_item(item: str):
+    success = await server.request('EQUIP_ITEM', {"item": item})
