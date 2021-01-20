@@ -165,7 +165,7 @@ class ChopTreesObjective(Objective):
                         async with server.on_terrain_feature_list_changed_stream() as terrain_stream:
                             with press_and_release('c'):
                                 event = await terrain_stream.next()
-                        await game.gather_debris(15)
+                        await game.gather_items_on_ground(15)
                 if not tree_path:
                     return
 

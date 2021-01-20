@@ -130,9 +130,6 @@ def _do_create_task(coro, *args, **kw):
     loop.create_task(coro(*args, **kw))
 
 
-
-
-
 def setup_async_loop():
     global loop
     loop = asyncio.new_event_loop()

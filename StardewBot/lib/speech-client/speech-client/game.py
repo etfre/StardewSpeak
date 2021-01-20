@@ -58,29 +58,32 @@ async def get_trees(location: str):
     trees = await server.request('GET_TREES', {"location": location})
     return trees
 
-async def gather_debris(radius):
+async def gather_items_on_ground(radius):
+    '''
+    Wood, coal, sap, stone etc.
+    '''
     async with server.player_status_stream() as stream:
         player_status = await stream.next()
         location = player_status['location']
         start_tile = player_status["tileX"], player_status["tileY"]
         tile_blacklist = set([start_tile])
         while True:
-            debris_to_gather = collections.defaultdict(int)
+            items_to_gather = collections.defaultdict(int)
             debris = await server.request('GET_DEBRIS', {"location": "location"})
             test_tiles_set = set()
-            for d in debris:
-                within_radius = distance_between_tiles(start_tile, (d['tileX'], d['tileY'])) < radius
+            for item in debris:
+                within_radius = distance_between_tiles(start_tile, (item['tileX'], item['tileY'])) < radius
                 if within_radius:
-                    debris_tile = d['tileX'], d['tileY']
+                    debris_tile = item['tileX'], item['tileY']
                     for tile in adjacent_tiles(debris_tile) + [debris_tile]:
-                        debris_to_gather[tile] += 1
+                        items_to_gather[tile] += 1
                         if tile not in tile_blacklist:
                             test_tiles_set.add(tile)
             if not test_tiles_set:
                 return
             player_status = await stream.next()
             current_tile = player_status["tileX"], player_status["tileY"]
-            test_tiles = sort_test_tiles(test_tiles_set, start_tile, current_tile, debris_to_gather)
+            test_tiles = sort_test_tiles(test_tiles_set, start_tile, current_tile, items_to_gather)
             path, invalid = await pathfind_to_resource(test_tiles, location, stream)
             if path is None:
                 server.log(f'Unable to gather {len(test_tiles)} in radius {radius}')
@@ -90,7 +93,7 @@ async def gather_debris(radius):
             for tile in invalid:
                 tile_blacklist.add(tile)
 
-def sort_test_tiles(tiles, start_tile, current_tile, debris_to_gather):
+def sort_test_tiles(tiles, start_tile, current_tile, items_to_gather):
     sorted_tiles = []
     # get maxes for weighted average
     max_start_distance = -1
@@ -99,12 +102,12 @@ def sort_test_tiles(tiles, start_tile, current_tile, debris_to_gather):
     for tile in tiles:
         max_start_distance = max(max_start_distance, distance_between_tiles(start_tile, tile))
         max_current_distance = max(max_current_distance, distance_between_tiles(current_tile, tile))
-        max_resources_on_tile = max(max_resources_on_tile, debris_to_gather[tile])
+        max_resources_on_tile = max(max_resources_on_tile, items_to_gather[tile])
 
     def score_tile(t):
         start_score = distance_between_tiles(start_tile, t) / max_start_distance
         current_score = distance_between_tiles(current_tile, t) / max_current_distance
-        resources_score = debris_to_gather[t] / max_resources_on_tile
+        resources_score = items_to_gather[t] / max_resources_on_tile
         return 0.05*start_score + 0.25*current_score + 0.7*resources_score
 
     return sorted(tiles, key=score_tile)
@@ -173,15 +176,24 @@ async def pathfind_to_position(
 ):
     if not isinstance(path, Path):
         path = await path_to_position(path[0], path[1], location)
+    target_x, target_y = path.tiles[-1]
     is_done = False
+    remaining_attempts = 5
     while not is_done:
         player_status = await status_stream.next()
         current_location = player_status["location"]
         if current_location != location:
             raise RuntimeError(
                 f"Unexpected location {current_location}, pathfinding for {location}"
-            )   
-        is_done = move_along_path(path, player_status)
+            )
+        try:
+            is_done = move_along_path(path, player_status)
+        except KeyError as e:
+            if remaining_attempts:
+                path = await path_to_position(target_x, target_y, location)
+                remaining_attempts -= 1
+            else:
+                raise e
     stop_moving()
     return path
 
