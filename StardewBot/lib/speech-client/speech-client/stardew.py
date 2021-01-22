@@ -147,6 +147,7 @@ class ChopTreesObjective(Objective):
 
     async def run(self):
         async with server.player_status_stream() as stream:
+            await game.equip_item(constants.WATERING_CAN)
             player_status = await stream.next()
             start_tile = player_status["tileX"], player_status["tileY"]
             while True:
@@ -177,6 +178,7 @@ class WaterCropsObjective(Objective):
         async with server.player_status_stream() as stream:
             player_status = await stream.next()
             start_tile = player_status["tileX"], player_status["tileY"]
+            await game.equip_item(constants.WATERING_CAN)
             while True:
                 hoe_dirt_tiles = await game.get_hoe_dirt('')
                 tiles_to_water = [t for t in hoe_dirt_tiles if t['crop'] and not t['isWatered']]
@@ -259,7 +261,7 @@ tools = {
     "hoe": "Hoe",
     "pickaxe": "Pickaxe",
     "scythe": "Scythe",
-    "watering can": "Watering Can",
+    "watering can": constants.WATERING_CAN,
 }
 repeat_mapping = {}
 
