@@ -181,16 +181,16 @@ class WaterCropsObjective(Objective):
             await game.equip_item(constants.WATERING_CAN)
             while True:
                 hoe_dirt_tiles = await game.get_hoe_dirt('')
-                tiles_to_water = [t for t in hoe_dirt_tiles if t['crop'] and not t['isWatered']]
+                tiles_to_water = [(hdt['tileX'], hdt['tileY']) for hdt in hoe_dirt_tiles if hdt['crop'] and not hdt['isWatered']]
                 if not tiles_to_water:
                     return
                 player_status = await stream.next()
                 current_tile = player_status["tileX"], player_status["tileY"]
                 hoe_dirt_path = None
                 facing_direction = player_status['facingDirection']
-                for hoe_dirt in sorted(tiles_to_water, key=lambda t: game.next_crop_key(start_tile, current_tile, (t['tileX'], t['tileY']), facing_direction)):
+                for tile_x, tile_y in sorted(tiles_to_water, key=lambda t: game.next_crop_key(start_tile, current_tile, t, facing_direction)):
                     try:
-                        hoe_dirt_path = await game.pathfind_to_adjacent(hoe_dirt['tileX'], hoe_dirt['tileY'], stream)
+                        hoe_dirt_path = await game.pathfind_to_adjacent(tile_x, tile_y, stream)
                     except RuntimeError:
                         continue
                     else:
