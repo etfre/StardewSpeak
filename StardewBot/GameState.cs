@@ -128,7 +128,6 @@ namespace StardewBot
             var values = new
             {
                 tilesize = Game1.tileSize
-                //x = Game1.
             };
             return values;
         }

@@ -1,5 +1,6 @@
 import time
 import collections
+import contextlib
 import asyncio
 from srabuilder.actions import directinput
 import server, constants, async_timeout
@@ -324,6 +325,18 @@ def facing_tile_center(player_status):
     return False
 
 
+@contextlib.contextmanager
+def press_and_release(keys):
+    for k in keys:
+        directinput.press(k)
+    try:
+        yield
+    except (BaseException, Exception) as e:
+        raise e
+    finally:
+        for k in reversed(keys):
+            directinput.release(k)
+
 def start_moving(direction: int):
     key_to_press = nums_to_keys[direction]
     to_release = "wasd".replace(key_to_press, "")
@@ -377,3 +390,9 @@ def next_debris_key(start_tile, current_tile, debris_obj, status):
     target_tile = debris_obj['tileX'], debris_obj['tileY']
     score = score_objects_by_distance(start_tile, current_tile, target_tile)
     return score
+
+async def swing_tool():
+    with server.tool_status_stream(ticks=1) as tss:
+        with press_and_release(constants.TOOL_KEY):
+            await tss.wait(lambda t: t['inUse'], timeout=10)
+        await tss.wait(lambda t: not t['inUse'], timeout=10)

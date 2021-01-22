@@ -13,4 +13,6 @@ WEEDS = 'Weeds'
 STONE = 'Stone'
 TWIG = 'Twig'
 
+TOOL_KEY = 'c'
+
 GET_LOCATION_OBJECTS = 'GET_LOCATION_OBJECTS'

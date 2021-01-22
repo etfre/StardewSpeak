@@ -71,7 +71,7 @@ class HoldKeyObjective(Objective):
         self.keys = keys
 
     async def run(self):
-        with press_and_release(self.keys):
+        with game.press_and_release(self.keys):
             # infinite loop to indicate that the objective isn't done until task is canceled
             await server.sleep_forever()
 
@@ -147,7 +147,7 @@ class ChopTreesObjective(Objective):
 
     async def run(self):
         async with server.player_status_stream() as stream:
-            await game.equip_item(constants.WATERING_CAN)
+            await game.equip_item(constants.AXE)
             player_status = await stream.next()
             start_tile = player_status["tileX"], player_status["tileY"]
             while True:
@@ -164,7 +164,7 @@ class ChopTreesObjective(Objective):
                         continue
                     else:
                         async with server.on_terrain_feature_list_changed_stream() as terrain_stream:
-                            with press_and_release('c'):
+                            with game.press_and_release(constants.TOOL_KEY):
                                 event = await terrain_stream.next()
                         await game.gather_items_on_ground(15)
                 if not tree_path:
@@ -194,10 +194,7 @@ class WaterCropsObjective(Objective):
                     except RuntimeError:
                         continue
                     else:
-                        with server.tool_status_stream(ticks=1) as tss:
-                            with press_and_release('c'):
-                                await tss.wait(lambda t: t['inUse'], timeout=1)
-                            await tss.wait(lambda t: not t['inUse'], timeout=1)
+                        await game.swing_tool()
                         break
                 if not hoe_dirt_path:
                     return
@@ -230,25 +227,10 @@ class ClearDebrisObjective(Objective):
                     else:
                         needed_tool = game.tool_for_object[obj['name']]
                         await game.equip_item(needed_tool)
-                        with server.tool_status_stream(ticks=1) as tss:
-                            with press_and_release('c'):
-                                await tss.wait(lambda t: t['inUse'], timeout=1)
-                            await tss.wait(lambda t: not t['inUse'], timeout=1)
+                        await game.swing_tool()
                         break
                 if not path_moved_to_target:
                     return
-
-@contextlib.contextmanager
-def press_and_release(keys):
-    for k in keys:
-        directinput.press(k)
-    try:
-        yield
-    except (BaseException, Exception) as e:
-        raise e
-    finally:
-        for k in reversed(keys):
-            directinput.release(k)
 
 async def cancel_active_objective():
     global active_objective
