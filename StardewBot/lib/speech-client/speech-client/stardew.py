@@ -202,6 +202,42 @@ class WaterCropsObjective(Objective):
                 if not hoe_dirt_path:
                     return
 
+class ClearDebrisObjective(Objective):
+
+    def __init__(self):
+        pass
+
+    async def run(self):
+        async with server.player_status_stream() as stream:
+            player_status = await stream.next()
+            start_tile = player_status["tileX"], player_status["tileY"]
+            await game.equip_item(constants.WATERING_CAN)
+            while True:
+                objs = await game.get_location_objects('')
+                if not objs:
+                    return
+                player_status = await stream.next()
+                current_tile = player_status["tileX"], player_status["tileY"]
+                path_moved_to_target = None
+                facing_direction = player_status['facingDirection']
+                for obj in sorted(objs, key=lambda o: game.next_debris_key(start_tile, current_tile, o, facing_direction)):
+                    server.log(obj)
+                    
+                    try:
+                        path_moved_to_target = await game.pathfind_to_adjacent(obj['tileX'], obj['tileY'], stream)
+                    except RuntimeError:
+                        continue
+                    else:
+                        needed_tool = game.tool_for_object[obj['name']]
+                        await game.equip_item(needed_tool)
+                        with server.tool_status_stream(ticks=1) as tss:
+                            with press_and_release('c'):
+                                await tss.wait(lambda t: t['inUse'], timeout=1)
+                            await tss.wait(lambda t: not t['inUse'], timeout=1)
+                        break
+                if not path_moved_to_target:
+                    return
+
 @contextlib.contextmanager
 def press_and_release(keys):
     for k in keys:
@@ -257,10 +293,10 @@ nums_to_keys = {
 }
 directions = {k: k for k in direction_keys}
 tools = {
-    "axe": "Axe",
-    "hoe": "Hoe",
-    "pickaxe": "Pickaxe",
-    "scythe": "Scythe",
+    "axe": constants.AXE,
+    "hoe": constants.HOE,
+    "pickaxe": constants.PICKAXE,
+    "scythe": constants.SCYTHE,
     "watering can": constants.WATERING_CAN,
 }
 repeat_mapping = {}
@@ -304,5 +340,6 @@ non_repeat_mapping = {
     "go to mailbox": objective_action(MoveToLocationObjective),
     "start chopping trees": objective_action(ChopTreesObjective),
     "water crops": objective_action(WaterCropsObjective),
+    "clear debris": objective_action(ClearDebrisObjective),
     "equip <tools>": server.AsyncFunction(game.equip_item, format_args=lambda **kw: [kw['tools']]),
 }

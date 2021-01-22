@@ -183,7 +183,12 @@ namespace StardewBot
                     }
                 case "GET_HOE_DIRT":
                     {
-                        resp = GameState.HoeDirtTiles();
+                        resp = GameState.HoeDirtTiles();    
+                        break;
+                    }
+                case "GET_LOCATION_OBJECTS":
+                    {
+                        resp = GameState.LocationObjects();
                         break;
                     }
                 case "EQUIP_ITEM":

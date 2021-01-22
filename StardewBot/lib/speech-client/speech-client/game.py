@@ -24,6 +24,13 @@ nums_to_keys = {
     2: "s",
     3: "a",
 }
+
+tool_for_object = {
+    constants.STONE: constants.PICKAXE,
+    constants.TWIG: constants.AXE,
+    constants.WEEDS: constants.SCYTHE,
+}
+
 directions = {k: k for k in direction_keys}
 
 class Route:
@@ -61,6 +68,10 @@ async def get_trees(location: str):
 
 async def get_hoe_dirt(location: str):
     hoe_dirt = await server.request('GET_HOE_DIRT', {"location": location})
+    return hoe_dirt or []
+
+async def get_location_objects(location: str):
+    hoe_dirt = await server.request(constants.GET_LOCATION_OBJECTS, {"location": location})
     return hoe_dirt or []
 
 async def gather_items_on_ground(radius):
@@ -360,4 +371,9 @@ def next_crop_key(start_tile, current_tile, target_tile, facing_direction):
     score = score_objects_by_distance(start_tile, current_tile, target_tile)
     if direction_from_tiles(current_tile, target_tile) == facing_direction:
         score -= 0.1
+    return score
+
+def next_debris_key(start_tile, current_tile, debris_obj, status):
+    target_tile = debris_obj['tileX'], debris_obj['tileY']
+    score = score_objects_by_distance(start_tile, current_tile, target_tile)
     return score

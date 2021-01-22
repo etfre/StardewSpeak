@@ -117,7 +117,7 @@ namespace StardewBot
             {
                 var tileX = (int)o.TileLocation.X;
                 var tileY = (int)o.TileLocation.Y;
-                var formattedObj = new {name = o.Name, tileX, tileY};
+                var formattedObj = new {name = o.Name, tileX, tileY, type = o.Type};
                 objs.Add(formattedObj);
             }
             return objs;
