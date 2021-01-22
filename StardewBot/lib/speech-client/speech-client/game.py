@@ -46,7 +46,7 @@ def distance_between_tiles(t1, t2):
     return abs(t1[0] - t2[0]) + abs(t1[1] - t2[1]) 
 
 
-def sort_objects_by_distance(start_tile, current_tile, obj_tile, start_weight=0.25, current_weight=0.75):
+def score_objects_by_distance(start_tile, current_tile, obj_tile, start_weight=0.25, current_weight=0.75):
     assert start_weight + current_weight == 1
     distance_from_start = distance_between_tiles(start_tile, obj_tile)
     distance_from_current = distance_between_tiles(current_tile, obj_tile)
@@ -144,10 +144,7 @@ async def path_to_warp(location: str):
 
 
 async def path_to_position(x, y, location):
-    s = time.time()
     path = await server.request("PATH_TO_POSITION", {"x": x, "y": y, "location": location})
-    e = time.time()
-    server.log('pathfind ' + str(e-s))
     if path is None:
         raise RuntimeError(f"Cannot pathfind to {x}, {y} at location {location}")
     return Path(path)
@@ -180,6 +177,7 @@ async def pathfind_to_position(
 ):
     if not isinstance(path, Path):
         path = await path_to_position(path[0], path[1], location)
+
     target_x, target_y = path.tiles[-1]
     is_done = False
     remaining_attempts = 5
@@ -245,8 +243,10 @@ async def pathfind_to_adjacent(x, y, status_stream: server.Stream):
     if shortest_path is None:
         raise RuntimeError(f"No path found adjacent to {x}, {y}")
     await pathfind_to_position(shortest_path, location, status_stream)
+    server.log('finished pathfind')
     direction_to_face = direction_from_tiles(shortest_path.tiles[-1], (x, y))
     await face_direction(direction_to_face, status_stream)
+    server.log('finished face direction')
     return shortest_path
     
 
@@ -274,16 +274,16 @@ def move_along_path(path, player_status):
 
 
 def direction_from_tiles(tile, target_tile):
-    if tile[1] - 1 == target_tile[1]:
+    x, y = tile
+    target_x, target_y, = target_tile
+    if x == target_x and y > target_y:
         return constants.NORTH
-    elif tile[0] + 1 == target_tile[0]:
+    elif x < target_x and y == target_y:
         return constants.EAST
-    elif tile[1] + 1 == target_tile[1]:
+    elif x == target_x and y < target_y:
         return constants.SOUTH
-    elif tile[0] - 1 == target_tile[0]:
+    elif x > target_x and y -- target_y:
         return constants.WEST
-    else:
-        raise RuntimeError(f"Points are incorrect: {tile}, {target_tile}")
 
 
 def facing_tile_center(player_status):
@@ -344,13 +344,20 @@ def stop_moving():
 
 async def ensure_not_moving(stream: server.Stream):
     stop_moving()
-    await stream.wait(lambda status: not status["isMoving"])
+    await stream.wait(lambda status: not status["isMoving"], timeout=2)
+    await stream.next()
 
 
 async def face_direction(direction: int, stream: server.Stream):
     await ensure_not_moving(stream)
     await server.request("FACE_DIRECTION", direction)
-    await stream.wait(lambda s: s["facingDirection"] == direction)
+    await stream.wait(lambda s: s["facingDirection"] == direction, timeout=1)
 
 async def equip_item(item: str):
     success = await server.request('EQUIP_ITEM', {"item": item})
+
+def next_crop_key(start_tile, current_tile, target_tile, facing_direction):
+    score = score_objects_by_distance(start_tile, current_tile, target_tile)
+    if direction_from_tiles(current_tile, target_tile) == facing_direction:
+        score -= 0.1
+    return score

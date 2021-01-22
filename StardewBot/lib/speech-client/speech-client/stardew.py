@@ -156,7 +156,7 @@ class ChopTreesObjective(Objective):
                 if not trees:
                     return
                 tree_path = None
-                for tree in sorted(trees, key=lambda t: game.sort_objects_by_distance(start_tile, current_tile, (t['tileX'], t['tileY']))):
+                for tree in sorted(trees, key=lambda t: game.score_objects_by_distance(start_tile, current_tile, (t['tileX'], t['tileY']))):
                     try:
                         tree_path = await game.pathfind_to_adjacent(tree['tileX'], tree['tileY'], stream)
                     except RuntimeError:
@@ -178,29 +178,24 @@ class WaterCropsObjective(Objective):
             player_status = await stream.next()
             start_tile = player_status["tileX"], player_status["tileY"]
             while True:
-                player_status = await stream.next()
-                current_tile = player_status["tileX"], player_status["tileY"]
                 hoe_dirt_tiles = await game.get_hoe_dirt('')
                 tiles_to_water = [t for t in hoe_dirt_tiles if t['crop'] and not t['isWatered']]
                 if not tiles_to_water:
                     return
+                player_status = await stream.next()
+                current_tile = player_status["tileX"], player_status["tileY"]
                 hoe_dirt_path = None
-                for hoe_dirt in sorted(tiles_to_water, key=lambda t: game.sort_objects_by_distance(start_tile, current_tile, (t['tileX'], t['tileY']))):
+                facing_direction = player_status['facingDirection']
+                for hoe_dirt in sorted(tiles_to_water, key=lambda t: game.next_crop_key(start_tile, current_tile, (t['tileX'], t['tileY']), facing_direction)):
                     try:
                         hoe_dirt_path = await game.pathfind_to_adjacent(hoe_dirt['tileX'], hoe_dirt['tileY'], stream)
                     except RuntimeError:
                         continue
                     else:
                         with server.tool_status_stream(ticks=1) as tss:
-                            server.log('about to swing tool')
                             with press_and_release('c'):
-                                server.log('swinging tool')
                                 await tss.wait(lambda t: t['inUse'], timeout=1)
-                                # await tss.next()
-                                # await tss.next()
-                                # await tss.wait(lambda t: t['power'] > 0)
                             await tss.wait(lambda t: not t['inUse'], timeout=1)
-                            server.log('done swinging tool')
                         break
                 if not hoe_dirt_path:
                     return

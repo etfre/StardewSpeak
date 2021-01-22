@@ -207,6 +207,7 @@ namespace StardewBot
             var respData = new ResponseData(id, value);
             this.SendMessage("RESPONSE", respData);
         }
+
         public void SendMessage(string msgType, object data = null)     
         {
             var message = new MessageToEngine(msgType, data);
