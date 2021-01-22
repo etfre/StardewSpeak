@@ -2,7 +2,7 @@ import time
 import collections
 import asyncio
 from srabuilder.actions import directinput
-import server, constants
+import server, constants, async_timeout
 
 
 
@@ -57,6 +57,11 @@ def sort_objects_by_distance(start_tile, current_tile, obj_tile, start_weight=0.
 async def get_trees(location: str):
     trees = await server.request('GET_TREES', {"location": location})
     return trees
+
+
+async def get_hoe_dirt(location: str):
+    hoe_dirt = await server.request('GET_HOE_DIRT', {"location": location})
+    return hoe_dirt or []
 
 async def gather_items_on_ground(radius):
     '''
@@ -117,7 +122,6 @@ async def pathfind_to_resource(tiles, location, stream):
     invalid = []
     for tile in tiles:
         try:
-            server.log(tile)
             path = await pathfind_to_position(tile, location, stream)
         except RuntimeError as e:
             invalid.append(tile)
@@ -179,21 +183,23 @@ async def pathfind_to_position(
     target_x, target_y = path.tiles[-1]
     is_done = False
     remaining_attempts = 5
-    while not is_done:
-        player_status = await status_stream.next()
-        current_location = player_status["location"]
-        if current_location != location:
-            raise RuntimeError(
-                f"Unexpected location {current_location}, pathfinding for {location}"
-            )
-        try:
-            is_done = move_along_path(path, player_status)
-        except KeyError as e:
-            if remaining_attempts:
-                path = await path_to_position(target_x, target_y, location)
-                remaining_attempts -= 1
-            else:
-                raise e
+    timeout = len(path.tiles * 3)
+    async with async_timeout.timeout(timeout):
+        while not is_done:
+            player_status = await status_stream.next()
+            current_location = player_status["location"]
+            if current_location != location:
+                raise RuntimeError(
+                    f"Unexpected location {current_location}, pathfinding for {location}"
+                )
+            try:
+                is_done = move_along_path(path, player_status)
+            except KeyError as e:
+                if remaining_attempts:
+                    path = await path_to_position(target_x, target_y, location)
+                    remaining_attempts -= 1
+                else:
+                    raise e
     stop_moving()
     return path
 
@@ -215,13 +221,9 @@ async def pathfind_to_adjacent(x, y, status_stream: server.Stream):
             continue
         tested_tiles.add(adjacent_tile)
         try:
-            s = time.time()
             path = await path_to_position(adjacent_tile[0], adjacent_tile[1], location)
         except RuntimeError:
             continue
-        finally:
-            e = time.time()
-            server.log(e-s)
         # shortcut if path goes through another adjacent tile
         tile_indices = {}
         for i, tile in enumerate(path.tiles[:-1]):

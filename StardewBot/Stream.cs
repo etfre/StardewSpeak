@@ -29,7 +29,8 @@ namespace StardewBot
             {
                 case "PLAYER_STATUS":
                     return GameState.PlayerStatus();
-
+                case "TOOL_STATUS":
+                    return GameState.ToolStatus();
             }
             return null;
         }

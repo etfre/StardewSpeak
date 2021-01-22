@@ -110,9 +110,8 @@ namespace StardewBot
             string pressed = e.Button.ToString();
             //this.Monitor.Log($"{Game1.player.Name} presseddd {e.Button}.", LogLevel.Debug);
             //this.Monitor.Log(e.Button.ToString(), LogLevel.Debug);
-            if (pressed == "M") {
+            if (pressed == "R") {
                 var menu = Game1.activeClickableMenu;
-                var pa = Game1.player.CurrentTool as Pickaxe;
             }
             if (pressed == "P")
             {
@@ -147,7 +146,8 @@ namespace StardewBot
             }
             else if (pressed == "L")
             {
-                var location = Game1.player.currentLocation;
+                var player = Game1.player;
+                var location = player.currentLocation;
                 var mouseX = Game1.getMouseX();
                 var mouseY = Game1.getMouseY();
                 var point = Game1.currentCursorTile;
@@ -163,10 +163,11 @@ namespace StardewBot
                 Log($"isPassable: {isPassable}");
                 Log($"isOccupied: {isOccupied}\n");
                 var rec = new xTile.Dimensions.Location(tileX, tileY);
-                var pl = Game1.player;
                 WriteJson("debris.json", location.debris.ToList());
                 WriteJson("objects.json", location.Objects.Values.ToList());
                 WriteJson("resourceClumps.json", location.resourceClumps.ToList());
+                WriteJson("currentTool.json", player.CurrentTool);
+                Log(player.toolPower.ToString());
             }
         }
         private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)

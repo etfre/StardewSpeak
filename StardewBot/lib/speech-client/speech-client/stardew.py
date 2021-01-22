@@ -1,4 +1,5 @@
 import time
+import async_timeout
 import contextlib
 import traceback
 import weakref
@@ -105,7 +106,6 @@ class MoveNTilesObjective(Objective):
             else:
                 raise ValueError(f"Unexpected direction {self.direction}")
             path = await game.path_to_position(to_x, to_y, status['location'])
-            server.log(path.tiles)
             await game.pathfind_to_position(path, status['location'], stream)
 
     async def cleanup(self, exception):
@@ -167,6 +167,42 @@ class ChopTreesObjective(Objective):
                                 event = await terrain_stream.next()
                         await game.gather_items_on_ground(15)
                 if not tree_path:
+                    return
+class WaterCropsObjective(Objective):
+
+    def __init__(self):
+        pass
+
+    async def run(self):
+        async with server.player_status_stream() as stream:
+            player_status = await stream.next()
+            start_tile = player_status["tileX"], player_status["tileY"]
+            while True:
+                player_status = await stream.next()
+                current_tile = player_status["tileX"], player_status["tileY"]
+                hoe_dirt_tiles = await game.get_hoe_dirt('')
+                tiles_to_water = [t for t in hoe_dirt_tiles if t['crop'] and not t['isWatered']]
+                if not tiles_to_water:
+                    return
+                hoe_dirt_path = None
+                for hoe_dirt in sorted(tiles_to_water, key=lambda t: game.sort_objects_by_distance(start_tile, current_tile, (t['tileX'], t['tileY']))):
+                    try:
+                        hoe_dirt_path = await game.pathfind_to_adjacent(hoe_dirt['tileX'], hoe_dirt['tileY'], stream)
+                    except RuntimeError:
+                        continue
+                    else:
+                        with server.tool_status_stream(ticks=1) as tss:
+                            server.log('about to swing tool')
+                            with press_and_release('c'):
+                                server.log('swinging tool')
+                                await tss.wait(lambda t: t['inUse'], timeout=1)
+                                # await tss.next()
+                                # await tss.next()
+                                # await tss.wait(lambda t: t['power'] > 0)
+                            await tss.wait(lambda t: not t['inUse'], timeout=1)
+                            server.log('done swinging tool')
+                        break
+                if not hoe_dirt_path:
                     return
 
 @contextlib.contextmanager
@@ -270,5 +306,6 @@ non_repeat_mapping = {
     "<n> <directions>": objective_action(MoveNTilesObjective, "directions", "n"),
     "go to mailbox": objective_action(MoveToLocationObjective),
     "start chopping trees": objective_action(ChopTreesObjective),
+    "water crops": objective_action(WaterCropsObjective),
     "equip <tools>": server.AsyncFunction(game.equip_item, format_args=lambda **kw: [kw['tools']]),
 }

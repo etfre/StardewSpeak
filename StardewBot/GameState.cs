@@ -33,6 +33,20 @@ namespace StardewBot
             return status;
         }
 
+        public static object ToolStatus()
+        {
+            var player = Game1.player;
+            var tool = player.CurrentTool;
+            var status = new
+            {
+                upgradeLevel = tool.UpgradeLevel,
+                power = player.toolPower,
+                baseName = tool.BaseName,
+                inUse = player.UsingTool,
+            };
+            return status;
+        }
+
         public static object Trees() 
         {
             var features = new List<dynamic>();
@@ -47,6 +61,29 @@ namespace StardewBot
                 else 
                 {
                 
+                }
+            }
+            return features;
+        }
+
+        public static object HoeDirtTiles()
+        {
+            var features = new List<dynamic>();
+            foreach (var tf in Game1.currentLocation.terrainFeatures.Values)
+            {
+                if (tf is HoeDirt)
+                {
+                    var dirtTile = tf as HoeDirt;
+                    var crop = dirtTile.crop == null ? null : new { dead = dirtTile.crop.dead.Value, fullyGrown = dirtTile.crop.fullyGrown.Value };
+                    var tileLocation = dirtTile.currentTileLocation;
+                    var readyForHarvest = dirtTile.readyForHarvest();
+                    var isWatered = dirtTile.state.Value == 1;
+                    var needsWatering = dirtTile.needsWatering();
+                    features.Add(new { type = "hoeDirt", readyForHarvest, isWatered, needsWatering, tileX = (int)tileLocation.X, tileY = (int)tileLocation.Y, crop });
+                }
+                else
+                {
+
                 }
             }
             return features;
@@ -71,6 +108,19 @@ namespace StardewBot
                 }
             }
             return debris;
+        }
+
+        public static dynamic LocationObjects() 
+        {
+            var objs = new List<dynamic>();
+            foreach (var o in Game1.currentLocation.Objects.Values) 
+            {
+                var tileX = (int)o.TileLocation.X;
+                var tileY = (int)o.TileLocation.Y;
+                var formattedObj = new {name = o.Name, tileX, tileY};
+                objs.Add(formattedObj);
+            }
+            return objs;
         }
 
         public static object GameValues() 

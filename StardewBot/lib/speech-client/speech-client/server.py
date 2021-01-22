@@ -1,4 +1,5 @@
 import time
+import async_timeout
 import traceback
 import weakref
 import functools
@@ -67,6 +68,12 @@ class Stream:
     async def __aexit__(self, exc_type, exc, tb):
         self.close()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self.close()
+
     async def next(self):
         if self.closed:
             log("Stream is already closed")
@@ -80,16 +87,19 @@ class Stream:
         return self.latest_value
 
 
-    async def wait(self, condition):
-        item = await self.current()
-        while not condition(item):
-            item = await self.next()
-        return item
+    async def wait(self, condition, timeout=None):
+        async with async_timeout.timeout(timeout):
+            item = await self.current()
+            while not condition(item):
+                item = await self.next()
+            return item
 
 
 def player_status_stream(ticks=1):
     return Stream("UPDATE_TICKED", data={"state": "PLAYER_STATUS", "ticks": ticks})
 
+def tool_status_stream(ticks=1):
+    return Stream("UPDATE_TICKED", data={"state": "TOOL_STATUS", "ticks": ticks})
 
 def on_warped_stream(ticks=1):
     return Stream("ON_WARPED", data={"state": "PLAYER_STATUS", "ticks": ticks})

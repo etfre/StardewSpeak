@@ -17,9 +17,12 @@ namespace StardewBot
     public class SpeechEngine
     {
         Process Proc;
+        private readonly object StandardInLock;
+
         public SpeechEngine()
         {
             ModEntry.Log("engine");
+            this.StandardInLock = new object();
         }
 
         public void LaunchProcess()
@@ -178,6 +181,11 @@ namespace StardewBot
                         resp = GameState.Debris();
                         break;
                     }
+                case "GET_HOE_DIRT":
+                    {
+                        resp = GameState.HoeDirtTiles();
+                        break;
+                    }
                 case "EQUIP_ITEM":
                     {
                         string item = data.item;
@@ -203,7 +211,10 @@ namespace StardewBot
         {
             var message = new MessageToEngine(msgType, data);
             string msgStr = JsonConvert.SerializeObject(message);
-            this.Proc.StandardInput.WriteLine(msgStr);
+            lock (this.StandardInLock) 
+            {
+                this.Proc.StandardInput.WriteLine(msgStr);
+            }
         }
 
         public void SendEvent(string eventType, object data = null) {
