@@ -390,6 +390,7 @@ async def face_direction(direction: int, stream: server.Stream):
 
 async def equip_item(item: str):
     success = await server.request('EQUIP_ITEM', {"item": item})
+    return success
 
 def next_crop_key(start_tile, current_tile, target_tile, facing_direction):
     score = score_objects_by_distance(start_tile, current_tile, target_tile)
@@ -411,3 +412,19 @@ async def swing_tool():
 def is_debris(obj):
     return obj.get('name') in DEBRIS
 
+def next_tile(current_tile, direction: int):
+    x, y = current_tile
+    if direction == constants.NORTH:
+        return x, y - 1
+    if direction == constants.EAST:
+        return x + 1, y
+    if direction == constants.SOUTH:
+        return x, y + 1
+    if direction == constants.WEST:
+        return x - 1, y
+
+async def chop_tree_and_gather_resources():
+    async with server.on_terrain_feature_list_changed_stream() as terrain_stream:
+        with press_and_release(constants.TOOL_KEY):
+            event = await terrain_stream.next()
+    await gather_items_on_ground(15)

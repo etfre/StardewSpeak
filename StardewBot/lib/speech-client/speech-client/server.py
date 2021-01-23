@@ -238,9 +238,9 @@ def handle_event(event_type, data):
         game_state.last_warp = data
 
 
-def log(msg):
-    to_send = msg if isinstance(msg, str) else json.dumps(msg)
-    return send_message("LOG", to_send)
+def log(*a, sep=' '):
+    to_send = [x if isinstance(x, str) else json.dumps(x) for x in a]
+    return send_message("LOG", sep.join(to_send))
 
 async def sleep_forever():
     while True:

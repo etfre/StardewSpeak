@@ -49,6 +49,14 @@ tools = {
 }
 repeat_mapping = {}
 
+
+
+numrep2 = Sequence(
+    [Choice(None, rules.nonZeroDigitMap), Repetition(Choice(None, rules.digitMap), min=0, max=10)],
+    name="n2",
+)
+num2 = Modifier(numrep2, rules.parse_numrep)
+
 def rule_builder():
     server.setup_async_loop()
     builder = rules.RuleBuilder()
@@ -58,6 +66,7 @@ def rule_builder():
             name="stardew_non_repeat",
             extras=[
                 rules.num,
+                num2,
                 Choice("direction_keys", direction_keys),
                 Choice("direction_nums", direction_nums),
                 Choice("directions", directions),
@@ -89,5 +98,6 @@ non_repeat_mapping = {
     "start chopping trees": objective_action(objective.ChopTreesObjective),
     "water crops": objective_action(objective.WaterCropsObjective),
     "clear debris": objective_action(objective.ClearDebrisObjective),
+    "hoe <n> by <n2>": objective_action(objective.HoePlotObjective, "n", "n2"),
     "equip <tools>": server.AsyncFunction(game.equip_item, format_args=lambda **kw: [kw['tools']]),
 }

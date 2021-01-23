@@ -146,8 +146,8 @@ class ChopTreesObjective(Objective):
         pass
 
     async def run(self):
+        await game.equip_item(constants.AXE)
         async with server.player_status_stream() as stream:
-            await game.equip_item(constants.AXE)
             player_status = await stream.next()
             start_tile = player_status["tileX"], player_status["tileY"]
             while True:
@@ -163,10 +163,7 @@ class ChopTreesObjective(Objective):
                     except RuntimeError:
                         continue
                     else:
-                        async with server.on_terrain_feature_list_changed_stream() as terrain_stream:
-                            with game.press_and_release(constants.TOOL_KEY):
-                                event = await terrain_stream.next()
-                        await game.gather_items_on_ground(15)
+                        await game.chop_tree_and_gather_resources()
                 if not tree_path:
                     return
 class WaterCropsObjective(Objective):
@@ -175,10 +172,10 @@ class WaterCropsObjective(Objective):
         pass
 
     async def run(self):
+        await game.equip_item(constants.WATERING_CAN)
         async with server.player_status_stream() as stream:
             player_status = await stream.next()
             start_tile = player_status["tileX"], player_status["tileY"]
-            await game.equip_item(constants.WATERING_CAN)
             while True:
                 hoe_dirt_tiles = await game.get_hoe_dirt('')
                 tiles_to_water = [(hdt['tileX'], hdt['tileY']) for hdt in hoe_dirt_tiles if hdt['crop'] and not hdt['isWatered']]
@@ -208,7 +205,6 @@ class ClearDebrisObjective(Objective):
         async with server.player_status_stream() as stream:
             player_status = await stream.next()
             start_tile = player_status["tileX"], player_status["tileY"]
-            await game.equip_item(constants.WATERING_CAN)
             while True:
                 objs = await game.get_location_objects('')
                 debris = [o for o in objs if game.is_debris(o)]
@@ -220,7 +216,6 @@ class ClearDebrisObjective(Objective):
                 facing_direction = player_status['facingDirection']
                 for obj in sorted(debris, key=lambda o: game.next_debris_key(start_tile, current_tile, o, facing_direction)):
                     server.log(obj)
-                    
                     try:
                         path_moved_to_target = await game.pathfind_to_adjacent(obj['tileX'], obj['tileY'], stream)
                     except RuntimeError:
@@ -232,6 +227,52 @@ class ClearDebrisObjective(Objective):
                         break
                 if not path_moved_to_target:
                     return
+class HoePlotObjective(Objective):
+
+    def __init__(self, n1, n2):
+        self.n1 = n1
+        self.n2 = n2
+        server.log(n1, n2)
+
+    async def run(self):
+        async with server.player_status_stream() as stream:
+            await game.equip_item(constants.HOE)
+            player_status = await stream.next()
+            player_tile = player_status["tileX"], player_status["tileY"]
+            facing_direction = player_status['facingDirection']
+            start_tile = game.next_tile(player_tile, facing_direction)
+            plot_tiles = set()
+            x_increment = -1 if game.last_faced_east_west == constants.WEST else 1
+            y_increment = -1 if game.last_faced_north_south == constants.NORTH else 1
+            for i in range(self.n1):
+                x = start_tile[0] + i * x_increment
+                for j in range(self.n2):
+                    y = start_tile[1] + j * y_increment
+                    plot_tiles.add((x, y))
+            server.log(list(plot_tiles))
+            # while True:
+            #     objs = await game.get_location_objects('')
+            #     debris = [o for o in objs if game.is_debris(o)]
+            #     if not debris:
+            #         return
+            #     player_status = await stream.next()
+            #     current_tile = player_status["tileX"], player_status["tileY"]
+            #     path_moved_to_target = None
+            #     facing_direction = player_status['facingDirection']
+            #     for obj in sorted(debris, key=lambda o: game.next_debris_key(start_tile, current_tile, o, facing_direction)):
+            #         server.log(obj)
+                    
+            #         try:
+            #             path_moved_to_target = await game.pathfind_to_adjacent(obj['tileX'], obj['tileY'], stream)
+            #         except RuntimeError:
+            #             continue
+            #         else:
+            #             needed_tool = game.tool_for_object[obj['name']]
+            #             await game.equip_item(needed_tool)
+            #             await game.swing_tool()
+            #             break
+            #     if not path_moved_to_target:
+            #         return
 
 async def cancel_active_objective():
     global active_objective
