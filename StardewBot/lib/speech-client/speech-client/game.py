@@ -5,7 +5,8 @@ import asyncio
 from srabuilder.actions import directinput
 import server, constants, async_timeout
 
-
+last_faced_east_west = constants.WEST
+last_faced_north_south = constants.SOUTH
 
 direction_keys = {
     "north": "w",
@@ -33,6 +34,8 @@ tool_for_object = {
 }
 
 directions = {k: k for k in direction_keys}
+
+DEBRIS = [constants.WEEDS, constants.TWIG, constants.STONE]
 
 class Route:
     def __init__(self, mod_paths):
@@ -345,8 +348,15 @@ def start_moving(direction: int):
             directinput.release(key)
     if key_to_press not in directinput.HELD:
         directinput.press(key_to_press)
+    set_last_faced_direction(direction)
 
-
+def set_last_faced_direction(direction: int):
+    global last_faced_east_west
+    global last_faced_north_south
+    if direction in (constants.NORTH, constants.SOUTH):
+        last_faced_north_south = direction
+    else:
+        last_faced_east_west = direction
 
 async def ensure_moving(direction: int, stream: server.Stream):
     player_status = await stream.current()
@@ -375,6 +385,7 @@ async def ensure_not_moving(stream: server.Stream):
 async def face_direction(direction: int, stream: server.Stream):
     await ensure_not_moving(stream)
     await server.request("FACE_DIRECTION", direction)
+    set_last_faced_direction(direction)
     await stream.wait(lambda s: s["facingDirection"] == direction, timeout=1)
 
 async def equip_item(item: str):
@@ -396,3 +407,7 @@ async def swing_tool():
         with press_and_release(constants.TOOL_KEY):
             await tss.wait(lambda t: t['inUse'], timeout=10)
         await tss.wait(lambda t: not t['inUse'], timeout=10)
+
+def is_debris(obj):
+    return obj.get('name') in DEBRIS
+
