@@ -202,23 +202,27 @@ async def pathfind_to_position(
     is_done = False
     remaining_attempts = 5
     timeout = len(path.tiles * 3)
-    async with async_timeout.timeout(timeout):
-        while not is_done:
-            player_status = await status_stream.next()
-            current_location = player_status["location"]
-            if current_location != location:
-                raise RuntimeError(
-                    f"Unexpected location {current_location}, pathfinding for {location}"
-                )
-            try:
-                is_done = move_along_path(path, player_status)
-            except KeyError as e:
-                if remaining_attempts:
-                    path = await path_to_position(target_x, target_y, location)
-                    remaining_attempts -= 1
-                else:
-                    raise e
-    stop_moving()
+    try:
+        async with async_timeout.timeout(timeout):
+            while not is_done:
+                player_status = await status_stream.next()
+                current_location = player_status["location"]
+                if current_location != location:
+                    raise RuntimeError(
+                        f"Unexpected location {current_location}, pathfinding for {location}"
+                    )
+                try:
+                    is_done = move_along_path(path, player_status)
+                except KeyError as e:
+                    if remaining_attempts:
+                        path = await path_to_position(target_x, target_y, location)
+                        remaining_attempts -= 1
+                    else:
+                        raise e
+    except (Exception, BaseException) as e:
+        raise e
+    finally:
+        stop_moving()
     return path
 
 def adjacent_tiles(tile):
@@ -263,10 +267,8 @@ async def pathfind_to_adjacent(x, y, status_stream: server.Stream):
     if shortest_path is None:
         raise RuntimeError(f"No path found adjacent to {x}, {y}")
     await pathfind_to_position(shortest_path, location, status_stream)
-    server.log('finished pathfind')
     direction_to_face = direction_from_tiles(shortest_path.tiles[-1], (x, y))
     await face_direction(direction_to_face, status_stream)
-    server.log('finished face direction')
     return shortest_path
     
 
