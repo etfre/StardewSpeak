@@ -49,6 +49,10 @@ tools = {
 }
 repeat_mapping = {}
 
+npcs = {
+    "elliott": constants.ELLIOTT,
+    "leah": constants.LEAH,
+}
 
 
 numrep2 = Sequence(
@@ -71,6 +75,7 @@ def rule_builder():
                 Choice("direction_nums", direction_nums),
                 Choice("directions", directions),
                 Choice("tools", tools),
+                Choice("npcs", npcs),
             ],
             defaults={"n": 1},
         )
@@ -90,7 +95,7 @@ non_repeat_mapping = {
     "<direction_keys>": objective_action(objective.HoldKeyObjective, "direction_keys"),
     "face <direction_nums>": objective_action(objective.FaceDirectionObjective, "direction_nums"),
     "stop": server.AsyncFunction(objective.cancel_active_objective, format_args=lambda **kw: []),
-    "tool": Function(lambda: directinput.send("c")),
+    "swing": Function(lambda: directinput.send("c")),
     "(action|check)": Function(lambda: directinput.send("x")),
     "(escape | menu)": Function(lambda: directinput.send("esc")),
     "<n> <directions>": objective_action(objective.MoveNTilesObjective, "directions", "n"),
@@ -100,4 +105,5 @@ non_repeat_mapping = {
     "clear debris": objective_action(objective.ClearDebrisObjective),
     "hoe <n> by <n2>": objective_action(objective.HoePlotObjective, "n", "n2"),
     "equip <tools>": server.AsyncFunction(game.equip_item, format_args=lambda **kw: [kw['tools']]),
+    "talk to <npcs>": objective_action(objective.TalkToNPCObjective, "npcs"),
 }

@@ -31,6 +31,8 @@ namespace StardewBot
                     return GameState.PlayerStatus();
                 case "TOOL_STATUS":
                     return GameState.ToolStatus();
+                case "CHARACTERS_AT_LOCATION":
+                    return GameState.CharactersAtLocation(Game1.currentLocation);
             }
             return null;
         }

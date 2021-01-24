@@ -26,11 +26,30 @@ namespace StardewBot
                 position,
                 tileX = player.getTileX(),
                 tileY = player.getTileY(),
+                canMove = player.CanMove,
                 facingDirection,
                 isMoving,
                 lastWarp = LastWarp
             };
             return status;
+        }
+
+        public static object CharactersAtLocation(GameLocation location)
+        {
+            var chars = new List<dynamic>();
+            foreach (var character in location.characters) 
+            {
+                var position = new { x = character.Position.X, y = character.Position.Y };
+                var charObj = new
+                {
+                    name = character.Name,
+                    tileX = character.getTileX(),
+                    tileY = character.getTileY(),
+                    position,
+                };
+                chars.Add(charObj);
+            }
+            return chars;
         }
 
         public static object ToolStatus()

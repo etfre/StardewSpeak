@@ -215,31 +215,6 @@ class ClearDebrisObjective(Objective):
 
     async def run(self):
         await game.modify_tiles(self.get_debris, game.next_debris_key, self.at_tile)
-        # async with server.player_status_stream() as stream:
-        #     player_status = await stream.next()
-        #     start_tile = player_status["tileX"], player_status["tileY"]
-        #     while True:
-        #         objs = await game.get_location_objects('')
-        #         debris = [o for o in objs if game.is_debris(o)]
-        #         if not debris:
-        #             return
-        #         player_status = await stream.next()
-        #         current_tile = player_status["tileX"], player_status["tileY"]
-        #         path_moved_to_target = None
-        #         facing_direction = player_status['facingDirection']
-        #         for obj in sorted(debris, key=lambda o: game.next_debris_key(start_tile, current_tile, o, facing_direction)):
-        #             server.log(obj)
-        #             try:
-        #                 path_moved_to_target = await game.pathfind_to_adjacent(obj['tileX'], obj['tileY'], stream)
-        #             except RuntimeError:
-        #                 continue
-        #             else:
-        #                 needed_tool = game.tool_for_object[obj['name']]
-        #                 await game.equip_item(needed_tool)
-        #                 await game.swing_tool()
-        #                 break
-        #         if not path_moved_to_target:
-        #             return
 class HoePlotObjective(Objective):
 
     def __init__(self, n1, n2):
@@ -262,9 +237,24 @@ class HoePlotObjective(Objective):
             for j in range(self.n2):
                 y = start_tile[1] + j * y_increment
                 plot_tiles.add((x, y))
-        server.log(list(plot_tiles))
         get_next_diggable = functools.partial(game.get_diggable_tiles, plot_tiles)
         await game.modify_tiles(get_next_diggable, game.generic_next_item_key, game.swing_tool)
+
+
+class TalkToNPCObjective(Objective):
+
+    def __init__(self, npc_name):
+        self.npc_name = npc_name
+
+    async def run(self):
+        async with server.characters_at_location_stream() as npc_stream, server.player_status_stream() as player_stream:
+            npc = await game.find_npc_by_name(self.npc_name, npc_stream)
+            if not npc:
+                self.fail(f'{self.npc_name} is not in the current location') 
+            await game.pathfind_to_adjacent(npc['tileX'], npc['tileY'], player_stream)
+            await game.do_action()
+            server.log(npc)
+
 
 
 async def cancel_active_objective():

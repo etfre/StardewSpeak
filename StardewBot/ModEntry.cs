@@ -45,18 +45,6 @@ namespace StardewBot
             ModEntry.log(msg, LogLevel.Debug);
         }
 
-        public static void WriteJson(string fname, object obj) 
-        {
-            var settings = new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
-            settings.Error = (serializer, err) => err.ErrorContext.Handled = true;
-            string objStr = JsonConvert.SerializeObject(obj, Formatting.None, settings);
-            string path = @"C:\Program Files (x86)\GOG Galaxy\Games\Stardew Valley\Mods\StardewBot\StardewBot\lib\speech-client\debug\" + fname;
-            using (var writetext = new StreamWriter(path))
-            {
-                writetext.WriteLine(objStr);
-            }
-        }
-
         private void OnWarped(object sender, WarpedEventArgs e)
         {
             long milliseconds = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
@@ -172,11 +160,10 @@ namespace StardewBot
                 Log($"isPassable: {isPassable}");
                 Log($"isOccupied: {isOccupied}\n");
                 var rec = new xTile.Dimensions.Location(tileX, tileY);
-                WriteJson("debris.json", location.debris.ToList());
-                WriteJson("objects.json", location.Objects.Values.ToList());
-                WriteJson("resourceClumps.json", location.resourceClumps.ToList());
-                WriteJson("currentTool.json", player.CurrentTool);
-                Log(player.toolPower.ToString());
+                Utils.WriteJson("debris.json", location.debris.ToList());
+                Utils.WriteJson("objects.json", location.Objects.Values.ToList());
+                Utils.WriteJson("resourceClumps.json", location.resourceClumps.ToList());
+                Utils.WriteJson("currentTool.json", player.CurrentTool);
             }
         }
         private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)

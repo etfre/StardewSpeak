@@ -274,6 +274,8 @@ async def pathfind_to_adjacent(x, y, status_stream: server.Stream):
 
 def move_along_path(path, player_status):
     """Return False to continue, True when done"""
+    if not player_status['canMove']:
+        raise RuntimeError('Cannot move')
     current_tile = player_status["tileX"], player_status["tileY"]
     current_tile_index = path.tile_indices[current_tile]
     try:
@@ -365,17 +367,6 @@ def set_last_faced_direction(direction: int):
     else:
         last_faced_east_west = direction
 
-async def ensure_moving(direction: int, stream: server.Stream):
-    player_status = await stream.current()
-    if direction != player_status["facingDirection"]:
-        await ensure_not_moving(stream)
-        player_status = await stream.current()
-    if not player_status["isMoving"]:
-        key_to_press = nums_to_keys[direction]
-        directinput.press(key_to_press)
-        await stream.wait(lambda x: x["isMoving"])
-
-
 def stop_moving():
     to_release = "wasd"
     for key in to_release:
@@ -426,6 +417,9 @@ async def swing_tool(obj):
             await tss.wait(lambda t: t['inUse'], timeout=10)
         await tss.wait(lambda t: not t['inUse'], timeout=10)
 
+async def do_action():
+    directinput.send(constants.ACTION_KEY)
+
 async def modify_tiles(get_items, sort_items, at_tile):
     async with server.player_status_stream() as stream:
         player_status = await stream.next()
@@ -467,3 +461,9 @@ async def chop_tree_and_gather_resources(tree):
         with press_and_release(constants.TOOL_KEY):
             event = await terrain_stream.next()
     await gather_items_on_ground(15)
+
+async def find_npc_by_name(name: str, characters_stream):
+    characters = await characters_stream.next()
+    for char in characters:
+        if char['name'] == name:
+            return char

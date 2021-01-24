@@ -101,6 +101,9 @@ def player_status_stream(ticks=1):
 def tool_status_stream(ticks=1):
     return Stream("UPDATE_TICKED", data={"state": "TOOL_STATUS", "ticks": ticks})
 
+def characters_at_location_stream(ticks=1):
+    return Stream("UPDATE_TICKED", data={"state": "CHARACTERS_AT_LOCATION", "ticks": ticks})
+
 def on_warped_stream(ticks=1):
     return Stream("ON_WARPED", data={"state": "PLAYER_STATUS", "ticks": ticks})
 
