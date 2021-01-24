@@ -247,13 +247,18 @@ class TalkToNPCObjective(Objective):
         self.npc_name = npc_name
 
     async def run(self):
+        npc_tile = None
+        pathfind_task = None
         async with server.characters_at_location_stream() as npc_stream, server.player_status_stream() as player_stream:
-            npc = await game.find_npc_by_name(self.npc_name, npc_stream)
-            if not npc:
-                self.fail(f'{self.npc_name} is not in the current location') 
-            await game.pathfind_to_adjacent(npc['tileX'], npc['tileY'], player_stream)
+            while pathfind_task is None or not pathfind_task.done():
+                npc = await game.find_npc_by_name(self.npc_name, npc_stream)
+                next_npc_tile = npc['tileX'], npc['tileY']
+                if npc_tile != next_npc_tile:
+                    if pathfind_task:
+                        await server.cancel_task(pathfind_task)
+                    npc_tile = next_npc_tile
+                    pathfind_task = server.loop.create_task(game.pathfind_to_adjacent(npc_tile[0], npc_tile[1], player_stream))
             await game.do_action()
-            server.log(npc)
 
 
 

@@ -274,8 +274,6 @@ async def pathfind_to_adjacent(x, y, status_stream: server.Stream):
 
 def move_along_path(path, player_status):
     """Return False to continue, True when done"""
-    if not player_status['canMove']:
-        raise RuntimeError('Cannot move')
     current_tile = player_status["tileX"], player_status["tileY"]
     current_tile_index = path.tile_indices[current_tile]
     try:
@@ -467,3 +465,4 @@ async def find_npc_by_name(name: str, characters_stream):
     for char in characters:
         if char['name'] == name:
             return char
+    raise RuntimeError(f'{name} is not in the current location')

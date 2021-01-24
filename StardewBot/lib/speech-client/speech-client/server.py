@@ -248,3 +248,10 @@ def log(*a, sep=' '):
 async def sleep_forever():
     while True:
         await asyncio.sleep(3600)
+
+async def cancel_task(task):
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
