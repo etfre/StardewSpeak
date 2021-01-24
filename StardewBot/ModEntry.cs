@@ -34,6 +34,7 @@ namespace StardewBot
             helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
             helper.Events.Player.Warped += this.OnWarped;
             helper.Events.World.TerrainFeatureListChanged += this.OnTerrainFeatureListChanged;
+            helper.Events.World.ObjectListChanged += this.OnObjectListChanged;
             ModEntry.log = this.Monitor.Log;
             this.speechEngine = new SpeechEngine();
             this.speechEngine.LaunchProcess();
@@ -95,6 +96,14 @@ namespace StardewBot
         }
 
 
+        private void OnObjectListChanged(object sender, ObjectListChangedEventArgs e)
+
+        {
+            var changedEvent = new { location = e.Location.NameOrUniqueName };
+            this.MessageStreams("ON_OBJECT_LIST_CHANGED", changedEvent);
+            Log($"ON_OBJECT_LIST_CHANGED");
+            //this.speechEngine.SendEvent("ON_WARPED", warpEvent);
+        }
         /*********
         ** Private methods
         *********/

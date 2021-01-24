@@ -75,8 +75,13 @@ async def get_hoe_dirt(location: str):
     return hoe_dirt or []
 
 async def get_location_objects(location: str):
-    hoe_dirt = await server.request(constants.GET_LOCATION_OBJECTS, {"location": location})
-    return hoe_dirt or []
+    objects = await server.request(constants.GET_LOCATION_OBJECTS, {"location": location})
+    return objects or []
+
+async def get_diggable_tiles(test_tiles_set, location: str):
+    test_tiles = [{'tileX': x, 'tileY': y} for x, y in test_tiles_set]
+    filtered = await server.request('GET_DIGGABLE_TILES', {'tiles': test_tiles})
+    return filtered
 
 async def gather_items_on_ground(radius):
     '''
@@ -392,22 +397,54 @@ async def equip_item(item: str):
     success = await server.request('EQUIP_ITEM', {"item": item})
     return success
 
-def next_crop_key(start_tile, current_tile, target_tile, facing_direction):
+def generic_next_item_key(start_tile, current_tile, item, player_status):
+    target_tile = item['tileX'], item['tileY']
     score = score_objects_by_distance(start_tile, current_tile, target_tile)
-    if direction_from_tiles(current_tile, target_tile) == facing_direction:
+    return score
+
+def next_crop_key(start_tile, current_tile, target_tile, player_status):
+    score = score_objects_by_distance(start_tile, current_tile, target_tile)
+    if direction_from_tiles(current_tile, target_tile) == player_status['facingDirection']:
         score -= 0.1
     return score
 
-def next_debris_key(start_tile, current_tile, debris_obj, status):
+def next_debris_key(start_tile, current_tile, debris_obj, player_status):
     target_tile = debris_obj['tileX'], debris_obj['tileY']
     score = score_objects_by_distance(start_tile, current_tile, target_tile)
     return score
 
-async def swing_tool():
+
+def next_hoe_key(start_tile, current_tile, target_tile, player_status):
+    score = score_objects_by_distance(start_tile, current_tile, target_tile)
+    return score
+
+async def swing_tool(obj):
     with server.tool_status_stream(ticks=1) as tss:
         with press_and_release(constants.TOOL_KEY):
             await tss.wait(lambda t: t['inUse'], timeout=10)
         await tss.wait(lambda t: not t['inUse'], timeout=10)
+
+async def modify_tiles(get_items, sort_items, at_tile):
+    async with server.player_status_stream() as stream:
+        player_status = await stream.next()
+        start_tile = player_status["tileX"], player_status["tileY"]
+        while True:
+            player_status = await stream.next()
+            current_tile = player_status["tileX"], player_status["tileY"]
+            items = await get_items(player_status['location'])
+            if not items:
+                return
+            item_path = None
+            for item in sorted(items, key=lambda t: sort_items(start_tile, current_tile, t, player_status)):
+                try:
+                    item_path = await pathfind_to_adjacent(item['tileX'], item['tileY'], stream)
+                except RuntimeError:
+                    continue
+                else:
+                    await at_tile(item)
+                    break
+            if not item_path:
+                return
 
 def is_debris(obj):
     return obj.get('name') in DEBRIS
@@ -423,7 +460,7 @@ def next_tile(current_tile, direction: int):
     if direction == constants.WEST:
         return x - 1, y
 
-async def chop_tree_and_gather_resources():
+async def chop_tree_and_gather_resources(tree):
     async with server.on_terrain_feature_list_changed_stream() as terrain_stream:
         with press_and_release(constants.TOOL_KEY):
             event = await terrain_stream.next()

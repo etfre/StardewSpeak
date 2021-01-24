@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using StardewBot.Pathfinder;
 using StardewModdingAPI;
 using StardewValley;
+using StardewValley.Objects;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -189,6 +190,12 @@ namespace StardewBot
                 case "GET_LOCATION_OBJECTS":
                     {
                         resp = GameState.LocationObjects();
+                        break;
+                    }
+                case "GET_DIGGABLE_TILES":
+                    {
+                        List<dynamic> testTiles = data.tiles.ToObject<List<dynamic>>();
+                        resp = testTiles.Where(tile => Utils.IsTileHoeable(Game1.player.currentLocation, (int)tile.tileX, (int)tile.tileY));
                         break;
                     }
                 case "EQUIP_ITEM":
