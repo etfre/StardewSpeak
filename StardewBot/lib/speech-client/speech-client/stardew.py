@@ -50,8 +50,29 @@ tools = {
 repeat_mapping = {}
 
 npcs = {
-    "elliott": constants.ELLIOTT,
-    "leah": constants.LEAH,
+    'abigail': constants.ABIGAIL,
+    'alex': constants.ALEX,
+    'caroline': constants.CAROLINE,
+    'demetrius': constants.DEMETRIUS,
+    'elliott': constants.ELLIOTT,
+    'emily': constants.EMILY,
+    'haley': constants.HALEY,
+    'harvey': constants.HARVEY,
+    'jas': constants.JAS,
+    'jodi': constants.JODI,
+    'kent': constants.KENT,
+    'leah': constants.LEAH,
+    'lewis': constants.LEWIS,
+    'marnie': constants.MARNIE,
+    'muh roo': constants.MARU,
+    'pam': constants.PAM,
+    'penny': constants.PENNY,
+    'pierre': constants.PIERRE,
+    'robin': constants.ROBIN,
+    'sam': constants.SAM,
+    'sebastian': constants.SEBASTIAN,
+    'shane': constants.SHANE,
+    'vincent': constants.VINCENT,
 }
 
 
