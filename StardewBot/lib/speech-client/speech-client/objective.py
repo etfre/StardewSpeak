@@ -20,6 +20,9 @@ import constants, server, game
 active_objective = None
 pending_objective = None
 
+def get_active_objective():
+    return active_objective
+
 class ObjectiveQueue:
 
     def __init__(self):
@@ -33,6 +36,18 @@ class ObjectiveFailedError(BaseException):
 
 
 class Objective:
+
+    def add_task(self, coro):
+        task_wrapper = TaskWrapper(coro)
+        self.tasks.append(task_wrapper)
+        return task_wrapper
+
+    @property
+    def tasks(self):
+        if not hasattr(self, '_tasks'):
+            self._tasks = []
+        return self._tasks
+
     async def run(self):
         raise NotImplementedError
 
@@ -56,6 +71,8 @@ class Objective:
         else:
             err = None
             server.log(f"Successfully completed objective {name}")
+        for task_wrapper in self.tasks:
+            await task_wrapper.cancel()
         await self.cleanup(err)
 
     async def cleanup(self, exception):
@@ -240,6 +257,29 @@ class HoePlotObjective(Objective):
         get_next_diggable = functools.partial(game.get_diggable_tiles, plot_tiles)
         await game.modify_tiles(get_next_diggable, game.generic_next_item_key, game.swing_tool)
 
+class TaskWrapper:
+
+    def __init__(self, coro):
+        self.result = None
+        self.exception = None
+        self.done = False
+        self.task = server.loop.create_task(self.wrap_coro(coro))
+
+    # I don't understand asyncio task exception handling. So let's just catch any coroutine exceptions here and expose
+    # the result/exception through self.result and self.exception
+    async def wrap_coro(self, coro):
+        try:
+            self.result = await coro
+        except (asyncio.CancelledError, Exception) as e:
+            self.exception = e
+        self.done = True
+
+    async def cancel(self):
+        self.task.cancel()
+        try:
+            await self.task
+        except asyncio.CancelledError:
+            pass
 
 class TalkToNPCObjective(Objective):
 
@@ -248,16 +288,29 @@ class TalkToNPCObjective(Objective):
 
     async def run(self):
         npc_tile = None
-        pathfind_task = None
+        pathfind_task_wrapper = None
+        tile_error_count = 0
         async with server.characters_at_location_stream() as npc_stream, server.player_status_stream() as player_stream:
-            while pathfind_task is None or not pathfind_task.done():
+            while True:
+                if pathfind_task_wrapper and pathfind_task_wrapper.done:
+                    if pathfind_task_wrapper.exception:
+                        if tile_error_count < 2:
+                            pathfind_coro = game.pathfind_to_adjacent(npc_tile[0], npc_tile[1], player_stream)
+                            pathfind_task_wrapper = self.add_task(pathfind_coro)
+                            tile_error_count += 1
+                            continue
+                        else:
+                            raise pathfind_task_wrapper.exception
+                    break
                 npc = await game.find_npc_by_name(self.npc_name, npc_stream)
                 next_npc_tile = npc['tileX'], npc['tileY']
                 if npc_tile != next_npc_tile:
-                    if pathfind_task:
-                        await server.cancel_task(pathfind_task)
+                    tile_error_count = 0
+                    if pathfind_task_wrapper:
+                        await pathfind_task_wrapper.cancel()
                     npc_tile = next_npc_tile
-                    pathfind_task = server.loop.create_task(game.pathfind_to_adjacent(npc_tile[0], npc_tile[1], player_stream))
+                    pathfind_coro = game.pathfind_to_adjacent(npc_tile[0], npc_tile[1], player_stream)
+                    pathfind_task_wrapper = self.add_task(pathfind_coro)
             await game.do_action()
 
 

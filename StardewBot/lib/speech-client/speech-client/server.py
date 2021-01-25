@@ -76,13 +76,11 @@ class Stream:
 
     async def next(self):
         if self.closed:
-            log("Stream is already closed")
-            return
+            raise StreamClosedError("Stream is already closed")
         if not self.future.done():
             await self.future
         if self.closed:
-            log(f"Stream {self.name} closed while waiting for next value")
-            return
+            raise StreamClosedError(f"Stream {self.name} closed while waiting for next value")
         self.future = loop.create_future()
         return self.latest_value
 
@@ -94,6 +92,8 @@ class Stream:
                 item = await self.next()
             return item
 
+class StreamClosedError(Exception):
+    pass
 
 def player_status_stream(ticks=1):
     return Stream("UPDATE_TICKED", data={"state": "PLAYER_STATUS", "ticks": ticks})
