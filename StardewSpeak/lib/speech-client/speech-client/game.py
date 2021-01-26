@@ -171,11 +171,13 @@ async def path_to_next_location(next_location: str, status_stream):
     x, y, is_door = location_connection['X'], location_connection['Y'], location_connection['IsDoor']
     if is_door:
         path = await path_to_adjacent(x, y, status_stream)
+        door_direction = direction_from_tiles(path.tiles[-1], (x, y))
     else:
         path = await path_to_position(x, y, location)
+        door_direction = None
     if path is None:
         raise RuntimeError(f"Cannot pathfind to connection to location {location}")
-    return path, is_door
+    return path, door_direction
 
 
 async def path_to_position(x, y, location):
@@ -189,7 +191,7 @@ async def pathfind_to_next_location(
     next_location: str,
     status_stream: server.Stream,
 ):
-    path, is_door = await path_to_next_location(next_location, status_stream)
+    path, door_direction = await path_to_next_location(next_location, status_stream)
     is_done = False
     while not is_done:
         player_status = await status_stream.next()
@@ -202,7 +204,8 @@ async def pathfind_to_next_location(
             )
         is_done = move_along_path(path, player_status)
     stop_moving()
-    if is_door:
+    if door_direction is not None:
+        await face_direction(door_direction, status_stream)
         await do_action()
 
 
