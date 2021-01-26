@@ -73,6 +73,8 @@ class Objective:
             server.log(f"Successfully completed objective {name}")
         for task_wrapper in self.tasks:
             await task_wrapper.cancel()
+        if err:
+            game.stop_moving()
         await self.cleanup(err)
 
     async def cleanup(self, exception):
@@ -124,7 +126,7 @@ class MoveNTilesObjective(Objective):
             else:
                 raise ValueError(f"Unexpected direction {self.direction}")
             path = await game.path_to_position(to_x, to_y, status['location'])
-            await game.pathfind_to_position(path, status['location'], stream)
+            await game.pathfind_to_position(path, stream)
 
     async def cleanup(self, exception):
         if exception:

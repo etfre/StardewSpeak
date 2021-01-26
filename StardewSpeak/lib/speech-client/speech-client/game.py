@@ -209,14 +209,7 @@ async def pathfind_to_next_location(
         await do_action()
 
 
-async def pathfind_to_position(
-    path: Path,
-    status_stream: server.Stream,
-):
-    if not isinstance(path, Path):
-        x, y, location = path
-        path = await path_to_position(x, y, location)
-
+async def pathfind_to_position(path: Path, status_stream: server.Stream):
     target_x, target_y = path.tiles[-1]
     is_done = False
     remaining_attempts = 5
@@ -289,7 +282,7 @@ async def path_to_adjacent(x, y, status_stream: server.Stream):
 
 
 async def pathfind_to_adjacent(x, y, status_stream: server.Stream):
-    path = path_to_adjacent(x, y, status_stream)
+    path = await path_to_adjacent(x, y, status_stream)
     await pathfind_to_position(path, status_stream)
     direction_to_face = direction_from_tiles(path.tiles[-1], (x, y))
     await face_direction(direction_to_face, status_stream)
@@ -328,8 +321,9 @@ def direction_from_tiles(tile, target_tile):
         return constants.EAST
     elif x == target_x and y < target_y:
         return constants.SOUTH
-    elif x > target_x and y -- target_y:
+    elif x > target_x and y == target_y:
         return constants.WEST
+    raise ValueError(f'Could not extract direction from {tile} to {target_tile}')
 
 
 def facing_tile_center(player_status):
