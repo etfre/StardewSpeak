@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace StardewBot
+namespace StardewSpeak
 {
     public static class Actions
     {

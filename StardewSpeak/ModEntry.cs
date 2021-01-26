@@ -5,7 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
-using StardewBot.Pathfinder;
+using StardewSpeak.Pathfinder;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewModdingAPI.Utilities;
@@ -13,7 +13,7 @@ using StardewValley;
 using StardewValley.Buildings;
 using StardewValley.Tools;
 
-namespace StardewBot
+namespace StardewSpeak
 {
     /// <summary>The mod entry point.</summary>
     public class ModEntry : Mod

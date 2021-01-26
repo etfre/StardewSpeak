@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 using StardewModdingAPI;
 using StardewValley;
 
-namespace StardewBot
+namespace StardewSpeak
 {
     public static class Utils
     {
@@ -24,7 +24,7 @@ namespace StardewBot
             var settings = new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
             settings.Error = (serializer, err) => err.ErrorContext.Handled = true;
             string objStr = JsonConvert.SerializeObject(obj, Formatting.None, settings);
-            string path = @"C:\Program Files (x86)\GOG Galaxy\Games\Stardew Valley\Mods\StardewBot\StardewBot\lib\speech-client\debug\" + fname;
+            string path = @"C:\Program Files (x86)\GOG Galaxy\Games\Stardew Valley\Mods\StardewSpeak\StardewSpeak\lib\speech-client\debug\" + fname;
             using (var writetext = new StreamWriter(path))
             {
                 writetext.WriteLine(objStr);

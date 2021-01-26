@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace StardewBot
+namespace StardewSpeak
 {
     public static class GameState
     {

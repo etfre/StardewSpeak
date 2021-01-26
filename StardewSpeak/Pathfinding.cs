@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using xTile.ObjectModel;
 using xTile.Tiles;
 
-namespace StardewBot.Pathfinder
+namespace StardewSpeak.Pathfinder
 {
     public class Location
     {
