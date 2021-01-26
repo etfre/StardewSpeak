@@ -1,6 +1,7 @@
 ﻿using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.Buildings;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,11 +14,26 @@ namespace StardewSpeak
     public static class Routing
     {
         public static bool Ready = false;
+        public static Dictionary<string, GameLocation> MapNamesToLocations = new Dictionary<string, GameLocation>();
+        public static Dictionary<string, Building> MapNamesToBuildings = new Dictionary<string, Building>();
         private static Dictionary<string, HashSet<string>> MapConnections = new Dictionary<string, HashSet<string>>();
+
+        public class LocationConnection {
+            public int X;
+            public int Y;
+            public bool IsDoor;
+            public LocationConnection(int x, int y, bool isDoor) {
+                this.X = x;
+                this.Y = y;
+                this.IsDoor = isDoor;
+            }
+        }
 
         public static void Reset()
         {
             Ready = false;
+            MapNamesToLocations.Clear();
+            MapNamesToBuildings.Clear();
             if (Game1.IsMultiplayer && !Game1.IsMasterGame)
             {
                 //client mode
@@ -45,14 +61,26 @@ namespace StardewSpeak
             throw new InvalidOperationException($"Missing location {name}");
         }
 
-        public static Warp FindWarp(GameLocation from, GameLocation to) {
+        public static LocationConnection FindLocationConnection(GameLocation from, GameLocation to) {
             foreach (var warp in from.warps) 
             {
                 if (warp.TargetName == to.NameOrUniqueName) {
-                    return warp;
+                    return new LocationConnection(warp.X, warp.Y, false);
                 }
             }
-            throw new InvalidOperationException($"Unable to find warp from {from.NameOrUniqueName} to {to.NameOrUniqueName}");
+            foreach (var doorDict in from.doors)
+            {
+                foreach (var door in doorDict)
+                {
+                    var point = door.Key;
+                    var loc = door.Value;
+                    if (loc == to.NameOrUniqueName)
+                    {
+                        return new LocationConnection(point.X, point.Y, true);
+                    }
+                }
+            }
+                throw new InvalidOperationException($"Unable to find warp from {from.NameOrUniqueName} to {to.NameOrUniqueName}");
         }
 
         public static Dictionary<string, HashSet<string>> BuildRouteCache()
@@ -61,11 +89,11 @@ namespace StardewSpeak
             foreach (var gl in Game1.locations)
             {
                 string key = gl.NameOrUniqueName;
+                MapNamesToLocations.Add(key, gl);
                 if (!string.IsNullOrWhiteSpace(key))// && !gl.isTemp())
                 {
                     if (gl.warps != null && gl.warps.Count > 0)
                     {
-                        ModEntry.Log("Learning about " + key);
                         returnValue[key] = new HashSet<string>();
                         foreach (var w in gl.warps) returnValue[key].Add(w.TargetName);
                         foreach (var d in gl.doors.Values) returnValue[key].Add(d);
@@ -84,6 +112,7 @@ namespace StardewSpeak
                         returnValue[b.indoors.Value.NameOrUniqueName] = new HashSet<string>();
                         //add the way out
                         returnValue[b.indoors.Value.NameOrUniqueName].Add(key);
+                        MapNamesToBuildings.Add(b.indoors.Value.NameOrUniqueName, b);
                     }
                 }
             }
@@ -133,12 +162,74 @@ namespace StardewSpeak
         public static List<string> GetRoute(string start, string destination)
         {
             if (!Ready) Reset();
-            var result = SearchRoute(start, destination);
-            if (result != null) result.Add(destination);
-            return result;
+            return SearchRoute(start, destination);
         }
 
-        private static List<string> SearchRoute(string step, string target, List<string> route = null, List<string> blacklist = null)
+        private static List<string> SearchRoute(string start, string target)
+        {
+            Func<dynamic, bool> validateTarget = (dynamic location) =>
+            {
+                if (location is Building)
+                {
+                    return location.indoors.Value.NameOrUniqueName == target;
+                }
+                return location.NameOrUniqueName == target;
+            };
+            return SearchRoute(start, validateTarget);
+        }
+
+        // bfs, just want to find shortest route
+        private static List<string> SearchRoute(string start, Func<dynamic, bool> validateTarget) 
+        {
+            var queue = new Queue<string>();
+            string target = null;
+            queue.Enqueue(start);
+            var seen = new HashSet<string> { start };
+            var mapLocationToPrev = new Dictionary<string, string>();
+            while (queue.Count > 0)
+            {
+                var currentLocationName = queue.Dequeue();
+                dynamic currentLocation;
+                if (MapNamesToLocations.ContainsKey(currentLocationName))
+                {
+                    currentLocation = MapNamesToLocations[currentLocationName];
+                }
+                else 
+                {
+                    currentLocation = MapNamesToBuildings[currentLocationName];
+                }
+                if (validateTarget(currentLocation)) 
+                {
+                    target = currentLocationName;
+                    break;
+                }
+                foreach (var adj in MapConnections[currentLocationName])
+                {
+                    if (!seen.Contains(adj)) 
+                    {
+                        mapLocationToPrev[adj] = currentLocationName;
+                        queue.Enqueue(adj);
+                        seen.Add(adj);
+                    }
+                }
+            }
+            return target == null ? null : ReconstructRoute(target, mapLocationToPrev);
+        }
+
+        private static List<string> ReconstructRoute(string last, Dictionary<string, string> mapLocationToPrev) 
+        {
+            var route = new List<string> { last };
+            var curr = last;
+            while (mapLocationToPrev.ContainsKey(curr)) 
+            {
+                curr = mapLocationToPrev[curr];
+                route.Add(curr);
+            }
+            route.Reverse();
+            return route;
+        }
+
+        private static List<string> SearchRoute2(string step, string target, List<string> route = null, List<string> blacklist = null)
         {
             if (route == null) route = new List<string>();
             if (blacklist == null) blacklist = new List<string>();
@@ -151,7 +242,7 @@ namespace StardewSpeak
                 {
                     return route2;
                 }
-                List<string> result = SearchRoute(s, target, route2, blacklist);
+                List<string> result = SearchRoute2(s, target, route2, blacklist);
                 if (result != null) return result;
             }
             blacklist.Add(step);

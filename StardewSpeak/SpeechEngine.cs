@@ -144,14 +144,7 @@ namespace StardewSpeak
                         GameLocation fromLocation = player.currentLocation;
                         string toLocationStr = data.toLocation;
                         GameLocation toLocation = Routing.FindLocationByName(toLocationStr);
-                        resp = new List<string>();
-                        if (fromLocation.NameOrUniqueName == toLocation.NameOrUniqueName)
-                        {
-                            resp.Add(toLocation.NameOrUniqueName);
-                        }
-                        else {
-                            resp = Routing.GetRoute(fromLocation.NameOrUniqueName, toLocation.NameOrUniqueName);
-                        }
+                        resp = Routing.GetRoute(fromLocation.NameOrUniqueName, toLocation.NameOrUniqueName);
                         break;
                     }
                 case "PATH_TO_POSITION":
@@ -162,13 +155,22 @@ namespace StardewSpeak
                         resp = path;
                         break;
                     }
+                case "LOCATION_CONNECTION": 
+                    {
+                        GameLocation fromLocation = player.currentLocation;
+                        string toLocationStr = data.toLocation;
+                        GameLocation toLocation = Routing.FindLocationByName(toLocationStr);
+                        var locationConnection = Routing.FindLocationConnection(fromLocation, toLocation);
+                        resp = locationConnection;
+                        break;
+                    }
                 case "PATH_TO_WARP":
                     {
                         GameLocation fromLocation = player.currentLocation;
                         string toLocationStr = data.toLocation;
                         GameLocation toLocation = Routing.FindLocationByName(toLocationStr);
-                        var warp = Routing.FindWarp(fromLocation, toLocation);
-                        var path = Pathfinder.Pathfinder.FindPath(fromLocation, playerX, playerY, warp.X, warp.Y);
+                        var locationConnection = Routing.FindLocationConnection(fromLocation, toLocation);
+                        var path = Pathfinder.Pathfinder.FindPath(fromLocation, playerX, playerY, locationConnection.X, locationConnection.Y);
                         resp = path;
                         break;
                     }

@@ -132,8 +132,7 @@ class MoveNTilesObjective(Objective):
                 await game.ensure_not_moving(stream)
 
 
-class MoveToLocationObjective(Objective):
-    # def __init__(self, x, y, location):
+class MoveToPointObjective(Objective):
     def __init__(self):
         x, y, location = 68, 17, "Farm"
         self.x = x
@@ -142,21 +141,22 @@ class MoveToLocationObjective(Objective):
 
     async def run(self):
         async with server.player_status_stream() as stream:
-            await game.ensure_not_moving(stream)
-            route = await game.request_route(self.location, self.x, self.y)
-            for i, location in enumerate(route[:-1]):
-                next_location = route[i + 1]
-                server.log(f"Getting path to next location {next_location}")
-                path = await game.path_to_warp(next_location)
-                await game.pathfind_to_warp(path, location, next_location, stream)
-            status = await stream.next()
-            path = await game.path_to_position(self.x, self.y, status['location'])
-            await game.pathfind_to_position(path, route[-1], stream)
+            await game.move_to_location(self.location, stream)
+            path = await game.path_to_position(self.x, self.y, self.location)
+            await game.pathfind_to_position(path, stream)
 
     async def cleanup(self, exception):
         if exception:
             async with server.player_status_stream() as stream:
                 await game.ensure_not_moving(stream)
+
+class MoveToLocationObjective(Objective):
+    def __init__(self, location):
+        self.location = location
+
+    async def run(self):
+        async with server.player_status_stream() as stream:
+            await game.move_to_location(self.location.name, stream)
 
 class ChopTreesObjective(Objective):
 

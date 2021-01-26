@@ -14,7 +14,7 @@ from dragonfly import *
 from srabuilder import rules
 
 from srabuilder.actions import directinput
-import constants, server, game, objective
+import constants, server, game, objective, locations
 
 
 direction_keys = {
@@ -97,6 +97,7 @@ def rule_builder():
                 Choice("directions", directions),
                 Choice("tools", tools),
                 Choice("npcs", npcs),
+                Choice("locations", locations.location_commands(locations.locations))
             ],
             defaults={"n": 1},
         )
@@ -120,7 +121,8 @@ non_repeat_mapping = {
     "(action|check)": Function(lambda: directinput.send("x")),
     "(escape | menu)": Function(lambda: directinput.send("esc")),
     "<n> <directions>": objective_action(objective.MoveNTilesObjective, "directions", "n"),
-    "go to mailbox": objective_action(objective.MoveToLocationObjective),
+    "go to mailbox": objective_action(objective.MoveToPointObjective),
+    "go to <locations>": objective_action(objective.MoveToLocationObjective, "locations"),
     "start chopping trees": objective_action(objective.ChopTreesObjective),
     "water crops": objective_action(objective.WaterCropsObjective),
     "clear debris": objective_action(objective.ClearDebrisObjective),

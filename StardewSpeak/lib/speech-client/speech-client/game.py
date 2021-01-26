@@ -37,13 +37,9 @@ directions = {k: k for k in direction_keys}
 
 DEBRIS = [constants.WEEDS, constants.TWIG, constants.STONE]
 
-class Route:
-    def __init__(self, mod_paths):
-        self.paths = tuple(Path(p) for p in mod_paths)
-
 
 class Path:
-    def __init__(self, mod_path):
+    def __init__(self, mod_path, location: str):
         tiles = []
         self.tile_indices = {}
         for i, mod_tile in enumerate(mod_path):
@@ -51,6 +47,7 @@ class Path:
             tiles.append(tile)
             self.tile_indices[tile] = i
         self.tiles = tuple(tiles)
+        self.location = location
 
 def distance_between_tiles(t1, t2):
     # pathfinding doesn't move diagonally for simplicity so just sum differences between x and y
@@ -138,65 +135,84 @@ def sort_test_tiles(tiles, start_tile, current_tile, items_to_gather):
     return sorted(tiles, key=score_tile)
 
 async def pathfind_to_resource(tiles, location, stream):
-    path = None
+    path_token = None
     invalid = []
     for tile in tiles:
         try:
-            path = await pathfind_to_position(tile, location, stream)
+            path_to_take = await path_to_position(tile[0], tile[1], location)
+            path = await pathfind_to_position(path_to_take, stream)
         except RuntimeError as e:
             invalid.append(tile)
         else:
             break
     return path, invalid
 
-async def request_route(location: str, x: int, y: int):
+async def move_to_location(location: str, stream: server.Stream):
+    await ensure_not_moving(stream)
+    route = await request_route(location)
+    for i, location in enumerate(route[:-1]):
+        next_location = route[i + 1]
+        server.log(f"Getting path to next location {next_location}")
+        await pathfind_to_next_location(next_location, stream)
+
+async def request_route(location: str):
     route = await server.request("ROUTE", {"toLocation": location})
     if route is None:
-        raise RuntimeError(f"Cannot pathfind to {x}, {y} at location {location}")
+        raise RuntimeError(f"Cannot route to location {location}")
     return route
 
 
-async def path_to_warp(location: str):
-    path = await server.request("PATH_TO_WARP", {"toLocation": location})
+async def path_to_next_location(next_location: str, status_stream):
+    player_status = await status_stream.next()
+    location = player_status['location']
+    location_connection = await server.request("LOCATION_CONNECTION", {"toLocation": next_location})
+    if location_connection is None:
+        raise RuntimeError(f"No connection to location {location}")
+    x, y, is_door = location_connection['X'], location_connection['Y'], location_connection['IsDoor']
+    if is_door:
+        path = await path_to_adjacent(x, y, status_stream)
+    else:
+        path = await path_to_position(x, y, location)
     if path is None:
-        raise RuntimeError(f"Cannot pathfind to warp to location {location}")
-    return Path(path)
+        raise RuntimeError(f"Cannot pathfind to connection to location {location}")
+    return path, is_door
 
 
 async def path_to_position(x, y, location):
     path = await server.request("PATH_TO_POSITION", {"x": x, "y": y, "location": location})
     if path is None:
         raise RuntimeError(f"Cannot pathfind to {x}, {y} at location {location}")
-    return Path(path)
+    return Path(path, location)
 
 
-async def pathfind_to_warp(
-    path: Path,
-    location: str,
+async def pathfind_to_next_location(
     next_location: str,
     status_stream: server.Stream,
 ):
+    path, is_door = await path_to_next_location(next_location, status_stream)
     is_done = False
     while not is_done:
         player_status = await status_stream.next()
         current_location = player_status["location"]
-        if current_location != location:
+        if current_location != path.location:
             if current_location == next_location:
                 break
             raise RuntimeError(
-                f"Unexpected location {current_location}, pathfinding for {location}"
+                f"Unexpected location {current_location}, pathfinding for {path.location}"
             )
         is_done = move_along_path(path, player_status)
     stop_moving()
+    if is_door:
+        await do_action()
 
 
 async def pathfind_to_position(
     path: Path,
-    location: str,
     status_stream: server.Stream,
 ):
     if not isinstance(path, Path):
-        path = await path_to_position(path[0], path[1], location)
+        x, y, location = path
+        path = await path_to_position(x, y, location)
 
     target_x, target_y = path.tiles[-1]
     is_done = False
@@ -207,15 +223,15 @@ async def pathfind_to_position(
             while not is_done:
                 player_status = await status_stream.next()
                 current_location = player_status["location"]
-                if current_location != location:
+                if current_location != path.location:
                     raise RuntimeError(
-                        f"Unexpected location {current_location}, pathfinding for {location}"
+                        f"Unexpected location {current_location}, pathfinding for {path.location}"
                     )
                 try:
                     is_done = move_along_path(path, player_status)
                 except KeyError as e:
                     if remaining_attempts:
-                        path = await path_to_position(target_x, target_y, location)
+                        path = await path_to_position(target_x, target_y, path.location)
                         remaining_attempts -= 1
                     else:
                         raise e
@@ -229,7 +245,7 @@ def adjacent_tiles(tile):
     x, y = tile
     return [(x, y - 1), (x + 1, y), (x, y + 1), (x - 1, y)]
 
-async def pathfind_to_adjacent(x, y, status_stream: server.Stream):
+async def path_to_adjacent(x, y, status_stream: server.Stream):
     player_status = await status_stream.next()
     location = player_status['location']
     current_tile = player_status["tileX"], player_status["tileY"]
@@ -266,10 +282,15 @@ async def pathfind_to_adjacent(x, y, status_stream: server.Stream):
                 break
     if shortest_path is None:
         raise RuntimeError(f"No path found adjacent to {x}, {y}")
-    await pathfind_to_position(shortest_path, location, status_stream)
-    direction_to_face = direction_from_tiles(shortest_path.tiles[-1], (x, y))
-    await face_direction(direction_to_face, status_stream)
     return shortest_path
+
+
+async def pathfind_to_adjacent(x, y, status_stream: server.Stream):
+    path = path_to_adjacent(x, y, status_stream)
+    await pathfind_to_position(path, status_stream)
+    direction_to_face = direction_from_tiles(path.tiles[-1], (x, y))
+    await face_direction(direction_to_face, status_stream)
+    return path
     
 
 def move_along_path(path, player_status):
