@@ -135,7 +135,7 @@ def sort_test_tiles(tiles, start_tile, current_tile, items_to_gather):
     return sorted(tiles, key=score_tile)
 
 async def pathfind_to_resource(tiles, location, stream):
-    path_token = None
+    path = None
     invalid = []
     for tile in tiles:
         try:

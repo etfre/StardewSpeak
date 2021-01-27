@@ -3,6 +3,7 @@ using StardewValley;
 using StardewValley.TerrainFeatures;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -38,6 +39,7 @@ namespace StardewSpeak.Pathfinder
     {
         public static List<Point> FindPath(GameLocation location, int startX, int startY, int targetX, int targetY, int cutoff = -1)
         {
+            if (!IsPassable(location, targetX, targetY)) return null;
             Location current = null;
             Location start = new Location { X = startX, Y = startY };
             Location target = new Location { X = targetX, Y = targetY };
@@ -45,8 +47,7 @@ namespace StardewSpeak.Pathfinder
             var closedList = new List<Location>();
             int g = 0;
             var passableCache = new Dictionary<Tuple<int, int>, bool>();
-            var openGates = OpenGates();
-
+            
             // start by adding the original position to the open list  
             openList.Add(start);
 
@@ -69,7 +70,7 @@ namespace StardewSpeak.Pathfinder
                     //Mod.instance.Monitor.Log("Breaking out of pathfinding, cutoff exceeded");
                     return null;
                 }
-                var adjacentSquares = GetWalkableAdjacentSquares(current.X, current.Y, location, openList, openGates, passableCache);
+                var adjacentSquares = GetWalkableAdjacentSquares(current.X, current.Y, location, openList, passableCache);
                 g = current.G + 1;
 
                 foreach (var adjacentSquare in adjacentSquares)
@@ -105,7 +106,6 @@ namespace StardewSpeak.Pathfinder
                     }
                 }
             }
-
             //make sure path is complete
             if (current == null) return null;
             if (current.X != targetX || current.Y != targetY)
@@ -125,50 +125,32 @@ namespace StardewSpeak.Pathfinder
             return returnPath;
         }
 
-        public static HashSet<Tuple<int, int>> OpenGates()
-        {
-            var gates = new HashSet<Tuple<int, int>>();
-            var objects = Game1.player.currentLocation.Objects;
-            foreach (StardewValley.Object obj in objects.Values)
-            {
-                if (obj.Name == "Gate")
-                {
-                    var gate = obj as Fence;
-                    if (gate.gatePosition.Value != 0) // open gate
-                    {
-                        gates.Add(new Tuple<int, int>((int)gate.TileLocation.X, (int)gate.TileLocation.Y));
-                    }
-                }
-            }
-            return gates;
-        }
-
-        static List<Location> GetWalkableAdjacentSquares(int x, int y, GameLocation map, List<Location> openList, HashSet<Tuple<int, int>> openGates, Dictionary<Tuple<int, int>, bool> passableCache)
+        static List<Location> GetWalkableAdjacentSquares(int x, int y, GameLocation map, List<Location> openList, Dictionary<Tuple<int, int>, bool> passableCache)
         {
             List<Location> list = new List<Location>();
 
-            if (IsPassable(map, x, y - 1, openGates, passableCache))
+            if (IsPassable(map, x, y - 1, passableCache))
             {
                 Location node = openList.Find(l => l.X == x && l.Y == y - 1);
                 if (node == null) list.Add(new Location() { Preferable = IsPreferableWalkingSurface(map, x, y), X = x, Y = y - 1 });
                 else list.Add(node);
             }
 
-            if (IsPassable(map, x, y + 1, openGates, passableCache))
+            if (IsPassable(map, x, y + 1, passableCache))
             {
                 Location node = openList.Find(l => l.X == x && l.Y == y + 1);
                 if (node == null) list.Add(new Location() { Preferable = IsPreferableWalkingSurface(map, x, y), X = x, Y = y + 1 });
                 else list.Add(node);
             }
 
-            if (IsPassable(map, x - 1, y, openGates, passableCache))
+            if (IsPassable(map, x - 1, y, passableCache))
             {
                 Location node = openList.Find(l => l.X == x - 1 && l.Y == y);
                 if (node == null) list.Add(new Location() { Preferable = IsPreferableWalkingSurface(map, x, y), X = x - 1, Y = y });
                 else list.Add(node);
             }
 
-            if (IsPassable(map, x + 1, y, openGates, passableCache))
+            if (IsPassable(map, x + 1, y, passableCache))
             {
                 Location node = openList.Find(l => l.X == x + 1 && l.Y == y);
                 if (node == null) list.Add(new Location() { Preferable = IsPreferableWalkingSurface(map, x, y), X = x + 1, Y = y });
@@ -184,18 +166,18 @@ namespace StardewSpeak.Pathfinder
             return false;
         }
 
-        public static bool IsPassable(GameLocation loc, int x, int y, HashSet<Tuple<int, int>> openGates, Dictionary<Tuple<int, int>, bool> passableCache) 
+        public static bool IsPassable(GameLocation loc, int x, int y, Dictionary<Tuple<int, int>, bool> passableCache) 
         {
             bool passable;
             var key = new Tuple<int, int>(x, y);
             if (!passableCache.TryGetValue(key, out passable)) {
-                passable = IsPassable(loc, x, y, openGates);
+                passable = IsPassable(loc, x, y);
                 passableCache.Add(key, passable);
             }
             return passable;
         }
 
-        public static bool IsPassable(GameLocation loc, int x, int y, HashSet<Tuple<int, int>> openGates)
+        public static bool IsPassable(GameLocation loc, int x, int y)
         {
             foreach (var w in loc.warps)
             {
@@ -253,13 +235,6 @@ namespace StardewSpeak.Pathfinder
                     return false;
                 }
             }
-            //foreach (var obj in loc.Objects.Values)
-            //{
-            //    if (obj.TileLocation.X == x && obj.TileLocation.Y == y)
-            //    {
-            //        return false;
-            //    }
-            //}
             return true;
         }
 
