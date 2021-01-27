@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using StardewValley;
+using StardewValley.TerrainFeatures;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -200,13 +201,8 @@ namespace StardewSpeak.Pathfinder
             {
                 if (w.X == x && w.Y == y) return true;
             }
-            var tup = new Tuple<int, int>(x, y);
-            if (openGates.Contains(tup))
-            {
-                return true;
-            }
             var vec = new Vector2(x, y);
-            if (loc.isTileOccupiedIgnoreFloors(vec) || !loc.isTileOnMap(vec))
+            if (isTileOccupied(loc, vec) || !loc.isTileOnMap(vec))
             {
                 return false;
             }
@@ -241,20 +237,9 @@ namespace StardewSpeak.Pathfinder
             {
                 return false;
             }
-            //if (loc.isTerrainFeatureAt(x, y))
-            //{
-            //    return false;
-            //}
             if (loc is Farm)
             {
                 var fff = loc as Farm;
-                //foreach (var brc in fff.largeTerrainFeatures)
-                //{
-                //    var r = brc.getBoundingBox();
-                //    var xx = x;
-                //    var yy = y;
-                //    if (xx > r.X && xx < r.X + r.Width && yy > r.Y && yy < r.Y + r.Height) return false;
-                //}
                 if (fff.getBuildingAt(vec) != null)
                 {
                     return false;
@@ -281,6 +266,43 @@ namespace StardewSpeak.Pathfinder
         static int ComputeHScore(bool preferable, int x, int y, int targetX, int targetY)
         {
             return (Math.Abs(targetX - x) + Math.Abs(targetY - y)) - (preferable ? 1 : 0);
+        }
+
+        public static bool isTileOccupied(GameLocation location, Vector2 tileLocation, string characterToIgnore = "")
+        {
+            location.objects.TryGetValue(tileLocation, out StardewValley.Object o);
+            if (o != null) 
+            {
+                return !o.isPassable();
+            }
+            Microsoft.Xna.Framework.Rectangle tileLocationRect = new Microsoft.Xna.Framework.Rectangle((int)tileLocation.X * 64 + 1, (int)tileLocation.Y * 64 + 1, 62, 62);
+            for (int i = 0; i < location.characters.Count; i++)
+            {
+                if (location.characters[i] != null && !location.characters[i].name.Equals(characterToIgnore) && location.characters[i].GetBoundingBox().Intersects(tileLocationRect))
+                {
+                    return true;
+                }
+            }
+            if (location.terrainFeatures.ContainsKey(tileLocation) && tileLocationRect.Intersects(location.terrainFeatures[tileLocation].getBoundingBox(tileLocation)) && !location.terrainFeatures[tileLocation].isPassable())
+            {
+                return true;
+            }
+            if (location.largeTerrainFeatures != null)
+            {
+                foreach (LargeTerrainFeature largeTerrainFeature in location.largeTerrainFeatures)
+                {
+                    if (largeTerrainFeature.getBoundingBox().Intersects(tileLocationRect))
+                    {
+                        return true;
+                    }
+                }
+            }
+            var f = location.GetFurnitureAt(tileLocation);
+            if (f != null && !f.isPassable())
+            {
+                return true;
+            }
+            return false;
         }
     }
 }
