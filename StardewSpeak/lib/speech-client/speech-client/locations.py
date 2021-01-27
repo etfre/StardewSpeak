@@ -12,9 +12,12 @@ def init_locations():
         Location("Farm"),
         Location("FarmHouse", ["farm house"]),
         Location("Forest"),
+        Location("HaleyHouse", ["haley's house"], possessive=True),
+        Location("JoshHouse", ["josh's house"], possessive=True),
         Location("LeahHouse", ["leah's house"], possessive=True),
         Location("Mine", ["mine", "mines"]),
         Location("Mountain"),
+        Location("SamHouse", ["sam's house"], possessive=True),
         Location("Town"),
         Location("Woods"),
     )

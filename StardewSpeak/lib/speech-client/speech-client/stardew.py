@@ -56,6 +56,7 @@ npcs = {
     'demetrius': constants.DEMETRIUS,
     'elliott': constants.ELLIOTT,
     'emily': constants.EMILY,
+    'gus': constants.GUS,
     'haley': constants.HALEY,
     'harvey': constants.HARVEY,
     'jas': constants.JAS,
@@ -73,6 +74,7 @@ npcs = {
     'sebastian': constants.SEBASTIAN,
     'shane': constants.SHANE,
     'vincent': constants.VINCENT,
+    'willy': constants.WILLY,
 }
 
 
