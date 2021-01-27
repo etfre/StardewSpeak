@@ -164,16 +164,6 @@ namespace StardewSpeak
                         resp = locationConnection;
                         break;
                     }
-                case "PATH_TO_WARP":
-                    {
-                        GameLocation fromLocation = player.currentLocation;
-                        string toLocationStr = data.toLocation;
-                        GameLocation toLocation = Routing.FindLocationByName(toLocationStr);
-                        var locationConnection = Routing.FindLocationConnection(fromLocation, toLocation);
-                        var path = Pathfinder.Pathfinder.FindPath(fromLocation, playerX, playerY, locationConnection.X, locationConnection.Y);
-                        resp = path;
-                        break;
-                    }
                 case "GET_TREES": 
                     {
                         resp = GameState.Trees();
