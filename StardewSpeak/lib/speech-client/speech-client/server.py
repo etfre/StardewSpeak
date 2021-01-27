@@ -216,7 +216,10 @@ def on_message(msg_str):
         fut = mod_requests.pop(msg_data["id"], None)
         if fut:
             resp_value = msg_data["value"]
-            fut.set_result(resp_value)
+            try:
+                fut.set_result(resp_value)
+            except asyncio.InvalidStateError:
+                pass
     elif msg_type == "STREAM_MESSAGE":
         stream_id = msg_data["stream_id"]
         stream = streams.get(stream_id)
