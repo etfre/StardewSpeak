@@ -110,37 +110,6 @@ namespace StardewSpeak
             if (pressed == "R") {
                 var menu = Game1.activeClickableMenu;
             }
-            if (pressed == "P")
-            {
-                this.Monitor.Log("pressed p");
-                if (Routing.Ready)
-                {
-                    var route = Routing.GetRoute("HaleyHouse");
-                    var watch = System.Diagnostics.Stopwatch.StartNew();
-                    var targetTile = Game1.currentCursorTile;
-                    var targetX = (int)targetTile.X;
-                    var targetY = (int)targetTile.Y;
-
-                    var path = Pathfinder.Pathfinder.FindPath(Game1.player.currentLocation, Game1.player.getTileX(), Game1.player.getTileY(), targetX, targetY, -1);
-                    if (path == null)
-                    {
-                        ModEntry.Log("No path found");
-                    }
-                    else { 
-                        foreach(var node in path) {
-                            ModEntry.Log($"{node.X}, {node.Y}");
-                        }
-                    }
-                    watch.Stop();
-                    var elapsedMs = watch.ElapsedMilliseconds;
-                    ModEntry.Log($"{elapsedMs}");
-                    }
-                else
-                {
-                    Routing.Reset();
-                }
-                //Core.EquipToolIfOnHotbar("Pickaxe");
-            }
             else if (pressed == "L")
             {
                 var player = Game1.player;

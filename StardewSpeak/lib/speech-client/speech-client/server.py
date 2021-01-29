@@ -152,7 +152,7 @@ def setup_async_loop():
     def async_setup(l):
         l.set_exception_handler(exception_handler)
         l.create_task(async_readline())
-        l.create_task(heartbeat(60))
+        l.create_task(heartbeat(3600))
         l.run_forever()
 
     def exception_handler(loop, context):

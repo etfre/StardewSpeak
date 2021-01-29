@@ -168,54 +168,19 @@ class ChopTreesObjective(Objective):
     async def run(self):
         await game.equip_item(constants.AXE)
         await game.modify_tiles(game.get_trees, game.generic_next_item_key, game.chop_tree_and_gather_resources)
-        # async with server.player_status_stream() as stream:
-        #     player_status = await stream.next()
-        #     start_tile = player_status["tileX"], player_status["tileY"]
-        #     while True:
-        #         player_status = await stream.next()
-        #         current_tile = player_status["tileX"], player_status["tileY"]
-        #         trees = await game.get_trees('')
-        #         if not trees:
-        #             return
-        #         tree_path = None
-        #         for tree in sorted(trees, key=lambda t: game.score_objects_by_distance(start_tile, current_tile, (t['tileX'], t['tileY']))):
-        #             try:
-        #                 tree_path = await game.pathfind_to_adjacent(tree['tileX'], tree['tileY'], stream)
-        #             except RuntimeError:
-        #                 continue
-        #             else:
-        #                 await game.chop_tree_and_gather_resources()
-        #         if not tree_path:
-        #             return
 class WaterCropsObjective(Objective):
 
     def __init__(self):
         pass
 
+    async def get_unwatered_crops(self, location: str):
+        hoe_dirt_tiles = await game.get_hoe_dirt('')
+        tiles_to_water = [hdt for hdt in hoe_dirt_tiles if hdt['crop'] and not hdt['isWatered']]
+        return tiles_to_water
+
     async def run(self):
         await game.equip_item(constants.WATERING_CAN)
-        async with server.player_status_stream() as stream:
-            player_status = await stream.next()
-            start_tile = player_status["tileX"], player_status["tileY"]
-            while True:
-                hoe_dirt_tiles = await game.get_hoe_dirt('')
-                tiles_to_water = [(hdt['tileX'], hdt['tileY']) for hdt in hoe_dirt_tiles if hdt['crop'] and not hdt['isWatered']]
-                if not tiles_to_water:
-                    return
-                player_status = await stream.next()
-                current_tile = player_status["tileX"], player_status["tileY"]
-                hoe_dirt_path = None
-                facing_direction = player_status['facingDirection']
-                for tile_x, tile_y in sorted(tiles_to_water, key=lambda t: game.next_crop_key(start_tile, current_tile, t, facing_direction)):
-                    try:
-                        hoe_dirt_path = await game.pathfind_to_adjacent(tile_x, tile_y, stream)
-                    except RuntimeError:
-                        continue
-                    else:
-                        await game.swing_tool()
-                        break
-                if not hoe_dirt_path:
-                    return
+        await game.modify_tiles(self.get_unwatered_crops, game.generic_next_item_key, game.swing_tool)
 
 class ClearDebrisObjective(Objective):
 
