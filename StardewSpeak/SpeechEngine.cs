@@ -196,6 +196,13 @@ namespace StardewSpeak
                         resp = Actions.EquipToolIfOnHotbar(item);
                         break;
                     }
+                case "EQUIP_ITEM_INDEX":
+                    {
+                        int index = data.index;
+                        Game1.player.CurrentToolIndex = index;
+                        resp = true;
+                        break;
+                    }
 
             }
             this.SendResponse(msgId, resp);

@@ -403,8 +403,26 @@ async def face_direction(direction: int, stream: server.Stream):
     await stream.wait(lambda s: s["facingDirection"] == direction, timeout=1)
 
 async def equip_item(item: str):
-    success = await server.request('EQUIP_ITEM', {"item": item})
-    return success
+    matched_index = None
+    row_size = 12
+    with server.player_items_stream(ticks=10) as stream, server.async_timeout.timeout(30):
+        while True:
+            items_info = await stream.next()
+            items = items_info['items']
+            for idx, inventory_item in enumerate(items):
+                if inventory_item and inventory_item['netName'] == item:
+                    matched_index = idx
+                    break
+            server.log('mi', matched_index)
+            if matched_index is None:
+                return False
+            else:
+                if items_info['currentToolIndex'] == matched_index:
+                    return True
+                if matched_index >= row_size:
+                    directinput.send(['tab'])
+                    continue
+                success = await server.request('EQUIP_ITEM_INDEX', {"index": matched_index})
 
 def generic_next_item_key(start_tile, current_tile, item, player_status):
     target_tile = item['tileX'], item['tileY']

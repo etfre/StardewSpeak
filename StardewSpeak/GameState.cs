@@ -34,6 +34,21 @@ namespace StardewSpeak
             return status;
         }
 
+        public static object PlayerItems() 
+        {
+            var items = Game1.player.Items.Select(i => {
+                if (i == null) return null;
+                return new
+                {
+                    netName = i.netName.Value,
+                    stack = i.Stack,
+                    displayName = i.DisplayName,
+                    name = i.Name
+                };
+             });
+            return new { currentToolIndex = Game1.player.CurrentToolIndex, items };
+        }
+
         public static object CharactersAtLocation(GameLocation location)
         {
             var chars = new List<dynamic>();
