@@ -114,6 +114,9 @@ def objective_action(objective_cls, *args):
     format_args = lambda **kw: [objective_cls(*[kw[a] for a in args])]
     return server.AsyncFunction(objective.new_active_objective, format_args=format_args)
 
+def function_objective(async_fn, *args):
+    format_args = lambda **kw: [objective.FunctionObjective(async_fn, *[kw[a] for a in args])]
+    return server.AsyncFunction(objective.new_active_objective, format_args=format_args)
 
 non_repeat_mapping = {
     "<direction_keys>": objective_action(objective.HoldKeyObjective, "direction_keys"),
@@ -131,4 +134,5 @@ non_repeat_mapping = {
     "hoe <n> by <n2>": objective_action(objective.HoePlotObjective, "n", "n2"),
     "equip <tools>": server.AsyncFunction(game.equip_item, format_args=lambda **kw: [kw['tools']]),
     "talk to <npcs>": objective_action(objective.TalkToNPCObjective, "npcs"),
+    "refill watering can": function_objective(game.refill_watering_can),
 }

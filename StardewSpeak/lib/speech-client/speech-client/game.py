@@ -444,7 +444,7 @@ def next_hoe_key(start_tile, current_tile, target_tile, player_status):
     score = score_objects_by_distance(start_tile, current_tile, target_tile)
     return score
 
-async def swing_tool(obj):
+async def swing_tool():
     with server.tool_status_stream(ticks=1) as tss:
         with press_and_release(constants.TOOL_KEY):
             await tss.wait(lambda t: t['inUse'], timeout=10)
@@ -501,3 +501,24 @@ async def find_npc_by_name(name: str, characters_stream):
         if char['name'] == name:
             return char
     raise RuntimeError(f'{name} is not in the current location')
+
+async def get_current_tile(stream: server.Stream):
+    ps = await stream.next()
+    current_tile = ps['tileX'], ps['tileY']
+    return current_tile
+
+async def refill_watering_can():
+    await equip_item(constants.WATERING_CAN)
+    water_tiles = await server.request('GET_WATER_TILES')
+    async with server.player_status_stream() as stream:
+        current_tile = await get_current_tile(stream)
+        water_tiles.sort(key=lambda t: distance_between_tiles(current_tile, t))
+        for wt in water_tiles:
+            try:
+                await pathfind_to_adjacent(wt[0], wt[1], stream)
+            except RuntimeError:
+                pass
+            else:
+                await swing_tool()
+                return True
+    return False

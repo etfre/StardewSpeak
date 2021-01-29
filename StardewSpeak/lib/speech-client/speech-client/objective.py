@@ -85,6 +85,15 @@ class Objective:
             msg = "Objective {self.__class__.__name__} failed"
         raise ObjectiveFailedError(msg)
 
+class FunctionObjective(Objective):
+
+    def __init__(self, fn, *a, **kw):
+        self.fn = fn
+        self.a = a
+        self.kw = kw
+
+    async def run(self):
+        await self.fn(*self.a, **self.kw)
 
 class HoldKeyObjective(Objective):
     def __init__(self, keys):
@@ -178,9 +187,12 @@ class WaterCropsObjective(Objective):
         tiles_to_water = [hdt for hdt in hoe_dirt_tiles if hdt['crop'] and not hdt['isWatered']]
         return tiles_to_water
 
+    async def at_tile(self, obj):
+        await game.swing_tool()
+
     async def run(self):
         await game.equip_item(constants.WATERING_CAN)
-        await game.modify_tiles(self.get_unwatered_crops, game.generic_next_item_key, game.swing_tool)
+        await game.modify_tiles(self.get_unwatered_crops, game.generic_next_item_key, self.at_tile)
 
 class ClearDebrisObjective(Objective):
 
@@ -195,7 +207,7 @@ class ClearDebrisObjective(Objective):
     async def at_tile(self, obj):
         needed_tool = game.tool_for_object[obj['name']]
         await game.equip_item(needed_tool)
-        await game.swing_tool(obj)
+        await game.swing_tool()
 
     async def run(self):
         await game.modify_tiles(self.get_debris, game.next_debris_key, self.at_tile)
@@ -205,6 +217,10 @@ class HoePlotObjective(Objective):
         self.n1 = n1
         self.n2 = n2
         server.log(n1, n2)
+
+    async def at_tile(self, obj):
+        await game.swing_tool()
+
 
     async def run(self):
         async with server.player_status_stream() as stream:
@@ -222,7 +238,7 @@ class HoePlotObjective(Objective):
                 y = start_tile[1] + j * y_increment
                 plot_tiles.add((x, y))
         get_next_diggable = functools.partial(game.get_diggable_tiles, plot_tiles)
-        await game.modify_tiles(get_next_diggable, game.generic_next_item_key, game.swing_tool)
+        await game.modify_tiles(get_next_diggable, game.generic_next_item_key, self.at_tile)
 
 class TaskWrapper:
 
