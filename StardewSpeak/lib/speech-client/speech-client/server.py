@@ -113,6 +113,9 @@ def on_warped_stream(ticks=1):
 def on_terrain_feature_list_changed_stream():
     return Stream("ON_TERRAIN_FEATURE_LIST_CHANGED", data={})
 
+def on_menu_changed_stream():
+    return Stream("ON_MENU_CHANGED")
+
 def create_stream_next_task(awaitable):
     async def to_call(awaitable):
         try:
@@ -151,6 +154,7 @@ def setup_async_loop():
     loop = asyncio.new_event_loop()
     def async_setup(l):
         l.set_exception_handler(exception_handler)
+        l.create_task(menu_changed())
         l.create_task(async_readline())
         l.create_task(heartbeat(3600))
         l.run_forever()
@@ -164,6 +168,11 @@ def setup_async_loop():
     async_thread = threading.Thread(target=async_setup, daemon=True, args=(loop,))
     async_thread.start()
 
+async def menu_changed():
+    async with on_menu_changed_stream() as stream:
+        while True:
+            changed_event = await stream.next()
+            log(changed_event)
 
 async def heartbeat(timeout):
     while True:

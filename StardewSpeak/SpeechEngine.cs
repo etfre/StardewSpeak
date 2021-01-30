@@ -205,7 +205,6 @@ namespace StardewSpeak
                     }
                 case "GET_WATER_TILES":
                     {
-                        //resp = Game1.player.currentLocation.water
                         bool[,] allTiles = Game1.player.currentLocation.waterTiles;
                         var wt = new List<List<int>>();
                         int width = allTiles.GetLength(0);

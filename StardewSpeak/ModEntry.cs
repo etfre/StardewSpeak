@@ -12,6 +12,7 @@ using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Buildings;
 using StardewValley.Tools;
+using StardewValley.Menus;
 
 namespace StardewSpeak
 {
@@ -31,6 +32,7 @@ namespace StardewSpeak
         public override void Entry(IModHelper helper)
         {
             helper.Events.Input.ButtonPressed += this.OnButtonPressed;
+            helper.Events.Display.MenuChanged += this.OnMenuChanged;
             helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
             helper.Events.Player.Warped += this.OnWarped;
             helper.Events.World.TerrainFeatureListChanged += this.OnTerrainFeatureListChanged;
@@ -62,6 +64,34 @@ namespace StardewSpeak
                 }
             }
             //this.speechEngine.SendEvent("ON_WARPED", warpEvent);
+        }
+
+        private void OnMenuChanged(object sender, MenuChangedEventArgs e) 
+        {
+            //e.OldMenu.
+            var serializedEvent = new
+            {
+                oldMenu = serializedMenu(e.OldMenu),
+                newMenu = serializedMenu(e.NewMenu),
+            };
+            this.MessageStreams("ON_MENU_CHANGED", serializedEvent);
+
+        }
+
+        private object serializedMenu(IClickableMenu menu) 
+        {
+            if (menu == null) return null;
+            var menuBarObj = new
+            {
+                menu.xPositionOnScreen
+            };
+            dynamic menuTypeObj = new { };
+            if (menu is ShopMenu) {
+                var sm = menu as ShopMenu;
+                menuTypeObj = new { downArrow = sm.downArrow.bounds };
+            }
+
+            return Utils.Merge(menuBarObj, menuTypeObj);
         }
 
         private void MessageStreams(string streamName, dynamic messageValue) 
