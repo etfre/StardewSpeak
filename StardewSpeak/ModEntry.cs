@@ -71,27 +71,11 @@ namespace StardewSpeak
             //e.OldMenu.
             var serializedEvent = new
             {
-                oldMenu = serializedMenu(e.OldMenu),
-                newMenu = serializedMenu(e.NewMenu),
+                oldMenu = Utils.serializedMenu(e.OldMenu),
+                newMenu = Utils.serializedMenu(e.NewMenu),
             };
             this.MessageStreams("ON_MENU_CHANGED", serializedEvent);
 
-        }
-
-        private object serializedMenu(IClickableMenu menu) 
-        {
-            if (menu == null) return null;
-            var menuBarObj = new
-            {
-                menu.xPositionOnScreen
-            };
-            dynamic menuTypeObj = new { };
-            if (menu is ShopMenu) {
-                var sm = menu as ShopMenu;
-                menuTypeObj = new { downArrow = sm.downArrow.bounds };
-            }
-
-            return Utils.Merge(menuBarObj, menuTypeObj);
         }
 
         private void MessageStreams(string streamName, dynamic messageValue) 

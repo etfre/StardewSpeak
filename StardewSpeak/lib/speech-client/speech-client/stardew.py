@@ -135,4 +135,6 @@ non_repeat_mapping = {
     "equip <tools>": server.AsyncFunction(game.equip_item, format_args=lambda **kw: [kw['tools']]),
     "talk to <npcs>": objective_action(objective.TalkToNPCObjective, "npcs"),
     "refill watering can": function_objective(game.refill_watering_can),
+    "scroll down": server.AsyncFunction(game.click_menu_button, format_args=lambda **kw: [constants.DOWN_ARROW]),
+    "mouse click": server.AsyncFunction(server.mouse_click, format_args=lambda **kw: []),
 }

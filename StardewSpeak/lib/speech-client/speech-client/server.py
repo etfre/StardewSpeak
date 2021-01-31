@@ -13,7 +13,7 @@ from dragonfly import *
 from srabuilder import rules
 
 # from actions import directinput
-from srabuilder.actions import directinput
+from srabuilder.actions import directinput, pydirectinput
 import constants
 
 loop = None
@@ -154,7 +154,7 @@ def setup_async_loop():
     loop = asyncio.new_event_loop()
     def async_setup(l):
         l.set_exception_handler(exception_handler)
-        l.create_task(menu_changed())
+        # l.create_task(menu_changed())
         l.create_task(async_readline())
         l.create_task(heartbeat(3600))
         l.run_forever()
@@ -250,7 +250,12 @@ def on_message(msg_str):
     else:
         raise RuntimeError(f"Unhandled message type from mod: {msg_type}")
 
+async def set_mouse_position(x: int, y: int):
+    await request('SET_MOUSE_POSITION', {'x': x, 'y': y})
 
+async def mouse_click(btn='left'):
+    await request('MOUSE_CLICK', {'btn': btn})
+    
 def handle_event(event_type, data):
     if event_type == "ON_WARPED":
         game_state.last_warp = data

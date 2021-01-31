@@ -46,3 +46,6 @@ SEBASTIAN = "Sebastian"
 SHANE = "Shane"
 VINCENT = "Vincent"
 WILLY = "Willy"
+
+DOWN_ARROW = 'downArrow'
+UP_ARROW = 'upArrow'

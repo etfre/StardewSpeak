@@ -1,4 +1,6 @@
 ﻿using Newtonsoft.Json;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using Newtonsoft.Json.Linq;
 using StardewSpeak.Pathfinder;
 using StardewModdingAPI;
@@ -221,6 +223,33 @@ namespace StardewSpeak
                             }
                         }
                         resp = wt;
+                        break;
+                    }
+                case "GET_ACTIVE_MENU":
+                    resp = Utils.serializedMenu(Game1.activeClickableMenu);
+                    break;
+                case "SET_MOUSE_POSITION":
+                    {
+                        int x = data.x;
+                        int y = data.y;
+                        Game1.setMousePosition(x, y);
+                        resp = true;
+                        break;
+                    }
+                case "MOUSE_CLICK":
+                    {
+                        var acm = Game1.activeClickableMenu;
+                        if (acm == null)
+                        {
+                            resp = false;
+                        }
+                        else
+                        {
+                            string btn = data.btn;
+                            acm.receiveLeftClick(Game1.getMouseX(), Game1.getMouseY());
+                            resp = true;
+                        }
+                        resp = true;
                         break;
                     }
             }

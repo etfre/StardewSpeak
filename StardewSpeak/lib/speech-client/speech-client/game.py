@@ -2,7 +2,7 @@ import time
 import collections
 import contextlib
 import asyncio
-from srabuilder.actions import directinput
+from srabuilder.actions import directinput, pydirectinput
 import server, constants, async_timeout
 
 last_faced_east_west = constants.WEST
@@ -522,3 +522,24 @@ async def refill_watering_can():
                 await swing_tool()
                 return True
     return False
+
+async def get_active_menu():
+    return await server.request('GET_ACTIVE_MENU')
+
+async def click_menu_button(button_property):
+    am = await get_active_menu()
+    if am is None:
+        return False
+    btn = am.get(button_property)
+    if btn is None:
+        return False
+    await click_component(btn)
+    return True
+
+
+async def click_component(clickable):
+    x, y = clickable['center']
+    await server.set_mouse_position(x, y)
+    await asyncio.sleep(2)
+    pydirectinput.click()
+    server.log(clickable)

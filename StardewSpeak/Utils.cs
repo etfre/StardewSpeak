@@ -9,11 +9,15 @@ using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
 using StardewModdingAPI;
 using StardewValley;
+using StardewValley.Menus;
+using System;
+using System.Runtime.InteropServices;
 
 namespace StardewSpeak
 {
     public static class Utils
     {
+
         public static bool IsTileHoeable(GameLocation location, int x, int y) 
         {
             var tile = new Vector2(x, y);
@@ -48,6 +52,37 @@ namespace StardewSpeak
             }
             return result;
         }
+        public static object serializedMenu(IClickableMenu menu)
+        {
+            if (menu == null) return null;
+            var menuBarObj = new
+            {
+                menu.xPositionOnScreen
+            };
+            dynamic menuTypeObj = new { };
+            if (menu is ShopMenu)
+            {
+                var sm = menu as ShopMenu;
+                menuTypeObj = new { downArrow = serializeClickableCmp(sm.downArrow) };
+            }
+
+            return Utils.Merge(menuBarObj, menuTypeObj);
+        }
+
+        public static object serializeClickableCmp(ClickableComponent cmp)
+        {
+            return new
+            {
+                cmp.bounds,
+                center = new List<int> { cmp.bounds.Center.X, cmp.bounds.Center.Y },
+                cmp.name,
+            };
+        }
+        public static void mouseClick() 
+        {
+        
+        }
+
     }
 
 }
