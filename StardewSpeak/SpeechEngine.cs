@@ -236,6 +236,14 @@ namespace StardewSpeak
                         resp = true;
                         break;
                     }
+                case "SET_MOUSE_POSITION_RELATIVE":
+                    {
+                        int x = data.x;
+                        int y = data.y;
+                        Game1.setMousePosition(Game1.getMouseX() + x, Game1.getMouseY() + y);
+                        resp = true;
+                        break;
+                    }
                 case "MOUSE_CLICK":
                     {
                         var acm = Game1.activeClickableMenu;

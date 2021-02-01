@@ -20,7 +20,19 @@ loop = None
 streams = weakref.WeakValueDictionary()
 mod_requests = {}
 
+ongoing_tasks = {} # not connected to an objective, slide mouse, swing tool etc
 
+async def start_ongoing_task(name, str, async_fn):
+    await stop_ongoing_task(name)
+    task_wrapper = TaskWrapper(async_fn())
+    ongoing_tasks[task]
+    
+
+async def stop_ongoing_task(name):
+    task = ongoing_tasks.get(name)
+    if task:
+        await task.cancel()
+        del ongoing_tasks[name]
 class Stream:
     def __init__(self, name, data=None):
         self.has_value = False
@@ -253,9 +265,12 @@ def on_message(msg_str):
 async def set_mouse_position(x: int, y: int):
     await request('SET_MOUSE_POSITION', {'x': x, 'y': y})
 
+async def set_mouse_position_relative(x: int, y: int):
+    await request('SET_MOUSE_POSITION_RELATIVE', {'x': x, 'y': y})
+
 async def mouse_click(btn='left'):
     await request('MOUSE_CLICK', {'btn': btn})
-    
+
 def handle_event(event_type, data):
     if event_type == "ON_WARPED":
         game_state.last_warp = data
@@ -275,3 +290,28 @@ async def cancel_task(task):
         await task
     except asyncio.CancelledError:
         pass
+
+
+class TaskWrapper:
+
+    def __init__(self, coro):
+        self.result = None
+        self.exception = None
+        self.done = False
+        self.task = loop.create_task(self.wrap_coro(coro))
+
+    # I don't understand asyncio task exception handling. So let's just catch any coroutine exceptions here and expose
+    # the result/exception through self.result and self.exception
+    async def wrap_coro(self, coro):
+        try:
+            self.result = await coro
+        except (asyncio.CancelledError, Exception) as e:
+            self.exception = e
+        self.done = True
+
+    async def cancel(self):
+        self.task.cancel()
+        try:
+            await self.task
+        except asyncio.CancelledError:
+            pass

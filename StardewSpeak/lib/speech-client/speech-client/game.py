@@ -543,3 +543,16 @@ async def click_component(clickable):
     await asyncio.sleep(2)
     pydirectinput.click()
     server.log(clickable)
+
+async def move_mouse_in_direction(direction: str, amount: int):
+    dx, dy = 0, 0
+    smallest_unit = 8
+    if direction == 'up':
+        dy = -amount
+    elif direction == 'right':
+        dx = amount
+    elif direction == 'down':
+        dy = amount
+    if direction == 'left':
+        dx = -amount
+    await server.set_mouse_position_relative(dx * smallest_unit, dy * smallest_unit)

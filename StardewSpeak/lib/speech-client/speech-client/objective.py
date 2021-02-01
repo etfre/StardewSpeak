@@ -38,7 +38,7 @@ class ObjectiveFailedError(BaseException):
 class Objective:
 
     def add_task(self, coro):
-        task_wrapper = TaskWrapper(coro)
+        task_wrapper = server.TaskWrapper(coro)
         self.tasks.append(task_wrapper)
         return task_wrapper
 
@@ -75,10 +75,6 @@ class Objective:
             await task_wrapper.cancel()
         if err:
             game.stop_moving()
-        await self.cleanup(err)
-
-    async def cleanup(self, exception):
-        pass
 
     def fail(self, msg=None):
         if msg is None:
@@ -137,12 +133,6 @@ class MoveNTilesObjective(Objective):
             path = await game.path_to_position(to_x, to_y, status['location'])
             await game.pathfind_to_position(path, stream)
 
-    async def cleanup(self, exception):
-        if exception:
-            async with server.player_status_stream() as stream:
-                await game.ensure_not_moving(stream)
-
-
 class MoveToPointObjective(Objective):
     def __init__(self):
         x, y, location = 68, 17, "Farm"
@@ -155,11 +145,6 @@ class MoveToPointObjective(Objective):
             await game.move_to_location(self.location, stream)
             path = await game.path_to_position(self.x, self.y, self.location)
             await game.pathfind_to_position(path, stream)
-
-    async def cleanup(self, exception):
-        if exception:
-            async with server.player_status_stream() as stream:
-                await game.ensure_not_moving(stream)
 
 class MoveToLocationObjective(Objective):
     def __init__(self, location):
@@ -240,29 +225,6 @@ class HoePlotObjective(Objective):
         get_next_diggable = functools.partial(game.get_diggable_tiles, plot_tiles)
         await game.modify_tiles(get_next_diggable, game.generic_next_item_key, self.at_tile)
 
-class TaskWrapper:
-
-    def __init__(self, coro):
-        self.result = None
-        self.exception = None
-        self.done = False
-        self.task = server.loop.create_task(self.wrap_coro(coro))
-
-    # I don't understand asyncio task exception handling. So let's just catch any coroutine exceptions here and expose
-    # the result/exception through self.result and self.exception
-    async def wrap_coro(self, coro):
-        try:
-            self.result = await coro
-        except (asyncio.CancelledError, Exception) as e:
-            self.exception = e
-        self.done = True
-
-    async def cancel(self):
-        self.task.cancel()
-        try:
-            await self.task
-        except asyncio.CancelledError:
-            pass
 
 class TalkToNPCObjective(Objective):
 

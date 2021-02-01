@@ -47,7 +47,12 @@ tools = {
     "scythe": constants.SCYTHE,
     "watering can": constants.WATERING_CAN,
 }
-repeat_mapping = {}
+mouse_directions = {
+    "up": "up",
+    "right": "right",
+    "down": "down",
+    "left": "left",
+}
 
 npcs = {
     'abigail': constants.ABIGAIL,
@@ -99,6 +104,7 @@ def rule_builder():
                 Choice("directions", directions),
                 Choice("tools", tools),
                 Choice("npcs", npcs),
+                Choice("mouse_directions", mouse_directions),
                 Choice("locations", locations.location_commands(locations.locations))
             ],
             defaults={"n": 1},
@@ -137,4 +143,5 @@ non_repeat_mapping = {
     "refill watering can": function_objective(game.refill_watering_can),
     "scroll down": server.AsyncFunction(game.click_menu_button, format_args=lambda **kw: [constants.DOWN_ARROW]),
     "mouse click": server.AsyncFunction(server.mouse_click, format_args=lambda **kw: []),
+    "[<n>] mouse <mouse_directions>": server.AsyncFunction(game.move_mouse_in_direction, format_args=lambda **kw: [kw['mouse_directions'], kw['n']]),
 }
