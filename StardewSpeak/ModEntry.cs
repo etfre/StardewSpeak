@@ -71,8 +71,8 @@ namespace StardewSpeak
             //e.OldMenu.
             var serializedEvent = new
             {
-                oldMenu = Utils.serializedMenu(e.OldMenu),
-                newMenu = Utils.serializedMenu(e.NewMenu),
+                oldMenu = Utils.SerializedMenu(e.OldMenu),
+                newMenu = Utils.SerializedMenu(e.NewMenu),
             };
             this.MessageStreams("ON_MENU_CHANGED", serializedEvent);
 

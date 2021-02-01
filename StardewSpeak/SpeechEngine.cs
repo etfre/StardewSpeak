@@ -226,7 +226,7 @@ namespace StardewSpeak
                         break;
                     }
                 case "GET_ACTIVE_MENU":
-                    resp = Utils.serializedMenu(Game1.activeClickableMenu);
+                    resp = Utils.SerializedMenu(Game1.activeClickableMenu);
                     break;
                 case "SET_MOUSE_POSITION":
                     {

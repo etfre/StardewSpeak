@@ -144,5 +144,8 @@ non_repeat_mapping = {
     "scroll down": server.AsyncFunction(game.click_menu_button, format_args=lambda **kw: [constants.DOWN_ARROW]),
     "mouse click": server.AsyncFunction(server.mouse_click, format_args=lambda **kw: []),
     "[<n>] mouse <mouse_directions>": server.AsyncFunction(game.move_mouse_in_direction, format_args=lambda **kw: [kw['mouse_directions'], kw['n']]),
-    "item <n>": server.AsyncFunction(menus.focus_item, format_args=lambda **kw: [kw['n']]),
+    "item <n>": server.AsyncFunction(menus.focus_item, format_args=lambda **kw: [None, kw['n'] - 1]),
+    "row <n>": server.AsyncFunction(menus.focus_item, format_args=lambda **kw: [kw['n'] - 1, None]),
+    "inventory": server.AsyncFunction(menus.set_item_grab_submenu, format_args=lambda **kw: ['inventoryMenu']),
+    "container": server.AsyncFunction(menus.set_item_grab_submenu, format_args=lambda **kw: ['itemsToGrabMenu']),
 }

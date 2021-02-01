@@ -12,6 +12,7 @@ using StardewValley;
 using StardewValley.Menus;
 using System;
 using System.Runtime.InteropServices;
+using Microsoft.Xna.Framework.Input;
 
 namespace StardewSpeak
 {
@@ -52,18 +53,26 @@ namespace StardewSpeak
             }
             return result;
         }
-        public static object serializedMenu(IClickableMenu menu)
+
+        public static object SerializedMenu(IClickableMenu menu) 
+        {
+            Point mousePosition = Game1.getMousePosition();
+            return SerializedMenu(menu, mousePosition);
+        }
+        public static object SerializedMenu(IClickableMenu menu, Point mousePosition)
         {
             if (menu == null) return null;
+            bool containsMouse = menu.isWithinBounds(mousePosition.X, mousePosition.Y);
             var menuBarObj = new
             {
-                menu.xPositionOnScreen
+                menu.xPositionOnScreen,
+                containsMouse
             };
             dynamic menuTypeObj = new { };
             if (menu is ShopMenu)
             {
                 var sm = menu as ShopMenu;
-                menuTypeObj = new { menuType = "shopMenu", downArrow = serializeClickableCmp(sm.downArrow) };
+                menuTypeObj = new { menuType = "shopMenu", downArrow = SerializeClickableCmp(sm.downArrow, mousePosition) };
             }
             else if (menu is InventoryMenu) 
             {
@@ -71,7 +80,7 @@ namespace StardewSpeak
                 menuTypeObj = new 
                 { 
                     menuType = "inventoryMenu",
-                    inventory = im.inventory.Select(x => Utils.serializeClickableCmp(x)),
+                    inventory = im.inventory.Select(x => Utils.SerializeClickableCmp(x, mousePosition)),
                     im.rows,
                     im.capacity,
                 };
@@ -81,10 +90,12 @@ namespace StardewSpeak
                 var igm = menu as ItemGrabMenu;
                 menuTypeObj = new
                 {
-                    menuType = "itemGrabMenu",
-                    trashCan = Utils.serializeClickableCmp(igm.trashCan),
-                    inventory = Utils.serializedMenu(igm.inventory),
-                    itemsToGrabMenu = Utils.serializedMenu(igm.ItemsToGrabMenu)
+                    menuType = "itemsToGrabMenu",
+                    trashCan = Utils.SerializeClickableCmp(igm.trashCan, mousePosition),
+                    inventoryMenu = Utils.SerializedMenu(igm.inventory, mousePosition),
+                    itemsToGrabMenu = Utils.SerializedMenu(igm.ItemsToGrabMenu, mousePosition),
+                    okButton = Utils.SerializeClickableCmp(igm.okButton, mousePosition),
+                    organizeButton = Utils.SerializeClickableCmp(igm.organizeButton, mousePosition),
                 };
 
             }
@@ -92,13 +103,16 @@ namespace StardewSpeak
             return Utils.Merge(menuBarObj, menuTypeObj);
         }
 
-        public static object serializeClickableCmp(ClickableComponent cmp)
+        public static object SerializeClickableCmp(ClickableComponent cmp, Point mousePosition)
         {
+            Rectangle bounds = cmp.bounds;
+            bool containsMouse = cmp.containsPoint(mousePosition.X, mousePosition.Y);
             return new
             {
-                cmp.bounds,
-                center = new List<int> { cmp.bounds.Center.X, cmp.bounds.Center.Y },
+                bounds = new { x = bounds.X, y = bounds.Y, width = bounds.Width, height = bounds.Height },
+                center = new List<int> { bounds.Center.X, bounds.Center.Y },
                 cmp.name,
+                containsMouse,
             };
         }
         public static void mouseClick() 

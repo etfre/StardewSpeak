@@ -153,6 +153,20 @@ class AsyncFunction(ActionBase):
             return call_soon(self.coro, *args)
         return call_soon(self.coro, **kwargs)
 
+class SyncFunction(ActionBase):
+    def __init__(self, fn, format_args=None):
+        super().__init__()
+        self.fn = fn
+        self.format_args = format_args
+
+    def execute(self, data=None):
+        assert isinstance(data, dict)
+        kwargs = {k: v for k, v in data.items() if not k.startswith("_")}
+        if self.format_args:
+            args = self.format_args(**kwargs)
+            return self.fn(*args)
+        return self.fn(**kwargs)
+
 def call_soon(coro, *args, **kw):
     loop.call_soon_threadsafe(_do_create_task, coro, *args, **kw)
 
