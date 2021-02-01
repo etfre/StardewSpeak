@@ -536,12 +536,14 @@ async def click_menu_button(button_property):
     await click_component(btn)
     return True
 
+async def focus_component(cmp):
+    x, y = cdp['center']
+    await server.set_mouse_position(x, y)
 
 async def click_component(clickable):
     x, y = clickable['center']
     await server.set_mouse_position(x, y)
-    await asyncio.sleep(2)
-    pydirectinput.click()
+    await server.mouse_click()
     server.log(clickable)
 
 async def move_mouse_in_direction(direction: str, amount: int):

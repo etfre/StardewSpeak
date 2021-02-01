@@ -63,7 +63,30 @@ namespace StardewSpeak
             if (menu is ShopMenu)
             {
                 var sm = menu as ShopMenu;
-                menuTypeObj = new { downArrow = serializeClickableCmp(sm.downArrow) };
+                menuTypeObj = new { menuType = "shopMenu", downArrow = serializeClickableCmp(sm.downArrow) };
+            }
+            else if (menu is InventoryMenu) 
+            {
+                var im = menu as InventoryMenu;
+                menuTypeObj = new 
+                { 
+                    menuType = "inventoryMenu",
+                    inventory = im.inventory.Select(x => Utils.serializeClickableCmp(x)),
+                    im.rows,
+                    im.capacity,
+                };
+            }
+            else if (menu is ItemGrabMenu) 
+            {
+                var igm = menu as ItemGrabMenu;
+                menuTypeObj = new
+                {
+                    menuType = "itemGrabMenu",
+                    trashCan = Utils.serializeClickableCmp(igm.trashCan),
+                    inventory = Utils.serializedMenu(igm.inventory),
+                    itemsToGrabMenu = Utils.serializedMenu(igm.ItemsToGrabMenu)
+                };
+
             }
 
             return Utils.Merge(menuBarObj, menuTypeObj);

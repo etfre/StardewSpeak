@@ -14,7 +14,7 @@ from dragonfly import *
 from srabuilder import rules
 
 from srabuilder.actions import directinput
-import constants, server, game, objective, locations
+import constants, server, game, objective, locations, menus
 
 
 direction_keys = {
@@ -144,4 +144,5 @@ non_repeat_mapping = {
     "scroll down": server.AsyncFunction(game.click_menu_button, format_args=lambda **kw: [constants.DOWN_ARROW]),
     "mouse click": server.AsyncFunction(server.mouse_click, format_args=lambda **kw: []),
     "[<n>] mouse <mouse_directions>": server.AsyncFunction(game.move_mouse_in_direction, format_args=lambda **kw: [kw['mouse_directions'], kw['n']]),
+    "item <n>": server.AsyncFunction(menus.focus_item, format_args=lambda **kw: [kw['n']]),
 }
