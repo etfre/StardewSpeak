@@ -537,14 +537,16 @@ async def click_menu_button(button_property):
     return True
 
 async def focus_component(cmp):
-    x, y = cdp['center']
+    x, y = cmp['center']
     await server.set_mouse_position(x, y)
 
-async def click_component(clickable):
-    x, y = clickable['center']
-    await server.set_mouse_position(x, y)
+async def click_component(cmp):
+    await focus_component(cmp)
+    await asyncio.sleep(0.1) # TODO some kind of mouse stream
     await server.mouse_click()
-    server.log(clickable)
+
+def find_component_by_field(list_of_components, field_name, field_value):
+    return next((x for x in list_of_components if x.get(field_name) == field_value), None)
 
 async def move_mouse_in_direction(direction: str, amount: int):
     dx, dy = 0, 0

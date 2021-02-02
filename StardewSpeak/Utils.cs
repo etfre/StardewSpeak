@@ -10,9 +10,9 @@ using Newtonsoft.Json;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Menus;
-using System;
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework.Input;
+using System.Reflection;
 
 namespace StardewSpeak
 {
@@ -54,18 +54,20 @@ namespace StardewSpeak
             return result;
         }
 
-        public static object SerializedMenu(IClickableMenu menu) 
+        public static object SerializeMenu(IClickableMenu menu) 
         {
             Point mousePosition = Game1.getMousePosition();
-            return SerializedMenu(menu, mousePosition);
+            return SerializeMenu(menu, mousePosition);
         }
-        public static object SerializedMenu(IClickableMenu menu, Point mousePosition)
+        public static object SerializeMenu(IClickableMenu menu, Point mousePosition)
         {
             if (menu == null) return null;
             bool containsMouse = menu.isWithinBounds(mousePosition.X, mousePosition.Y);
             var menuBarObj = new
             {
                 menu.xPositionOnScreen,
+                allClickableComponents = SerializeComponentList(menu.allClickableComponents, mousePosition),
+                menu.upperRightCloseButton,
                 containsMouse
             };
             dynamic menuTypeObj = new { };
@@ -74,33 +76,71 @@ namespace StardewSpeak
                 var sm = menu as ShopMenu;
                 menuTypeObj = new { menuType = "shopMenu", downArrow = SerializeClickableCmp(sm.downArrow, mousePosition) };
             }
-            else if (menu is InventoryMenu) 
+            else if (menu is InventoryMenu)
             {
                 var im = menu as InventoryMenu;
-                menuTypeObj = new 
-                { 
+                menuTypeObj = new
+                {
                     menuType = "inventoryMenu",
-                    inventory = im.inventory.Select(x => Utils.SerializeClickableCmp(x, mousePosition)),
+                    inventory = SerializeComponentList(im.inventory, mousePosition),
                     im.rows,
                     im.capacity,
                 };
             }
-            else if (menu is ItemGrabMenu) 
+            else if (menu is ItemGrabMenu)
             {
                 var igm = menu as ItemGrabMenu;
                 menuTypeObj = new
                 {
                     menuType = "itemsToGrabMenu",
                     trashCan = Utils.SerializeClickableCmp(igm.trashCan, mousePosition),
-                    inventoryMenu = Utils.SerializedMenu(igm.inventory, mousePosition),
-                    itemsToGrabMenu = Utils.SerializedMenu(igm.ItemsToGrabMenu, mousePosition),
+                    inventoryMenu = Utils.SerializeMenu(igm.inventory, mousePosition),
+                    itemsToGrabMenu = Utils.SerializeMenu(igm.ItemsToGrabMenu, mousePosition),
                     okButton = Utils.SerializeClickableCmp(igm.okButton, mousePosition),
                     organizeButton = Utils.SerializeClickableCmp(igm.organizeButton, mousePosition),
                 };
 
             }
+            else if (menu is TitleMenu)
+            {
+                var tm = menu as TitleMenu;
+                menuTypeObj = new
+                {
+                    menuType = "titleMenu",
+                    backButton = SerializeClickableCmp(tm.backButton, mousePosition),
+                    buttons = SerializeComponentList(tm.buttons, mousePosition),
+                    languageButton = SerializeClickableCmp(tm.languageButton, mousePosition),
+                    skipButton = SerializeClickableCmp(tm.skipButton, mousePosition),
+                    windowedButton = SerializeClickableCmp(tm.windowedButton, mousePosition),
+                    subMenu = SerializeMenu(TitleMenu.subMenu),
+                };
+            }
+            else if (menu is LoadGameMenu) 
+            {
+                var lgm = menu as LoadGameMenu;
+                int currentItemIndex = (int)GetPrivateField(lgm, "currentItemIndex");
+                menuTypeObj = new
+                {
+                    menuType = "loadGameMenu",
+                    currentItemIndex,
+                    deleteButtons = SerializeComponentList(lgm.deleteButtons, mousePosition),
+                    slotButtons = SerializeComponentList(lgm.slotButtons, mousePosition),
+                    upArrow = SerializeClickableCmp(lgm.upArrow, mousePosition),
+                    downArrow = SerializeClickableCmp(lgm.downArrow, mousePosition),
+                    lgm.deleteConfirmationScreen,
+                };
+            }
 
             return Utils.Merge(menuBarObj, menuTypeObj);
+        }
+
+        public static List<object> SerializeComponentList(List<ClickableComponent> components, Point mousePosition)
+        {
+            return components?.Select(x => SerializeClickableCmp(x, mousePosition)).ToList();
+        }
+
+        public static List<object> SerializeComponentList(List<ClickableTextureComponent> components, Point mousePosition) {
+            return components?.Select(x => SerializeClickableCmp(x, mousePosition)).ToList();
         }
 
         public static object SerializeClickableCmp(ClickableComponent cmp, Point mousePosition)
@@ -115,10 +155,12 @@ namespace StardewSpeak
                 containsMouse,
             };
         }
-        public static void mouseClick() 
+        public static object GetPrivateField(object obj, string fieldName) 
         {
-        
+            var value = obj.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(obj);
+            return value;
         }
+
 
     }
 

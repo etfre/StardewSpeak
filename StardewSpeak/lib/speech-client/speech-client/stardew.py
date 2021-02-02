@@ -14,7 +14,7 @@ from dragonfly import *
 from srabuilder import rules
 
 from srabuilder.actions import directinput
-import constants, server, game, objective, locations, menus
+import constants, server, game, objective, locations, menus, main_menu
 
 
 direction_keys = {
@@ -105,7 +105,8 @@ def rule_builder():
                 Choice("tools", tools),
                 Choice("npcs", npcs),
                 Choice("mouse_directions", mouse_directions),
-                Choice("locations", locations.location_commands(locations.locations))
+                Choice("locations", locations.location_commands(locations.locations)),
+                main_menu.main_button_choice,
             ],
             defaults={"n": 1},
         )
@@ -141,11 +142,13 @@ non_repeat_mapping = {
     "equip <tools>": server.AsyncFunction(game.equip_item, format_args=lambda **kw: [kw['tools']]),
     "talk to <npcs>": objective_action(objective.TalkToNPCObjective, "npcs"),
     "refill watering can": function_objective(game.refill_watering_can),
+    "scroll up": server.AsyncFunction(game.click_menu_button, format_args=lambda **kw: [constants.UP_ARROW]),
     "scroll down": server.AsyncFunction(game.click_menu_button, format_args=lambda **kw: [constants.DOWN_ARROW]),
-    "mouse click": server.AsyncFunction(server.mouse_click, format_args=lambda **kw: []),
+    "click": server.AsyncFunction(server.mouse_click, format_args=lambda **kw: []),
     "[<n>] mouse <mouse_directions>": server.AsyncFunction(game.move_mouse_in_direction, format_args=lambda **kw: [kw['mouse_directions'], kw['n']]),
     "item <n>": server.AsyncFunction(menus.focus_item, format_args=lambda **kw: [None, kw['n'] - 1]),
     "row <n>": server.AsyncFunction(menus.focus_item, format_args=lambda **kw: [kw['n'] - 1, None]),
     "inventory": server.AsyncFunction(menus.set_item_grab_submenu, format_args=lambda **kw: ['inventoryMenu']),
     "container": server.AsyncFunction(menus.set_item_grab_submenu, format_args=lambda **kw: ['itemsToGrabMenu']),
+    "<main_buttons> game": server.AsyncFunction(main_menu.click_main_button, format_args=lambda **kw: [kw['main_buttons']]),
 }

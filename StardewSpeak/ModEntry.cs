@@ -13,6 +13,7 @@ using StardewValley;
 using StardewValley.Buildings;
 using StardewValley.Tools;
 using StardewValley.Menus;
+using System.Reflection;
 
 namespace StardewSpeak
 {
@@ -71,8 +72,8 @@ namespace StardewSpeak
             //e.OldMenu.
             var serializedEvent = new
             {
-                oldMenu = Utils.SerializedMenu(e.OldMenu),
-                newMenu = Utils.SerializedMenu(e.NewMenu),
+                oldMenu = Utils.SerializeMenu(e.OldMenu),
+                newMenu = Utils.SerializeMenu(e.NewMenu),
             };
             this.MessageStreams("ON_MENU_CHANGED", serializedEvent);
 
@@ -123,6 +124,7 @@ namespace StardewSpeak
             //this.Monitor.Log(e.Button.ToString(), LogLevel.Debug);
             if (pressed == "R") {
                 var menu = Game1.activeClickableMenu;
+                var serializedMenu = Utils.SerializeMenu(Game1.activeClickableMenu);
             }
             else if (pressed == "L")
             {
