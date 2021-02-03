@@ -508,20 +508,21 @@ async def get_current_tile(stream: server.Stream):
     return current_tile
 
 async def refill_watering_can():
-    await equip_item(constants.WATERING_CAN)
-    water_tiles = await server.request('GET_WATER_TILES')
     async with server.player_status_stream() as stream:
-        current_tile = await get_current_tile(stream)
-        water_tiles.sort(key=lambda t: distance_between_tiles(current_tile, t))
-        for wt in water_tiles:
-            try:
-                await pathfind_to_adjacent(wt[0], wt[1], stream)
-            except RuntimeError:
-                pass
-            else:
-                await swing_tool()
-                return True
-    return False
+        path = await pathfind_to_nearest_water(stream)
+        if path is not None:
+            await equip_item(constants.WATERING_CAN)
+            await swing_tool()
+
+async def pathfind_to_nearest_water(stream: server.Stream):
+    water_tiles = await server.request('GET_WATER_TILES')
+    current_tile = await get_current_tile(stream)
+    water_tiles.sort(key=lambda t: distance_between_tiles(current_tile, t))
+    for wt in water_tiles:
+        try:
+            return await pathfind_to_adjacent(wt[0], wt[1], stream)
+        except RuntimeError:
+            pass
 
 async def move_mouse_in_direction(direction: str, amount: int):
     dx, dy = 0, 0

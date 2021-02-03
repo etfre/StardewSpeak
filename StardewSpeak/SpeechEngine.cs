@@ -14,6 +14,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using StardewValley.Menus;
 
 namespace StardewSpeak
 {
@@ -258,6 +259,23 @@ namespace StardewSpeak
                             resp = true;
                         }
                         resp = true;
+                        break;
+                    }
+                case "CATCH_FISH":
+                    {
+                        var am = Game1.activeClickableMenu;
+                        if (am is BobberBar) 
+                        {
+                            var bb = am as BobberBar;
+                            var distanceFromCatching = (float)Utils.GetPrivateField(bb, "distanceFromCatching");
+                            bool treasure = (bool)Utils.GetPrivateField(bb, "treasure");
+                            if (treasure)
+                            {
+                                Utils.SetPrivateField(bb, "treasureCaught", true);
+                            }
+                            Utils.SetPrivateField(bb, "distanceFromCatching", distanceFromCatching + 100);
+
+                        }
                         break;
                     }
             }

@@ -4,6 +4,7 @@ SOUTH = 2
 WEST = 3
 
 AXE = 'Axe'
+FISHING_ROD = 'Fishing Rod'
 HOE = 'Hoe'
 PICKAXE = 'Pickaxe'
 SCYTHE = 'Scythe'

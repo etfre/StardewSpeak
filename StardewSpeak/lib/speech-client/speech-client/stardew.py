@@ -14,7 +14,7 @@ from dragonfly import *
 from srabuilder import rules
 
 from srabuilder.actions import directinput
-import constants, server, game, objective, locations, container_menu, title_menu, menu_utils
+import constants, server, game, objective, locations, container_menu, title_menu, menu_utils, fishing_menu
 
 
 direction_keys = {
@@ -42,6 +42,7 @@ nums_to_keys = {
 directions = {k: k for k in direction_keys}
 tools = {
     "axe": constants.AXE,
+    "fishing rod": constants.FISHING_ROD,
     "hoe": constants.HOE,
     "pickaxe": constants.PICKAXE,
     "scythe": constants.SCYTHE,
@@ -166,4 +167,6 @@ non_repeat_mapping = {
     "container": async_action(container_menu.set_item_grab_submenu, 'itemsToGrabMenu'),
     "load game <n>": server.AsyncFunction(title_menu.load_game, format_args=lambda **kw: [kw['n'] - 1]),
     "<main_buttons> game": async_action(title_menu.click_main_button, 'main_buttons'),
+    "start fishing": async_action(fishing_menu.start_fishing),
+    "catch fish": async_action(fishing_menu.catch_fish),
 }

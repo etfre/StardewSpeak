@@ -1,5 +1,6 @@
 ﻿using StardewValley;
 using StardewValley.TerrainFeatures;
+using StardewValley.Tools;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -78,7 +79,21 @@ namespace StardewSpeak
                 baseName = tool.BaseName,
                 inUse = player.UsingTool,
             };
-            return status;
+            dynamic objDetails = new { };
+            if (tool is FishingRod) 
+            {
+                var fr = tool as FishingRod;
+                objDetails = new
+                {
+                    castingPower = fr.castingPower,
+                    fr.isNibbling,
+                    fr.isFishing,
+                    fr.isLostItem,
+                    fr.isReeling,
+                    fr.isTimingCast,
+                };
+            }
+            return Utils.Merge(status, objDetails);
         }
 
         public static object Trees() 

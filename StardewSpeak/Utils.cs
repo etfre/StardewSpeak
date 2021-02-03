@@ -181,6 +181,11 @@ namespace StardewSpeak
             return value;
         }
 
+        public static void SetPrivateField(object obj, string fieldName, dynamic value)
+        {
+            var field = obj.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
+            if (field != null) field.SetValue(obj, value);
+        }
 
     }
 
