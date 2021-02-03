@@ -17,9 +17,9 @@ def reset_item_grab_state():
 
 async def set_item_grab_submenu(submenu_name: str):
     assert submenu_name in ('inventoryMenu', 'itemsToGrabMenu')
-    menu = await game.get_active_menu()
+    menu = await menu_utils.get_active_menu()
     if not menu or menu['menuType'] != 'itemsToGrabMenu':
-        return
+        raise menu_utils.InvalidMenuOption()
     submenu = menu[submenu_name]
     if submenu['containsMouse']:
         return
@@ -29,9 +29,9 @@ async def set_item_grab_submenu(submenu_name: str):
     await menu_utils.focus_component(cmp)
 
 async def focus_item(new_row, new_col):
-    menu = await game.get_active_menu()
+    menu = await menu_utils.get_active_menu()
     if not menu or 'menuType' not in menu:
-        return
+        raise menu_utils.InvalidMenuOption()
     if menu['menuType'] == "itemsToGrabMenu":
         submenu_name = 'itemsToGrabMenu' if menu['itemsToGrabMenu']['containsMouse'] else 'inventoryMenu'
         submenu = menu[submenu_name]

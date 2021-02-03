@@ -523,32 +523,6 @@ async def refill_watering_can():
                 return True
     return False
 
-async def get_active_menu():
-    return await server.request('GET_ACTIVE_MENU')
-
-async def click_menu_button(button_property):
-    am = await get_active_menu()
-    server.log(am, button_property)
-    if am is None:
-        return False
-    btn = am.get(button_property)
-    if btn is None:
-        return False
-    await click_component(btn)
-    return True
-
-async def focus_component(cmp):
-    x, y = cmp['center']
-    await server.set_mouse_position(x, y)
-
-async def click_component(cmp):
-    await focus_component(cmp)
-    await asyncio.sleep(0.1) # TODO some kind of mouse stream
-    await server.mouse_click()
-
-def find_component_by_field(list_of_components, field_name, field_value):
-    return next((x for x in list_of_components if x.get(field_name) == field_value), None)
-
 async def move_mouse_in_direction(direction: str, amount: int):
     dx, dy = 0, 0
     smallest_unit = 8

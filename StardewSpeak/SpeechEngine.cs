@@ -278,7 +278,9 @@ namespace StardewSpeak
         public void SendMessage(string msgType, object data = null)     
         {
             var message = new MessageToEngine(msgType, data);
-            string msgStr = JsonConvert.SerializeObject(message);
+            var settings = new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
+            settings.Error = (serializer, err) => err.ErrorContext.Handled = true;
+            string msgStr = JsonConvert.SerializeObject(message, Formatting.None, settings);
             lock (this.StandardInLock) 
             {
                 this.Proc.StandardInput.WriteLine(msgStr);

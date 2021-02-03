@@ -14,7 +14,7 @@ from dragonfly import *
 from srabuilder import rules
 
 from srabuilder.actions import directinput
-import constants, server, game, objective, locations, container_menu, main_menu
+import constants, server, game, objective, locations, container_menu, main_menu, menu_utils
 
 
 direction_keys = {
@@ -142,8 +142,8 @@ non_repeat_mapping = {
     "equip <tools>": server.AsyncFunction(game.equip_item, format_args=lambda **kw: [kw['tools']]),
     "talk to <npcs>": objective_action(objective.TalkToNPCObjective, "npcs"),
     "refill watering can": function_objective(game.refill_watering_can),
-    "scroll up": server.AsyncFunction(game.click_menu_button, format_args=lambda **kw: [constants.UP_ARROW]),
-    "scroll down": server.AsyncFunction(game.click_menu_button, format_args=lambda **kw: [constants.DOWN_ARROW]),
+    "scroll up": server.AsyncFunction(menu_utils.click_menu_button, format_args=lambda **kw: [constants.UP_ARROW]),
+    "scroll down": server.AsyncFunction(menu_utils.click_menu_button, format_args=lambda **kw: [constants.DOWN_ARROW]),
     "click": server.AsyncFunction(server.mouse_click, format_args=lambda **kw: []),
     "[<n>] mouse <mouse_directions>": server.AsyncFunction(game.move_mouse_in_direction, format_args=lambda **kw: [kw['mouse_directions'], kw['n']]),
     "item <n>": server.AsyncFunction(container_menu.focus_item, format_args=lambda **kw: [None, kw['n'] - 1]),
