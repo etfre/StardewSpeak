@@ -21,3 +21,6 @@ def list_of_rows(cmps):
             rows.append([])
         rows[-1].append(cmp)
     return rows
+
+class InvalidMenuOption(Exception):
+    pass

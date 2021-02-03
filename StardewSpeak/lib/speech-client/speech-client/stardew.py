@@ -14,7 +14,7 @@ from dragonfly import *
 from srabuilder import rules
 
 from srabuilder.actions import directinput
-import constants, server, game, objective, locations, menus, main_menu
+import constants, server, game, objective, locations, container_menu, main_menu
 
 
 direction_keys = {
@@ -146,9 +146,10 @@ non_repeat_mapping = {
     "scroll down": server.AsyncFunction(game.click_menu_button, format_args=lambda **kw: [constants.DOWN_ARROW]),
     "click": server.AsyncFunction(server.mouse_click, format_args=lambda **kw: []),
     "[<n>] mouse <mouse_directions>": server.AsyncFunction(game.move_mouse_in_direction, format_args=lambda **kw: [kw['mouse_directions'], kw['n']]),
-    "item <n>": server.AsyncFunction(menus.focus_item, format_args=lambda **kw: [None, kw['n'] - 1]),
-    "row <n>": server.AsyncFunction(menus.focus_item, format_args=lambda **kw: [kw['n'] - 1, None]),
-    "inventory": server.AsyncFunction(menus.set_item_grab_submenu, format_args=lambda **kw: ['inventoryMenu']),
-    "container": server.AsyncFunction(menus.set_item_grab_submenu, format_args=lambda **kw: ['itemsToGrabMenu']),
+    "item <n>": server.AsyncFunction(container_menu.focus_item, format_args=lambda **kw: [None, kw['n'] - 1]),
+    "row <n>": server.AsyncFunction(container_menu.focus_item, format_args=lambda **kw: [kw['n'] - 1, None]),
+    "inventory": server.AsyncFunction(container_menu.set_item_grab_submenu, format_args=lambda **kw: ['inventoryMenu']),
+    "container": server.AsyncFunction(container_menu.set_item_grab_submenu, format_args=lambda **kw: ['itemsToGrabMenu']),
+    "load game <n>": server.AsyncFunction(main_menu.load_game, format_args=lambda **kw: [kw['n'] - 1]),
     "<main_buttons> game": server.AsyncFunction(main_menu.click_main_button, format_args=lambda **kw: [kw['main_buttons']]),
 }

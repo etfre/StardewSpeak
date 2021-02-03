@@ -528,6 +528,7 @@ async def get_active_menu():
 
 async def click_menu_button(button_property):
     am = await get_active_menu()
+    server.log(am, button_property)
     if am is None:
         return False
     btn = am.get(button_property)

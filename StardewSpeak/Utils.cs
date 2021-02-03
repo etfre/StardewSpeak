@@ -115,6 +115,26 @@ namespace StardewSpeak
                     subMenu = SerializeMenu(TitleMenu.subMenu),
                 };
             }
+            else if (menu is CharacterCustomization)
+            {
+                var ccm = menu as CharacterCustomization;
+                menuTypeObj = new
+                {
+                    menuType = "characterCustomizationMenu",
+                    backButton = SerializeClickableCmp(ccm.backButton, mousePosition),
+                    cabinLayoutButtons = SerializeComponentList(ccm.cabinLayoutButtons, mousePosition),
+                    farmTypeButtons = SerializeComponentList(ccm.farmTypeButtons, mousePosition),
+                    favThingBoxCC = SerializeClickableCmp(ccm.favThingBoxCC, mousePosition),
+                    farmnameBoxCC = SerializeClickableCmp(ccm.farmnameBoxCC, mousePosition),
+                    leftSelectionButtons = SerializeComponentList(ccm.leftSelectionButtons, mousePosition),
+                    nameBoxCC = SerializeClickableCmp(ccm.nameBoxCC, mousePosition),
+                    okButton = SerializeClickableCmp(ccm.okButton, mousePosition),
+                    petButtons = SerializeComponentList(ccm.petButtons, mousePosition),
+                    randomButton = SerializeClickableCmp(ccm.randomButton, mousePosition),
+                    rightSelectionButtons = SerializeComponentList(ccm.rightSelectionButtons, mousePosition),
+                    skipIntroButton = SerializeClickableCmp(ccm.skipIntroButton, mousePosition),
+                };
+            }
             else if (menu is LoadGameMenu) 
             {
                 var lgm = menu as LoadGameMenu;
