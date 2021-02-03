@@ -14,7 +14,7 @@ from dragonfly import *
 from srabuilder import rules
 
 from srabuilder.actions import directinput
-import constants, server, game, objective, locations, container_menu, main_menu, menu_utils
+import constants, server, game, objective, locations, container_menu, title_menu, menu_utils
 
 
 direction_keys = {
@@ -106,7 +106,7 @@ def rule_builder():
                 Choice("npcs", npcs),
                 Choice("mouse_directions", mouse_directions),
                 Choice("locations", locations.location_commands(locations.locations)),
-                main_menu.main_button_choice,
+                title_menu.main_button_choice,
             ],
             defaults={"n": 1},
         )
@@ -125,10 +125,24 @@ def function_objective(async_fn, *args):
     format_args = lambda **kw: [objective.FunctionObjective(async_fn, *[kw[a] for a in args])]
     return server.AsyncFunction(objective.new_active_objective, format_args=format_args)
 
+def async_action(async_fn, *args):
+
+    def format_args(**kw):
+        formatted_args = []
+        for a in args:
+            try:
+                formatted_arg = kw.get(a, a)
+            except TypeError:
+                formatted_arg = a
+            formatted_args.append(formatted_arg)
+        return formatted_args
+
+    return server.AsyncFunction(async_fn, format_args=format_args)
+
 non_repeat_mapping = {
     "<direction_keys>": objective_action(objective.HoldKeyObjective, "direction_keys"),
     "face <direction_nums>": objective_action(objective.FaceDirectionObjective, "direction_nums"),
-    "stop": server.AsyncFunction(server.stop_everything, format_args=lambda **kw: []),
+    "stop": async_action(server.stop_everything),
     "swing": Function(lambda: directinput.send("c")),
     "(action|check)": Function(lambda: directinput.send("x")),
     "(escape | menu)": Function(lambda: directinput.send("esc")),
@@ -139,17 +153,17 @@ non_repeat_mapping = {
     "water crops": objective_action(objective.WaterCropsObjective),
     "clear debris": objective_action(objective.ClearDebrisObjective),
     "hoe <n> by <n2>": objective_action(objective.HoePlotObjective, "n", "n2"),
-    "equip <tools>": server.AsyncFunction(game.equip_item, format_args=lambda **kw: [kw['tools']]),
+    "equip <tools>": async_action(game.equip_item, 'tools'),
     "talk to <npcs>": objective_action(objective.TalkToNPCObjective, "npcs"),
     "refill watering can": function_objective(game.refill_watering_can),
-    "scroll up": server.AsyncFunction(menu_utils.click_menu_button, format_args=lambda **kw: [constants.UP_ARROW]),
-    "scroll down": server.AsyncFunction(menu_utils.click_menu_button, format_args=lambda **kw: [constants.DOWN_ARROW]),
-    "click": server.AsyncFunction(server.mouse_click, format_args=lambda **kw: []),
-    "[<n>] mouse <mouse_directions>": server.AsyncFunction(game.move_mouse_in_direction, format_args=lambda **kw: [kw['mouse_directions'], kw['n']]),
+    "scroll up": async_action(menu_utils.try_menus, [menu_utils.click_menu_button, title_menu.click_submenu_button], constants.UP_ARROW),
+    "scroll down": async_action(menu_utils.try_menus, [menu_utils.click_menu_button, title_menu.click_submenu_button], constants.DOWN_ARROW),
+    "click": async_action(server.mouse_click),
+    "[<n>] mouse <mouse_directions>": async_action(game.move_mouse_in_direction, 'mouse_directions', 'n'),
     "item <n>": server.AsyncFunction(container_menu.focus_item, format_args=lambda **kw: [None, kw['n'] - 1]),
     "row <n>": server.AsyncFunction(container_menu.focus_item, format_args=lambda **kw: [kw['n'] - 1, None]),
-    "inventory": server.AsyncFunction(container_menu.set_item_grab_submenu, format_args=lambda **kw: ['inventoryMenu']),
-    "container": server.AsyncFunction(container_menu.set_item_grab_submenu, format_args=lambda **kw: ['itemsToGrabMenu']),
-    "load game <n>": server.AsyncFunction(main_menu.load_game, format_args=lambda **kw: [kw['n'] - 1]),
-    "<main_buttons> game": server.AsyncFunction(main_menu.click_main_button, format_args=lambda **kw: [kw['main_buttons']]),
+    "inventory": async_action(container_menu.set_item_grab_submenu, 'inventoryMenu'),
+    "container": async_action(container_menu.set_item_grab_submenu, 'itemsToGrabMenu'),
+    "load game <n>": server.AsyncFunction(title_menu.load_game, format_args=lambda **kw: [kw['n'] - 1]),
+    "<main_buttons> game": async_action(title_menu.click_main_button, 'main_buttons'),
 }

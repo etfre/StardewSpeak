@@ -11,18 +11,23 @@ async def click_main_button(btn_name: str):
     await menu_utils.click_component(button)
 
 async def load_game(game_idx: int):
-    menu = await get_submenu()
-    if menu['menuType'] != 'loadGameMenu':
-        raise menu_utils.InvalidMenuOption()
-    button_index = game_idx + menu['currentItemIndex']
+    menu = await get_submenu('loadGameMenu')
+    button_index = game_idx - menu['currentItemIndex']
     try:
         btn = menu['slotButtons'][button_index]
     except IndexError:
         return
     await menu_utils.click_component(btn)
 
-async def get_submenu():
+async def get_submenu(menuType=None):
     menu = await menu_utils.get_active_menu()
     if not menu or menu['menuType'] != 'titleMenu' or not menu.get('subMenu') :
         raise menu_utils.InvalidMenuOption()
-    return menu.get('subMenu')
+    submenu = menu.get('subMenu')
+    if not submenu or (menuType is not None and submenu['menuType'] != menuType):
+        raise menu_utils.InvalidMenuOption()
+    return submenu
+
+async def click_submenu_button(button_name):
+    menu_getter = get_submenu
+    await menu_utils.click_menu_button(button_name, menu_getter=menu_getter)

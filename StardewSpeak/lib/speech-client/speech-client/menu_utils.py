@@ -23,12 +23,15 @@ def list_of_rows(cmps):
         rows[-1].append(cmp)
     return rows
 
-async def click_menu_button(button_property):
-    am = await get_active_menu()
-    server.log(am, button_property)
-    if am is None:
+async def get_active_menu():
+    return await server.request('GET_ACTIVE_MENU')
+
+async def click_menu_button(button_property, menu_getter=get_active_menu):
+    menu = await menu_getter()
+    server.log(menu, button_property)
+    if menu is None:
         raise InvalidMenuOption()
-    btn = am.get(button_property)
+    btn = menu.get(button_property)
     if btn is None:
         raise InvalidMenuOption()
     await click_component(btn)
@@ -43,8 +46,15 @@ async def click_component(cmp):
     await server.mouse_click()
 
 
-async def get_active_menu():
-    return await server.request('GET_ACTIVE_MENU')
+
+async def try_menus(try_fns, *a):
+    for fn in try_fns:
+        try:
+            await fn(*a)
+        except InvalidMenuOption:
+            pass
+        else:
+            return
 
 class InvalidMenuOption(Exception):
     pass
