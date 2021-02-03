@@ -128,7 +128,7 @@ def function_objective(async_fn, *args):
 non_repeat_mapping = {
     "<direction_keys>": objective_action(objective.HoldKeyObjective, "direction_keys"),
     "face <direction_nums>": objective_action(objective.FaceDirectionObjective, "direction_nums"),
-    "stop": server.AsyncFunction(objective.cancel_active_objective, format_args=lambda **kw: []),
+    "stop": server.AsyncFunction(server.stop_everything, format_args=lambda **kw: []),
     "swing": Function(lambda: directinput.send("c")),
     "(action|check)": Function(lambda: directinput.send("x")),
     "(escape | menu)": Function(lambda: directinput.send("esc")),

@@ -20,19 +20,36 @@ loop = None
 streams = {}
 mod_requests = {}
 
-ongoing_tasks = {} # not connected to an objective, slide mouse, swing tool etc
+ongoing_tasks = {} # not connected to an objective, slide mouse, swing sword etc
 
 async def start_ongoing_task(name, str, async_fn):
     await stop_ongoing_task(name)
-    task_wrapper = TaskWrapper(async_fn())
-    ongoing_tasks[task]
+    async def to_call(awaitable):
+        try:
+            await awaitable
+        except (Exception, BaseException):
+            raise
+        finally:
+            del ongoing_tasks[name]
+    wrapped_coro = async_fn()
+    coro = to_call(wrapped_coro)
+    task_wrapper = TaskWrapper(coro)
+    ongoing_tasks[task_wrapper]
     
 
 async def stop_ongoing_task(name):
     task = ongoing_tasks.get(name)
     if task:
         await task.cancel()
-        del ongoing_tasks[name]
+
+async def stop_all_ongoing_tasks():
+    cancel_awaitables = [t.cancel() for t in ongoing_tasks.values()]
+    await asyncio.gather(*cancel_awaitables)
+
+async def stop_everything():
+    import objective
+    await asyncio.gather(stop_all_ongoing_tasks(), objective.cancel_active_objective())
+
 class Stream:
     def __init__(self, name, data=None):
         self.has_value = False
