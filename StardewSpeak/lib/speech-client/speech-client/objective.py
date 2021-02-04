@@ -196,6 +196,21 @@ class ClearDebrisObjective(Objective):
 
     async def run(self):
         await game.modify_tiles(self.get_debris, game.next_debris_key, self.at_tile)
+
+class PlantSeedsOrFertilizerObjective(Objective):
+
+    def __init__(self):
+        pass
+
+    async def get_hoe_dirt(self, location: str):
+        hoe_dirt_tiles = await game.get_hoe_dirt('')
+        return [x for x in hoe_dirt_tiles if x['canPlantThisSeedHere']]
+
+    async def at_tile(self, obj):
+        await game.do_action()
+
+    async def run(self):
+        await game.modify_tiles(self.get_hoe_dirt, game.generic_next_item_key, self.at_tile)
 class HoePlotObjective(Objective):
 
     def __init__(self, n1, n2):

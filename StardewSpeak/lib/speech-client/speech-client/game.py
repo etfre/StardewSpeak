@@ -459,12 +459,16 @@ async def modify_tiles(get_items, sort_items, at_tile):
     async with server.player_status_stream() as stream:
         player_status = await stream.next()
         start_tile = player_status["tileX"], player_status["tileY"]
+        previous_item_count = -1
         while True:
             player_status = await stream.next()
             current_tile = player_status["tileX"], player_status["tileY"]
             items = await get_items(player_status['location'])
             if not items:
                 return
+            if previous_item_count == len(items):
+                raise RuntimeError('Unable to modify current tile')
+            previous_item_count = len(items)
             item_path = None
             for item in sorted(items, key=lambda t: sort_items(start_tile, current_tile, t, player_status)):
                 try:

@@ -13,13 +13,14 @@ using StardewValley.Menus;
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework.Input;
 using System.Reflection;
+using StardewValley.TerrainFeatures;
 
 namespace StardewSpeak
 {
     public static class Utils
     {
 
-        public static bool IsTileHoeable(GameLocation location, int x, int y) 
+        public static bool IsTileHoeable(GameLocation location, int x, int y)
         {
             var tile = new Vector2(x, y);
             if (location.terrainFeatures.ContainsKey(tile) || location.objects.ContainsKey(tile)) return false;
@@ -54,7 +55,7 @@ namespace StardewSpeak
             return result;
         }
 
-        public static object SerializeMenu(IClickableMenu menu) 
+        public static object SerializeMenu(IClickableMenu menu)
         {
             Point mousePosition = Game1.getMousePosition();
             return SerializeMenu(menu, mousePosition);
@@ -135,7 +136,7 @@ namespace StardewSpeak
                     skipIntroButton = SerializeClickableCmp(ccm.skipIntroButton, mousePosition),
                 };
             }
-            else if (menu is LoadGameMenu) 
+            else if (menu is LoadGameMenu)
             {
                 var lgm = menu as LoadGameMenu;
                 int currentItemIndex = (int)GetPrivateField(lgm, "currentItemIndex");
@@ -159,7 +160,8 @@ namespace StardewSpeak
             return components?.Select(x => SerializeClickableCmp(x, mousePosition)).ToList();
         }
 
-        public static List<object> SerializeComponentList(List<ClickableTextureComponent> components, Point mousePosition) {
+        public static List<object> SerializeComponentList(List<ClickableTextureComponent> components, Point mousePosition)
+        {
             return components?.Select(x => SerializeClickableCmp(x, mousePosition)).ToList();
         }
 
@@ -175,7 +177,7 @@ namespace StardewSpeak
                 containsMouse,
             };
         }
-        public static object GetPrivateField(object obj, string fieldName) 
+        public static object GetPrivateField(object obj, string fieldName)
         {
             var value = obj.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(obj);
             return value;
@@ -187,6 +189,29 @@ namespace StardewSpeak
             if (field != null) field.SetValue(obj, value);
         }
 
-    }
+        public static Item EquippedItem()
+        {
+            var player = Game1.player;
+            return player.Items[player.CurrentToolIndex];
+        }
 
+        public static bool CanPlantOnHoeDirt(HoeDirt hd)
+        {
+            Item currentItem = Game1.player.ActiveObject;
+            if (currentItem == null) return false;
+            bool equippedFertilizer = currentItem.Category == -19;
+            int objIndex = currentItem.ParentSheetIndex;
+            int fertilizer = hd.fertilizer.Value;
+            Vector2 tileLocation = hd.currentTileLocation;
+            int tileX = (int)tileLocation.X;
+            int tileY = (int)tileLocation.Y;
+            if (equippedFertilizer)
+            {
+                // canPlantThisSeedHere fertilizer test doesn't account for existing crops
+                bool emptyOrUngrownCrop = hd.crop == null || hd.crop.currentPhase == 0;
+                return emptyOrUngrownCrop && fertilizer == 0;
+            }
+            return hd.canPlantThisSeedHere((int)objIndex, tileX, tileY, false);
+        }
+    }
 }

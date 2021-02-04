@@ -151,6 +151,7 @@ non_repeat_mapping = {
     "go to mailbox": objective_action(objective.MoveToPointObjective),
     "go to <locations>": objective_action(objective.MoveToLocationObjective, "locations"),
     "start chopping trees": objective_action(objective.ChopTreesObjective),
+    "start planting": objective_action(objective.PlantSeedsOrFertilizerObjective),
     "water crops": objective_action(objective.WaterCropsObjective),
     "clear debris": objective_action(objective.ClearDebrisObjective),
     "hoe <n> by <n2>": objective_action(objective.HoePlotObjective, "n", "n2"),

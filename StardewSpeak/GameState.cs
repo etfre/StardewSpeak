@@ -123,12 +123,16 @@ namespace StardewSpeak
                 if (tf is HoeDirt)
                 {
                     var dirtTile = tf as HoeDirt;
-                    var crop = dirtTile.crop == null ? null : new { dead = dirtTile.crop.dead.Value, fullyGrown = dirtTile.crop.fullyGrown.Value };
+                    var crop = dirtTile.crop == null ? null : new { dirtTile.crop.currentPhase, dead = dirtTile.crop.dead.Value, fullyGrown = dirtTile.crop.fullyGrown.Value };
+                    int fertilizer = dirtTile.fertilizer.Value;
                     var tileLocation = dirtTile.currentTileLocation;
+                    var tileX = (int)tileLocation.X;
+                    var tileY = (int)tileLocation.Y;
+                    bool canPlantThisSeedHere = Utils.CanPlantOnHoeDirt(dirtTile);
                     var readyForHarvest = dirtTile.readyForHarvest();
                     var isWatered = dirtTile.state.Value == 1;
                     var needsWatering = dirtTile.needsWatering();
-                    features.Add(new { type = "hoeDirt", readyForHarvest, isWatered, needsWatering, tileX = (int)tileLocation.X, tileY = (int)tileLocation.Y, crop });
+                    features.Add(new { type = "hoeDirt", readyForHarvest, fertilizer, isWatered, needsWatering, tileX, tileY, crop, canPlantThisSeedHere });
                 }
                 else
                 {
