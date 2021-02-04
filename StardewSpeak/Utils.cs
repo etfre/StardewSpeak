@@ -189,29 +189,23 @@ namespace StardewSpeak
             if (field != null) field.SetValue(obj, value);
         }
 
-        public static Item EquippedItem()
-        {
-            var player = Game1.player;
-            return player.Items[player.CurrentToolIndex];
-        }
-
         public static bool CanPlantOnHoeDirt(HoeDirt hd)
         {
             Item currentItem = Game1.player.ActiveObject;
             if (currentItem == null) return false;
             bool equippedFertilizer = currentItem.Category == -19;
-            int objIndex = currentItem.ParentSheetIndex;
-            int fertilizer = hd.fertilizer.Value;
-            Vector2 tileLocation = hd.currentTileLocation;
-            int tileX = (int)tileLocation.X;
-            int tileY = (int)tileLocation.Y;
+            // canPlantThisSeedHere fertilizer test doesn't account for existing crops
             if (equippedFertilizer)
             {
-                // canPlantThisSeedHere fertilizer test doesn't account for existing crops
+                int fertilizer = hd.fertilizer.Value;
                 bool emptyOrUngrownCrop = hd.crop == null || hd.crop.currentPhase == 0;
                 return emptyOrUngrownCrop && fertilizer == 0;
             }
-            return hd.canPlantThisSeedHere((int)objIndex, tileX, tileY, false);
+            int objIndex = currentItem.ParentSheetIndex;
+            Vector2 tileLocation = hd.currentTileLocation;
+            int tileX = (int)tileLocation.X;
+            int tileY = (int)tileLocation.Y;
+            return hd.canPlantThisSeedHere(objIndex, tileX, tileY, false);
         }
     }
 }

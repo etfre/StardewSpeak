@@ -14,7 +14,7 @@ from dragonfly import *
 from srabuilder import rules
 
 from srabuilder.actions import directinput
-import constants, server, game, objective, locations, container_menu, title_menu, menu_utils, fishing_menu
+import constants, server, game, objective, locations, container_menu, title_menu, menu_utils, fishing_menu, letters
 
 
 direction_keys = {
@@ -108,6 +108,7 @@ def rule_builder():
                 Choice("mouse_directions", mouse_directions),
                 Choice("locations", locations.location_commands(locations.locations)),
                 title_menu.main_button_choice,
+                letters.letters
             ],
             defaults={"n": 1},
         )
@@ -126,19 +127,24 @@ def function_objective(async_fn, *args):
     format_args = lambda **kw: [objective.FunctionObjective(async_fn, *[kw[a] for a in args])]
     return server.AsyncFunction(objective.new_active_objective, format_args=format_args)
 
+
+def format_args(args, **kw):
+    formatted_args = []
+    for a in args:
+        try:
+            formatted_arg = kw.get(a, a)
+        except TypeError:
+            formatted_arg = a
+        formatted_args.append(formatted_arg)
+    return formatted_args
+
+def sync_action(fn, *args):
+    format_args_fn = functools.partial(format_args, args)
+    return server.SyncFunction(fn, format_args=format_args_fn)
+
 def async_action(async_fn, *args):
-
-    def format_args(**kw):
-        formatted_args = []
-        for a in args:
-            try:
-                formatted_arg = kw.get(a, a)
-            except TypeError:
-                formatted_arg = a
-            formatted_args.append(formatted_arg)
-        return formatted_args
-
-    return server.AsyncFunction(async_fn, format_args=format_args)
+    format_args_fn = functools.partial(format_args, args)
+    return server.AsyncFunction(async_fn, format_args=format_args_fn)
 
 non_repeat_mapping = {
     "<direction_keys>": objective_action(objective.HoldKeyObjective, "direction_keys"),
@@ -170,4 +176,6 @@ non_repeat_mapping = {
     "<main_buttons> game": async_action(title_menu.click_main_button, 'main_buttons'),
     "start fishing": async_action(fishing_menu.start_fishing),
     "catch fish": async_action(fishing_menu.catch_fish),
+    "(letter | letters | lowercase) <letters>": Function(lambda **kw: letters.type_letters(kw['letters'])),
+    "(capital | uppercase) <letters>": Function(lambda **kw: letters.type_letters(kw['letters'].upper())),
 }
