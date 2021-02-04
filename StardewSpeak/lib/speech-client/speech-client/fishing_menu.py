@@ -22,6 +22,6 @@ async def wait_for_nibble():
     with server.tool_status_stream() as tss:
         await tss.wait(lambda t: t['isNibbling'])
         game.press_key(constants.TOOL_KEY)
-        await tss.wait(lambda t: t['isReeling'])
+        await tss.wait(lambda t: t['isReeling'], timeout=5)
 
 
