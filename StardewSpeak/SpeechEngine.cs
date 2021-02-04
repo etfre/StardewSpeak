@@ -210,16 +210,19 @@ namespace StardewSpeak
                     {
                         bool[,] allTiles = Game1.player.currentLocation.waterTiles;
                         var wt = new List<List<int>>();
-                        int width = allTiles.GetLength(0);
-                        int height = allTiles.GetLength(1);
-                        for (int x = 0; x < width; x++)
-                        {
-                            for (int y = 0; y < height; y++)
+                        if (allTiles != null) {
+                            int width = allTiles.GetLength(0);
+                            int height = allTiles.GetLength(1);
+                            for (int x = 0; x < width; x++)
                             {
-                                bool isWaterTile = allTiles[x, y];
-                                if (isWaterTile) {
-                                    var tile = new List<int> { x, y };
-                                    wt.Add(tile);
+                                for (int y = 0; y < height; y++)
+                                {
+                                    bool isWaterTile = allTiles[x, y];
+                                    if (isWaterTile)
+                                    {
+                                        var tile = new List<int> { x, y };
+                                        wt.Add(tile);
+                                    }
                                 }
                             }
                         }

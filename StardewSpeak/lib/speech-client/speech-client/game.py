@@ -352,6 +352,8 @@ def facing_tile_center(player_status):
         return x - offset_from_mid >= 0
     return False
 
+def press_key(key: str):
+    directinput.send([key])
 
 @contextlib.contextmanager
 def press_and_release(keys):
@@ -523,6 +525,7 @@ async def pathfind_to_nearest_water(stream: server.Stream):
             return await pathfind_to_adjacent(wt[0], wt[1], stream)
         except RuntimeError:
             pass
+    raise RuntimeError('Cannot access any water tiles in the current location')
 
 async def move_mouse_in_direction(direction: str, amount: int):
     dx, dy = 0, 0
