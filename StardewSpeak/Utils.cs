@@ -69,7 +69,8 @@ namespace StardewSpeak
                 menu.xPositionOnScreen,
                 allClickableComponents = SerializeComponentList(menu.allClickableComponents, mousePosition),
                 menu.upperRightCloseButton,
-                containsMouse
+                containsMouse,
+                menuType = "unknown",
             };
             dynamic menuTypeObj = new { };
             if (menu is ShopMenu)

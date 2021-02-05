@@ -217,10 +217,40 @@ def setup_async_loop():
     async_thread = threading.Thread(target=async_setup, daemon=True, args=(loop,))
     async_thread.start()
 
+async def request_active_menu_with_delay():
+    import menu_utils
+    await asyncio.sleep(1)
+    menu = await menu_utils.get_active_menu()
+    return menu
+
 async def menu_changed():
-    async with on_menu_changed_stream() as stream:
+    import game
+
+    async with on_menu_changed_stream() as mcs:
         while True:
-            changed_event = await stream.next()
+            changed_event_coro, active_menu_coro = mcs.next(), request_active_menu_with_delay()
+            done, pending = await asyncio.wait([changed_event_coro, active_menu_coro], return_when=asyncio.FIRST_COMPLETED)
+            done_task = list(done)[0]
+            done_coro = done_task.get_coro()
+            if done_coro == changed_event_coro:
+                new_menu = done_task.result()['newMenu']
+            else:
+                new_menu = done_task.result()
+            current_menu = game.context_variables['ACTIVE_MENU']
+            is_new_menu = not is_same_menu(current_menu, new_menu)
+            if is_new_menu:
+                await game.on_menu_changed(new_menu)
+
+def is_same_menu(menu1, menu2):
+    if (menu1, menu2) == (None, None):
+        return True
+    if (menu1, menu2).count(None) == 1:
+        return False
+    if menu1['menuType'] != menu2['menuType']:
+        return False
+    if menu1['menuType'] == 'titleMenu':
+        return is_same_menu(menu1['subMenu'], menu2['subMenu'])
+    return True
 
 async def heartbeat(timeout):
     while True:

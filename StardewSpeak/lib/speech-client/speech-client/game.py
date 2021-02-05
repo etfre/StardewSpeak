@@ -37,6 +37,9 @@ directions = {k: k for k in direction_keys}
 
 DEBRIS = [constants.WEEDS, constants.TWIG, constants.STONE]
 
+context_variables = {
+    'ACTIVE_MENU': None
+}
 
 class Path:
     def __init__(self, mod_path, location: str):
@@ -543,3 +546,8 @@ async def move_mouse_in_direction(direction: str, amount: int):
     if direction == 'left':
         dx = -amount
     await server.set_mouse_position_relative(dx * smallest_unit, dy * smallest_unit)
+
+async def on_menu_changed(new_menu):
+    context_variables['ACTIVE_MENU'] = new_menu
+    server.log(new_menu)
+    await server.stop_everything()
