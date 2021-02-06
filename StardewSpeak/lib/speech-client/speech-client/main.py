@@ -25,7 +25,7 @@ from dragonfly.log import setup_log
 from srabuilder import sleep, environment
 import srabuilder
 
-import stardew
+import stardew, new_game_menu
 
 
 # --------------------------------------------------------------------------
@@ -72,6 +72,7 @@ def main(args):
         (startdew_context,): stardew.rule_builder(),
     }
     srabuilder.load_environment_grammars(map_contexts_to_builder)
+    new_game_menu.load_grammar()
 
     # threading.Thread(target=command_line_loop, args=(engine,), daemon=True).start()
     srabuilder.run_engine()

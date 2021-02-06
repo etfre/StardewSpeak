@@ -178,5 +178,4 @@ non_repeat_mapping = {
     "catch fish": async_action(fishing_menu.catch_fish),
     "(letter | letters | lowercase) <letters>": Function(lambda **kw: letters.type_letters(kw['letters'])),
     "(capital | uppercase) <letters>": Function(lambda **kw: letters.type_letters(kw['letters'].upper())),
-    "name": async_action(new_game_menu.focus_name_box),
 }

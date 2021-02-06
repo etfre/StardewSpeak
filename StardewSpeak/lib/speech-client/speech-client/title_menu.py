@@ -1,7 +1,15 @@
 import game, server, menu_utils
 import dragonfly as df
 
-main_button_choice = df.Choice("main_buttons", {"new": "New", "load": "Load", "co op": "Co-op", "exit": "Exit"}) 
+main_button_choice = df.Choice("main_buttons", {"new": "New", "load": "Load", "co op": "Co-op", "exit": "Exit"})
+
+def active_submenu_type(menu):
+    if menu is None or menu['menuType'] != 'titleMenu' or not menu.get('subMenu') :
+        return
+    submenu = menu.get('subMenu')
+    if submenu is None:
+        return
+    return submenu['menuType']
 
 async def click_main_button(btn_name: str):
     menu = await menu_utils.get_active_menu()

@@ -1,8 +1,11 @@
 import dragonfly as df
-import title_menu, menu_utils, server
+import title_menu, menu_utils, server, df_utils, game
 
 async def get_new_game_menu():
     return await title_menu.get_submenu('characterCustomizationMenu')
+
+async def focus_box(cmp_name):
+    await menu_utils.click_menu_button(cmp_name, menu_getter=get_new_game_menu)
 
 async def focus_name_box():
     menu = await get_new_game_menu()
@@ -18,47 +21,25 @@ async def focus_name_box():
 #     elif message == "wake":
 #         print("Awake...")
 
+mapping = {
+    "name": df_utils.async_action(focus_box, 'nameBoxCC'),
+    "farm name": df_utils.async_action(focus_box, 'farmnameBoxCC'),
+    "favorite thing": df_utils.async_action(focus_box, 'favThingBoxCC'),
+    "(random | [roll] dice)": df_utils.async_action(focus_box, 'randomButton'),
+    "(ok [button] | start game)": df_utils.async_action(focus_box, 'okButton'),
+}
 
-# def load_sleep_wake_grammar(initial_awake: bool):
-#     sleep_grammar = df.Grammar("sleep")
+def is_active():
+    menu_type = title_menu.active_submenu_type(game.get_context_menu())
+    return menu_type == 'characterCustomizationMenu' 
 
-#     def sleep(force=False):
-#         global sleeping
-#         if not sleeping or force:
-#             sleeping = True
-#             sleep_grammar.set_exclusiveness(True)
-#         notify("sleep")
-
-#     def wake(force=False):
-#         global sleeping
-#         if sleeping or force:
-#             sleeping = False
-#             sleep_grammar.set_exclusiveness(False)
-#         notify("wake")
-
-#     mapping = {
-#         "start listening": df.Function(wake)
-#         + df.Function(lambda: df.get_engine().start_saving_adaptation_state()),
-#         "stop listening": df.Function(
-#             lambda: df.get_engine().stop_saving_adaptation_state()
-#         )
-#         + df.Function(sleep),
-#         "halt listening": df.Function(
-#             lambda: df.get_engine().stop_saving_adaptation_state()
-#         )
-#         + df.Function(sleep),
-#     }
-#     sleep_rule = df.MappingRule(name="sleep_rule", mapping=mapping)
-#     sleep_grammar.add_rule(sleep_rule)
-#     sleep_noise_rule = df.MappingRule(
-#         name="sleep_noise_rule",
-#         mapping={"<text>": df.Function(lambda text: False)},
-#         extras=[df.Dictation("text")],
-#         context=df.FuncContext(lambda: sleeping),
-#     )
-#     sleep_grammar.add_rule(sleep_noise_rule)
-#     sleep_grammar.load()
-#     if initial_awake:
-#         wake(force=True)
-#     else:
-#         sleep(force=True)
+def load_grammar():
+    grammar = df.Grammar("new_game_menu")
+    main_rule = df.MappingRule(
+        name="new_game_menu_rule",
+        mapping=mapping,
+        extras=[],
+        context=df.FuncContext(lambda: is_active()),
+    )
+    grammar.add_rule(main_rule)
+    grammar.load()

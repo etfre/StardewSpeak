@@ -549,5 +549,7 @@ async def move_mouse_in_direction(direction: str, amount: int):
 
 async def on_menu_changed(new_menu):
     context_variables['ACTIVE_MENU'] = new_menu
-    server.log(new_menu)
     await server.stop_everything()
+
+def get_context_menu():
+    return context_variables['ACTIVE_MENU']

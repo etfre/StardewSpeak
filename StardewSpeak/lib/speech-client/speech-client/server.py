@@ -205,7 +205,7 @@ def setup_async_loop():
         l.set_exception_handler(exception_handler)
         l.create_task(menu_changed())
         l.create_task(async_readline())
-        l.create_task(heartbeat(3600))
+        l.create_task(heartbeat(300))
         l.run_forever()
 
     def exception_handler(loop, context):
@@ -225,7 +225,7 @@ async def request_active_menu_with_delay():
 
 async def menu_changed():
     import game
-
+    
     async with on_menu_changed_stream() as mcs:
         while True:
             changed_event_coro, active_menu_coro = mcs.next(), request_active_menu_with_delay()
