@@ -185,14 +185,23 @@ class ClearDebrisObjective(Objective):
         pass
 
     async def get_debris(self, location):
+        debris_objects, resource_clumps = await asyncio.gather(self.get_debris_objects(location), game.get_resource_clump_pieces(location), loop=server.loop)
+        return debris_objects + resource_clumps
+
+    async def get_debris_objects(self, location):
         objs = await game.get_location_objects(location)
-        debris = [o for o in objs if game.is_debris(o)]
+        debris = [{**o, 'type': 'object'} for o in objs if game.is_debris(o)]
         return debris
 
     async def at_tile(self, obj):
         needed_tool = game.tool_for_object[obj['name']]
-        await game.equip_item(needed_tool)
-        await game.swing_tool()
+        await game.equip_item(needed_tool['name'])
+        if obj['type'] == 'object':
+            await game.swing_tool()
+        else:
+            assert obj['type'] == 'resource_clump'
+            await game.clear_resource_clump(obj)
+        await game.gather_items_on_ground(5)
 
     async def run(self):
         await game.modify_tiles(self.get_debris, game.next_debris_key, self.at_tile)

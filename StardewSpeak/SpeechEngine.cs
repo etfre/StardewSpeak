@@ -281,6 +281,11 @@ namespace StardewSpeak
                         }
                         break;
                     }
+                case "GET_RESOURCE_CLUMPS": 
+                    {
+                        resp = GameState.ResourceClumps();
+                        break;
+                    }
             }
             this.SendResponse(msgId, resp);
         }

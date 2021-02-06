@@ -38,6 +38,7 @@ namespace StardewSpeak
             helper.Events.Player.Warped += this.OnWarped;
             helper.Events.World.TerrainFeatureListChanged += this.OnTerrainFeatureListChanged;
             helper.Events.World.ObjectListChanged += this.OnObjectListChanged;
+            helper.Events.World.LargeTerrainFeatureListChanged += this.OnLargeTerrainFeatureListChanged;
             ModEntry.log = this.Monitor.Log;
             this.speechEngine = new SpeechEngine();
             this.speechEngine.LaunchProcess();
@@ -107,6 +108,12 @@ namespace StardewSpeak
             Log($"ON_OBJECT_LIST_CHANGED");
             //this.speechEngine.SendEvent("ON_WARPED", warpEvent);
         }
+
+        private void OnLargeTerrainFeatureListChanged(object sender, LargeTerrainFeatureListChangedEventArgs e) 
+        {
+            Log($"ON_LARGE_TERRAIN_FEATURE_LIST_CHANGED");
+
+        }
         /*********
         ** Private methods
         *********/
@@ -147,6 +154,7 @@ namespace StardewSpeak
                 Utils.WriteJson("objects.json", location.Objects.Values.ToList());
                 Utils.WriteJson("resourceClumps.json", location.resourceClumps.ToList());
                 Utils.WriteJson("currentTool.json", player.CurrentTool);
+                Utils.WriteJson("serializedResourceClumps.json", GameState.ResourceClumps());
             }
         }
         private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)

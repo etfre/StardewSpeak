@@ -3,21 +3,26 @@ EAST = 1
 SOUTH = 2
 WEST = 3
 
-AXE = 'Axe'
-FISHING_ROD = 'Fishing Rod'
-HOE = 'Hoe'
-PICKAXE = 'Pickaxe'
-SCYTHE = 'Scythe'
-WATERING_CAN = 'Watering Can'
+AXE = 'axe'
+FISHING_ROD = 'fishingRod'
+HOE = 'hoe'
+PICKAXE = 'pickaxe'
+SCYTHE = 'scythe'
+WATERING_CAN = 'wateringCan'
 
 WEEDS = 'Weeds'
 STONE = 'Stone'
 TWIG = 'Twig'
+HOLLOW_LOG = 'hollowLog'
+STUMP = 'stump'
+BOULDER = 'boulder'
+METEORITE = 'meteorite'
 
 ACTION_KEY = 'x'
 TOOL_KEY = 'c'
 
 GET_LOCATION_OBJECTS = 'GET_LOCATION_OBJECTS'
+GET_RESOURCE_CLUMPS = 'GET_RESOURCE_CLUMPS'
 
 ABIGAIL = "Abigail"
 ALEX = "Alex"

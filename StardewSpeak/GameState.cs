@@ -38,14 +38,7 @@ namespace StardewSpeak
         public static object PlayerItems() 
         {
             var items = Game1.player.Items.Select(i => {
-                if (i == null) return null;
-                return new
-                {
-                    netName = i.netName.Value,
-                    stack = i.Stack,
-                    displayName = i.DisplayName,
-                    name = i.Name
-                };
+                return Utils.SerializeItem(i);
              });
             return new { currentToolIndex = Game1.player.CurrentToolIndex, items };
         }
@@ -72,28 +65,7 @@ namespace StardewSpeak
         {
             var player = Game1.player;
             var tool = player.CurrentTool;
-            var status = new
-            {
-                upgradeLevel = tool.UpgradeLevel,
-                power = player.toolPower,
-                baseName = tool.BaseName,
-                inUse = player.UsingTool,
-            };
-            dynamic objDetails = new { };
-            if (tool is FishingRod) 
-            {
-                var fr = tool as FishingRod;
-                objDetails = new
-                {
-                    castingPower = fr.castingPower,
-                    fr.isNibbling,
-                    fr.isFishing,
-                    fr.isLostItem,
-                    fr.isReeling,
-                    fr.isTimingCast,
-                };
-            }
-            return Utils.Merge(status, objDetails);
+            return Utils.SerializeItem(tool);
         }
 
         public static object Trees() 
@@ -142,6 +114,47 @@ namespace StardewSpeak
             return features;
         }
 
+        public static object ResourceClumps() 
+        {
+            var clumps = new List<dynamic>();
+            foreach (var clump in Game1.currentLocation.resourceClumps) 
+            {
+                string name = "";
+                switch (clump.parentSheetIndex.Value) 
+                {
+                    case ResourceClump.boulderIndex: 
+                        name = "boulder";
+                        break;
+                    case ResourceClump.hollowLogIndex:
+                        name = "hollowLog";
+                        break;
+                    case ResourceClump.stumpIndex:
+                        name = "stump";
+                        break;
+                    case ResourceClump.meteoriteIndex:
+                        name = "meteorite";
+                        break;
+                    case ResourceClump.mineRock1Index:
+                    case ResourceClump.mineRock2Index:
+                    case ResourceClump.mineRock3Index:
+                    case ResourceClump.mineRock4Index:
+                        name = "mineRock";
+                        break;
+                }
+                var serializedClump = new
+                {
+                    tileX = (int)clump.tile.X,
+                    tileY = (int)clump.tile.Y,
+                    height = clump.height.Value,
+                    width = clump.width.Value,
+                    objectIndex = clump.parentSheetIndex.Value,
+                    health = clump.health.Value,
+                    name
+                };
+                clumps.Add(serializedClump);
+            }
+            return clumps;
+        }
 
         public static object Debris()
         {

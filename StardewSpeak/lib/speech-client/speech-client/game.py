@@ -28,9 +28,13 @@ nums_to_keys = {
 }
 
 tool_for_object = {
-    constants.STONE: constants.PICKAXE,
-    constants.TWIG: constants.AXE,
-    constants.WEEDS: constants.SCYTHE,
+    constants.STONE: {'name': constants.PICKAXE, 'level': 0},
+    constants.TWIG: {'name': constants.AXE, 'level': 0},
+    constants.WEEDS: {'name': constants.SCYTHE, 'level': 0},
+    constants.BOULDER: {'name': constants.AXE, 'level': 2},
+    constants.HOLLOW_LOG: {'name': constants.AXE, 'level': 2},
+    constants.STUMP: {'name': constants.AXE, 'level': 1},
+    # constants.METEORITE: {'name': constants.AXE, 'level': 3},
 }
 
 directions = {k: k for k in direction_keys}
@@ -77,6 +81,23 @@ async def get_hoe_dirt(location: str):
 async def get_location_objects(location: str):
     objects = await server.request(constants.GET_LOCATION_OBJECTS, {"location": location})
     return objects or []
+
+async def get_resource_clumps(location: str):
+    clumps = await server.request(constants.GET_RESOURCE_CLUMPS, {"location": location})
+    return clumps
+
+
+async def get_resource_clump_pieces(location: str):
+    clumps = await get_resource_clumps(location)
+    clump_pieces = []
+    # break up resource clump like a boulder into one object for each tile
+    for c in clumps:
+        start_x, start_y = c['tileX'], c['tileY']
+        for x in range(c['width']):
+            for y in range(c['height']):
+                clump_piece = {**c, 'tileX': start_x + x, 'tileY': start_y + y, 'type': 'resource_clump'}
+                clump_pieces.append(clump_piece)
+    return clump_pieces
 
 async def get_diggable_tiles(test_tiles_set, location: str):
     test_tiles = [{'tileX': x, 'tileY': y} for x, y in test_tiles_set]
@@ -415,7 +436,7 @@ async def equip_item(item: str):
             items_info = await stream.next()
             items = items_info['items']
             for idx, inventory_item in enumerate(items):
-                if inventory_item and inventory_item['netName'] == item:
+                if inventory_item and inventory_item['type'] == item:
                     matched_index = idx
                     break
             if matched_index is None:
@@ -502,7 +523,21 @@ async def chop_tree_and_gather_resources(tree):
     async with server.on_terrain_feature_list_changed_stream() as terrain_stream:
         with press_and_release(constants.TOOL_KEY):
             event = await terrain_stream.next()
-    await gather_items_on_ground(15)
+    await gather_items_on_ground(5)
+
+async def clear_resource_clump(clump):
+    tile_x, tile_y = clump['tileX'], clump['tileY']
+    with press_and_release(constants.TOOL_KEY):
+        while True:
+            clumps = await get_resource_clump_pieces('')
+            target = None
+            for c in clumps:
+                if (tile_x, tile_y) == (c['tileX'], c['tileY']):
+                    target = c
+                    break
+            if not target:
+                return
+            await asyncio.sleep(0.5)
 
 async def find_npc_by_name(name: str, characters_stream):
     characters = await characters_stream.next()

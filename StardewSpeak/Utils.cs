@@ -14,6 +14,7 @@ using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework.Input;
 using System.Reflection;
 using StardewValley.TerrainFeatures;
+using StardewValley.Tools;
 
 namespace StardewSpeak
 {
@@ -44,15 +45,53 @@ namespace StardewSpeak
 
             dynamic expando = new ExpandoObject();
             var result = expando as IDictionary<string, object>;
-            foreach (System.Reflection.PropertyInfo fi in item1.GetType().GetProperties())
+            foreach (var kvp in IterObject(item1)) 
             {
-                result[fi.Name] = fi.GetValue(item1, null);
+                result[kvp.key] = kvp.value;
             }
-            foreach (System.Reflection.PropertyInfo fi in item2.GetType().GetProperties())
+            foreach (var kvp in IterObject(item2))
             {
-                result[fi.Name] = fi.GetValue(item2, null);
+                result[kvp.key] = kvp.value;
             }
+            //if (item1 is ExpandoObject) {
+            //    var exp = item1 as ExpandoObject;
+            //    foreach (var kvp in exp)
+            //    {
+            //        result[kvp.Key] = kvp.Value;
+            //    }
+            //}
+            //foreach (System.Reflection.PropertyInfo fi in item1.GetType().GetProperties())
+            //{
+            //    result[fi.Name] = fi.GetValue(item1, null);
+            //}
+            //foreach (System.Reflection.PropertyInfo fi in item2.GetType().GetProperties())
+            //{
+            //    result[fi.Name] = fi.GetValue(item2, null);
+            //}
             return result;
+        }
+
+        public static List<dynamic> IterObject(dynamic obj) {
+            var items = new List<dynamic>();
+            if (obj is ExpandoObject)
+            {
+                var exp = obj as ExpandoObject;
+                foreach (var kvp in exp)
+                {
+                    items.Add(new { key = kvp.Key, value = kvp.Value });
+                }
+            }
+            else 
+            {
+                foreach (System.Reflection.PropertyInfo fi in obj.GetType().GetProperties())
+                {
+                    items.Add(new { 
+                        key = fi.Name, 
+                        value = fi.GetValue(obj, null)
+                    });
+                }
+            }
+            return items;
         }
 
         public static object SerializeMenu(IClickableMenu menu)
@@ -207,6 +246,70 @@ namespace StardewSpeak
             int tileX = (int)tileLocation.X;
             int tileY = (int)tileLocation.Y;
             return hd.canPlantThisSeedHere(objIndex, tileX, tileY, false);
+        }
+
+        public static object SerializeItem(Item i) 
+        {
+            if (i == null) return null;
+            var player = Game1.player;
+            dynamic obj = new
+            {
+                netName = i.netName.Value,
+                stack = i.Stack,
+                displayName = i.DisplayName,
+                name = i.Name,
+                type = "",
+                isTool = false,
+                isMeleeWeapon = false,
+            };
+            if (i is Tool) 
+            {
+                var tool = i as Tool;
+                obj = Utils.Merge(obj, new 
+                { 
+                    isTool = true,
+                    upgradeLevel = tool.UpgradeLevel,
+                    power = player.toolPower,
+                    baseName = tool.BaseName,
+                    inUse = player.UsingTool,
+                });
+            }
+            if (i is MeleeWeapon)
+            {
+                var mw = i as MeleeWeapon;
+                obj = Utils.Merge(obj, new { isMeleeWeapon = true });
+                if (mw.isScythe()) obj = Utils.Merge(obj, new { type = "scythe" });
+            }
+            else if (i is FishingRod)
+            {
+                var fr = i as FishingRod;
+                obj = Utils.Merge(obj, new
+                {
+                    fr.castingPower,
+                    fr.isNibbling,
+                    fr.isFishing,
+                    fr.isLostItem,
+                    fr.isReeling,
+                    fr.isTimingCast,
+                });
+            }
+            else if (i is Axe)
+            {
+                obj = Utils.Merge(obj, new { type = "axe" });
+            }
+            else if (i is Pickaxe)
+            {
+                obj = Utils.Merge(obj, new { type = "pickaxe" });
+            }
+            else if (i is WateringCan)
+            {
+                obj = Utils.Merge(obj, new { type = "wateringCan" });
+            }
+            else if (i is Hoe)
+            {
+                obj = Utils.Merge(obj, new { type = "hoe" });
+            }
+            return obj;
         }
     }
 }
