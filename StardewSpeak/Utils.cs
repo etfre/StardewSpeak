@@ -107,7 +107,7 @@ namespace StardewSpeak
             {
                 menu.xPositionOnScreen,
                 allClickableComponents = SerializeComponentList(menu.allClickableComponents, mousePosition),
-                menu.upperRightCloseButton,
+                upperRightCloseButton = Utils.SerializeClickableCmp(menu.upperRightCloseButton, mousePosition),
                 containsMouse,
                 menuType = "unknown",
             };
@@ -115,7 +115,21 @@ namespace StardewSpeak
             if (menu is ShopMenu)
             {
                 var sm = menu as ShopMenu;
-                menuTypeObj = new { menuType = "shopMenu", downArrow = SerializeClickableCmp(sm.downArrow, mousePosition) };
+                var forSale = sm.forSale.Select(x => Utils.SerializeItem((Item)x));
+                var forSaleButtons = Utils.SerializeComponentList(sm.forSaleButtons, mousePosition);
+                menuTypeObj = new 
+                { 
+                    menuType = "shopMenu",
+                    forSale,
+                    forSaleButtons,
+                    sm.currentItemIndex,
+                    inventory = Utils.SerializeMenu(sm.inventory),
+                    upArrow = SerializeClickableCmp(sm.upArrow, mousePosition),
+                    downArrow = SerializeClickableCmp(sm.downArrow, mousePosition),
+                    scrollBar = SerializeClickableCmp(sm.scrollBar
+                    , mousePosition),
+
+                };
             }
             else if (menu is InventoryMenu)
             {
@@ -207,6 +221,7 @@ namespace StardewSpeak
 
         public static object SerializeClickableCmp(ClickableComponent cmp, Point mousePosition)
         {
+            if (cmp == null) return null;
             Rectangle bounds = cmp.bounds;
             bool containsMouse = cmp.containsPoint(mousePosition.X, mousePosition.Y);
             return new

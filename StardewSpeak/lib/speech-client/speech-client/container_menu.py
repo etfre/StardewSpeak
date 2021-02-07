@@ -35,13 +35,30 @@ async def focus_item(new_row, new_col):
     if menu['menuType'] == "itemsToGrabMenu":
         submenu_name = 'itemsToGrabMenu' if menu['itemsToGrabMenu']['containsMouse'] else 'inventoryMenu'
         submenu = menu[submenu_name]
-        rows = menu_utils.list_of_rows(submenu['inventory'])
-        indices = menu_utils.find_component_containing_mouse(rows)
-        row, col = indices if indices else item_grab[submenu_name]
-        if new_row is not None:
-            row = new_row
-        if new_col is not None:
-            col = new_col
-        cmp = rows[row][col]
-        await menu_utils.focus_component(cmp)
-        item_grab[submenu_name] = row, col
+        def get_previous():
+            return item_grab[submenu_name]
+        def set_previous(r, c):
+            item_grab[submenu_name] = r, c
+        await focus_inventory_box(submenu['inventory'], new_row, new_col, get_previous, set_previous)
+        # rows = menu_utils.list_of_rows(submenu['inventory'])
+        # indices = menu_utils.find_component_containing_mouse(rows)
+        # row, col = indices if indices else item_grab[submenu_name]
+        # if new_row is not None:
+        #     row = new_row
+        # if new_col is not None:
+        #     col = new_col
+        # cmp = rows[row][col]
+        # await menu_utils.focus_component(cmp)
+        # item_grab[submenu_name] = row, col
+
+async def focus_inventory_box(cmp_list, new_row, new_col, get_previous=lambda: (0, 0), set_previous=lambda r, c: None):
+    rows = menu_utils.list_of_rows(cmp_list)
+    indices = menu_utils.find_component_containing_mouse(rows)
+    row, col = indices if indices else get_previous()
+    if new_row is not None:
+        row = new_row
+    if new_col is not None:
+        col = new_col
+    cmp = rows[row][col]
+    await menu_utils.focus_component(cmp)
+    set_previous(row, col)
