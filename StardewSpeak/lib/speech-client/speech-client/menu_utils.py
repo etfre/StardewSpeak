@@ -35,7 +35,6 @@ async def get_active_menu(menu_type=None):
 
 async def click_menu_button(button_property, menu_getter=get_active_menu):
     menu = await menu_getter()
-    server.log(menu, button_property)
     if menu is None:
         raise InvalidMenuOption()
     btn = menu.get(button_property)
@@ -63,6 +62,25 @@ async def try_menus(try_fns, *a):
             pass
         else:
             return
+
+class InventoryMenuWrapper:
+
+    def __init__(self):
+        self.row = 0
+        self.col = 0
+
+    async def focus_previous(self, inventory_menu):
+        await self.focus_box(inventory_menu, self.row, self.col)
+
+    async def focus_box(self, inventory_menu, new_row, new_col):
+        rows = list_of_rows(inventory_menu['inventory'])
+        indices = find_component_containing_mouse(rows) or (self.row, self.col)
+        row = indices[0] if new_row is None else new_row
+        col = indices[1] if new_col is None else new_col
+        cmp = rows[row][col]
+        await focus_component(cmp)
+        self.row = row
+        self.col = col
 
 class InvalidMenuOption(Exception):
     pass

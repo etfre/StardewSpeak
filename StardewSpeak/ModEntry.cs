@@ -129,11 +129,12 @@ namespace StardewSpeak
             string pressed = e.Button.ToString();
             //this.Monitor.Log($"{Game1.player.Name} presseddd {e.Button}.", LogLevel.Debug);
             //this.Monitor.Log(e.Button.ToString(), LogLevel.Debug);
-            if (pressed == "R") {
+            if (pressed == "R")
+            {
                 var menu = Game1.activeClickableMenu;
                 var serializedMenu = Utils.SerializeMenu(Game1.activeClickableMenu);
                 Utils.WriteJson("menu.json", serializedMenu);
-                }
+            }
             else if (pressed == "L")
             {
                 var player = Game1.player;

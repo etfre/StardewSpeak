@@ -1,46 +1,69 @@
 import dragonfly as df
-import title_menu, menu_utils, server, df_utils, game
+from srabuilder import rules
+import title_menu, menu_utils, server, df_utils, game, container_menu
+
+prev_for_sale_index = 0
+inventory_wrapper = menu_utils.InventoryMenuWrapper()
 
 async def get_shop_menu():
-    return menu_utils.get_active_menu('shopMenu')
+    return await menu_utils.get_active_menu('shopMenu')
 
-async def buy_item_index(idx: int):
+async def focus_menu_section(submenu_name: str):
+    assert submenu_name in ('inventory', 'forSale')
+    menu = await get_shop_menu()
+    for_sale_focused = any(x['containsMouse'] for x in menu['forSaleButtons'])
+    if submenu_name == 'forSale' and not for_sale_focused:
+        await focus_for_sale_index(prev_for_sale_index)
+    elif submenu_name == 'inventory':
+        await inventory_wrapper.focus_previous(menu['inventory'])
+
+async def focus_item(idx, key):
+    menu = await get_shop_menu()
+    for_sale_focused = any(x['containsMouse'] for x in menu['forSaleButtons'])
+    if for_sale_focused and key == 'item':
+        await focus_for_sale_index(idx)
+        return
+    row, col = (idx, None) if key == 'row' else (None, idx)
+    await inventory_wrapper.focus_box(menu['inventory'], row, col)
+
+async def focus_for_sale_index(idx: int):
+    global prev_for_sale_index
+    menu = await get_shop_menu()
     buttons = menu["forSaleButtons"]
     await menu_utils.focus_component(buttons[idx])
-    await menu_utils.click_menu_button(cmp_name, menu_getter=get_new_game_menu)
+    prev_for_sale_index = 0
+
+
+async def buy_item_index(idx: int):
+    menu = await get_shop_menu()
+    buttons = menu["forSaleButtons"]
+    await menu_utils.focus_component(buttons[idx])
 
 async def focus_name_box():
     menu = await get_new_game_menu()
     await menu_utils.click_component(menu['nameBoxCC'])
 
 
-# sleeping = False
-
-
-# def notify(message):
-#     if message == "sleep":
-#         print("Sleeping...")
-#     elif message == "wake":
-#         print("Awake...")
 
 mapping = {
-    "name": df_utils.async_action(focus_box, 'nameBoxCC'),
-    "farm name": df_utils.async_action(focus_box, 'farmnameBoxCC'),
-    "favorite thing": df_utils.async_action(focus_box, 'favThingBoxCC'),
-    "(random | [roll] dice)": df_utils.async_action(focus_box, 'randomButton'),
-    "(ok [button] | start game)": df_utils.async_action(focus_box, 'okButton'),
+    # "buy <n>": df_utils.async_action(buy_item_index, 'n'),
+    "item <n>": server.AsyncFunction(focus_item, format_args=lambda **kw: [kw['n'] - 1, 'item']),
+    "row <n>": server.AsyncFunction(focus_item, format_args=lambda **kw: [kw['n'] - 1, 'row']),
+    "(shop | store)": df_utils.async_action(focus_for_sale_index, 0),
+    # "row <n>": server.AsyncFunction(focus_item, format_args=lambda **kw: [kw['n'] - 1, None]),
 }
 
 def is_active():
     return menu_utils.test_menu_type(game.get_context_menu(), 'shopMenu')
 
 def load_grammar():
-    grammar = df.Grammar("new_game_menu")
+    grammar = df.Grammar("shop_menu")
     main_rule = df.MappingRule(
-        name="new_game_menu_rule",
+        name="shop_menu_rule",
         mapping=mapping,
-        extras=[],
+        extras=[rules.num],
         context=df.FuncContext(lambda: is_active()),
     )
     grammar.add_rule(main_rule)
     grammar.load()
+    
