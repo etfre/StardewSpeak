@@ -164,6 +164,7 @@ non_repeat_mapping = {
     "equip <tools>": async_action(game.equip_item, 'tools'),
     "talk to <npcs>": objective_action(objective.TalkToNPCObjective, "npcs"),
     "refill watering can": function_objective(game.refill_watering_can),
+    "go inside": function_objective(game.go_inside),
     "scroll up": async_action(menu_utils.try_menus, [menu_utils.click_menu_button, title_menu.click_submenu_button], constants.UP_ARROW),
     "scroll down": async_action(menu_utils.try_menus, [menu_utils.click_menu_button, title_menu.click_submenu_button], constants.DOWN_ARROW),
     "click": async_action(server.mouse_click),

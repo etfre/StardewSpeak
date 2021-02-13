@@ -39,6 +39,8 @@ namespace StardewSpeak
             helper.Events.World.TerrainFeatureListChanged += this.OnTerrainFeatureListChanged;
             helper.Events.World.ObjectListChanged += this.OnObjectListChanged;
             helper.Events.World.LargeTerrainFeatureListChanged += this.OnLargeTerrainFeatureListChanged;
+            helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
+            helper.Events.World.LocationListChanged += this.OnLocationListChanged;
             ModEntry.log = this.Monitor.Log;
             this.speechEngine = new SpeechEngine();
             this.speechEngine.LaunchProcess();
@@ -48,6 +50,17 @@ namespace StardewSpeak
         public static void Log(string msg) {
             ModEntry.log(msg, LogLevel.Debug);
         }
+
+        private void OnSaveLoaded(object sender, SaveLoadedEventArgs e) 
+        {
+            Routing.Reset();
+        }
+
+        private void OnLocationListChanged(object sender, LocationListChangedEventArgs e)
+        {
+            Routing.Reset();
+        }
+
 
         private void OnWarped(object sender, WarpedEventArgs e)
         {

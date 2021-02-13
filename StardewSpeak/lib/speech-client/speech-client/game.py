@@ -588,3 +588,10 @@ async def on_menu_changed(new_menu):
 
 def get_context_menu():
     return context_variables['ACTIVE_MENU']
+
+async def get_location_connections():
+    return await server.request('GET_LOCATION_CONNECTIONS')
+
+async def go_inside():
+    connections = await get_location_connections()
+    server.log(connections)

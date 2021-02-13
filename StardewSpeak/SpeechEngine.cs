@@ -150,6 +150,11 @@ namespace StardewSpeak
                         resp = Routing.GetRoute(fromLocation.NameOrUniqueName, toLocation.NameOrUniqueName);
                         break;
                     }
+                case "ROUTE_INDOORS": 
+                    {
+                        GameLocation fromLocation = player.currentLocation;
+                        break;
+                    }
                 case "PATH_TO_POSITION":
                     {
                         int targetX = data.x;
@@ -165,6 +170,12 @@ namespace StardewSpeak
                         GameLocation toLocation = Routing.FindLocationByName(toLocationStr);
                         var locationConnection = Routing.FindLocationConnection(fromLocation, toLocation);
                         resp = locationConnection;
+                        break;
+                    }
+                case "GET_LOCATION_CONNECTIONS": 
+                    {
+                        GameLocation fromLocation = player.currentLocation;
+                        resp = Routing.MapConnections[fromLocation.NameOrUniqueName];
                         break;
                     }
                 case "GET_TREES": 

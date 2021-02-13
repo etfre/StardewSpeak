@@ -347,7 +347,7 @@ namespace StardewSpeak
 
         public static void Update()
         {
-            if (!Routing.Ready) return;
+            //if (!Routing.Ready) return;
 
             //Mod.Input.Update();
 
