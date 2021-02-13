@@ -19,12 +19,12 @@ async def focus_menu_section(submenu_name: str):
 
 async def focus_item(idx, key):
     menu = await get_shop_menu()
-    for_sale_focused = any(x['containsMouse'] for x in menu['forSaleButtons'])
-    if for_sale_focused and key == 'item':
+    inventory = menu['inventory']
+    if not inventory['containsMouse'] and key == 'item':
         await focus_for_sale_index(idx)
         return
     row, col = (idx, None) if key == 'row' else (None, idx)
-    await inventory_wrapper.focus_box(menu['inventory'], row, col)
+    await inventory_wrapper.focus_box(inventory, row, col)
 
 async def focus_for_sale_index(idx: int):
     global prev_for_sale_index
@@ -46,11 +46,10 @@ async def focus_name_box():
 
 
 mapping = {
-    # "buy <n>": df_utils.async_action(buy_item_index, 'n'),
-    "item <n>": server.AsyncFunction(focus_item, format_args=lambda **kw: [kw['n'] - 1, 'item']),
-    "row <n>": server.AsyncFunction(focus_item, format_args=lambda **kw: [kw['n'] - 1, 'row']),
-    "(shop | store)": df_utils.async_action(focus_for_sale_index, 0),
-    # "row <n>": server.AsyncFunction(focus_item, format_args=lambda **kw: [kw['n'] - 1, None]),
+    "item <positive_index>": df_utils.async_action(focus_item, 'positive_index', 'item'),
+    "row <positive_index>": df_utils.async_action(focus_item, 'positive_index', 'row'),
+    "(shop | store)": df_utils.async_action(focus_menu_section, 'forSale'),
+    "inventory": df_utils.async_action(focus_menu_section, 'inventory'),
 }
 
 def is_active():
@@ -61,7 +60,7 @@ def load_grammar():
     main_rule = df.MappingRule(
         name="shop_menu_rule",
         mapping=mapping,
-        extras=[rules.num],
+        extras=[rules.num, df_utils.positive_index],
         context=df.FuncContext(lambda: is_active()),
     )
     grammar.add_rule(main_rule)
