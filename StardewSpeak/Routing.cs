@@ -44,7 +44,7 @@ namespace StardewSpeak
 
         public static GameLocation FindLocationByName(string name)
         {
-            foreach (var gl in Game1.locations) {
+            foreach (var gl in AllGameLocations()) {
                 if (gl.NameOrUniqueName == name) {
                     return gl;
                 }
@@ -78,10 +78,23 @@ namespace StardewSpeak
                 {
                     var point = door.Key;
                     var locName = door.Value;
-                    if (!MapNamesToLocations.ContainsKey(locName)) continue;
                     var targetLoc = MapNamesToLocations[locName];
                     var lc = new LocationConnection(locName, point.X, point.Y, true, targetLoc.IsOutdoors);
                     connections.Add(lc);
+                }
+            }
+            if (from is StardewValley.Locations.BuildableGameLocation)
+            {
+                StardewValley.Locations.BuildableGameLocation bl = from as StardewValley.Locations.BuildableGameLocation;
+                foreach (var b in bl.buildings)
+                {
+                    if (b.indoors.Value != null)
+                    {
+                        var point = b.humanDoor.Value;
+                        var locName = b.indoors.Value.NameOrUniqueName;
+                        var lc = new LocationConnection(locName, point.X + b.tileX.Value, point.Y + b.tileY.Value, true, false);
+                        connections.Add(lc);
+                    };
                 }
             }
             return connections;
@@ -123,7 +136,7 @@ namespace StardewSpeak
                     {
                         if (b.indoors.Value != null) 
                         {
-                            allLocations.Add(b.indoors);
+                            allLocations.Add(b.indoors.Value);
                         };
                     }
                 }

@@ -183,7 +183,8 @@ namespace StardewSpeak
             {
                 var tileX = (int)o.TileLocation.X;
                 var tileY = (int)o.TileLocation.Y;
-                var formattedObj = new {name = o.Name, tileX, tileY, type = o.Type};
+                bool readyForHarvest = o.readyForHarvest.Value;
+                var formattedObj = new {name = o.Name, tileX, tileY, type = o.Type, readyForHarvest };
                 objs.Add(formattedObj);
             }
             return objs;

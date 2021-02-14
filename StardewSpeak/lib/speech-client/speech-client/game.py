@@ -558,6 +558,17 @@ async def refill_watering_can():
             await equip_item(constants.WATERING_CAN)
             await swing_tool()
 
+async def get_ready_crafted(loc):
+    objs = await  get_location_objects(loc)
+    ready_crafted = [x for x in objs if x['readyForHarvest'] and x['type'] == "Crafting"]
+    return ready_crafted
+
+async def pick_up_crafted_items():
+    await modify_tiles(get_ready_crafted, generic_next_item_key, at_crafted)
+
+async def at_crafted(obj):
+    await do_action()
+
 async def pathfind_to_nearest_water(stream: server.Stream):
     water_tiles = await server.request('GET_WATER_TILES')
     current_tile = await get_current_tile(stream)
@@ -593,5 +604,9 @@ async def get_location_connections():
     return await server.request('GET_LOCATION_CONNECTIONS')
 
 async def go_inside():
-    connections = await get_location_connections()
-    server.log(connections)
+    indoors_connections = [x for x in (await get_location_connections()) if not x['TargetIsOutdoors']]
+    if indoors_connections:
+        with server.player_status_stream() as pss:
+            current_tile = await get_current_tile(pss)
+            indoors_connections.sort(key=lambda t: distance_between_tiles(current_tile, (t['X'], t['Y'])))
+            await pathfind_to_next_location(indoors_connections[0]['TargetName'], pss)
