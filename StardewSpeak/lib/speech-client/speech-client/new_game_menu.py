@@ -1,6 +1,6 @@
 import asyncio
 import dragonfly as df
-import title_menu, menu_utils, server, df_utils, game
+import title_menu, menu_utils, server, df_utils, game, letters
 
 async def get_new_game_menu():
     return await title_menu.get_submenu('characterCustomizationMenu')
@@ -58,6 +58,7 @@ mapping = {
     "skip (intro | introduction)": df_utils.async_action(focus_box, 'skipIntroButton'),
     "<farm_types> farm": df_utils.async_action(click_farm, 'farm_types'),
     "[<positive_num>] <arrows> <arrow_fields>": df_utils.async_action(click_arrow_field, 'arrow_fields', 'arrows', 'positive_num'),
+    "<letters_and_keys>": df.Function(lambda **kw: letters.type_letters(kw['letters_and_keys'])),
 }
 
 def is_active():
@@ -73,7 +74,8 @@ def load_grammar():
             df.Choice("farm_types", farm_types),
             df.Choice("arrow_fields", arrow_fields),
             df.Choice("arrows", arrows),
-            df_utils.positive_num
+            df_utils.positive_num,
+            letters.letters_and_keys
         ],
         defaults={'positive_num': 1},
         context=df.FuncContext(lambda: is_active()),

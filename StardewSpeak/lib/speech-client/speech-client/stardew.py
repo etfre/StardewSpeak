@@ -112,7 +112,6 @@ def rule_builder():
                 Choice("mouse_directions", mouse_directions),
                 Choice("locations", locations.location_commands(locations.locations)),
                 title_menu.main_button_choice,
-                letters.letters
             ],
             defaults={"n": 1},
         )
@@ -178,6 +177,5 @@ non_repeat_mapping = {
     "<main_buttons> game": async_action(title_menu.click_main_button, 'main_buttons'),
     "start fishing": async_action(fishing_menu.start_fishing),
     "catch fish": async_action(fishing_menu.catch_fish),
-    "(letter | letters | lowercase) <letters>": Function(lambda **kw: letters.type_letters(kw['letters'])),
-    "(capital | uppercase) <letters>": Function(lambda **kw: letters.type_letters(kw['letters'].upper())),
+    # "(capital | uppercase) <letters_and_keys>": Function(lambda **kw: letters.type_letters(kw['letters'].upper())),
 }
