@@ -82,7 +82,9 @@ namespace StardewSpeak
         void OnExit(Process process, TaskCompletionSource<int> tcs)
         {
             tcs.SetResult(process.ExitCode);
-            ModEntry.Log("Kaldi engine exited");
+            ModEntry.Log("Kaldi engine exited. Restarting in 10 seconds...");
+            System.Threading.Thread.Sleep(10000);
+            LaunchProcess();
         }
 
         void onMessage(string messageText)

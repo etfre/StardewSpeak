@@ -1,3 +1,4 @@
+import asyncio
 import dragonfly as df
 import title_menu, menu_utils, server, df_utils, game
 
@@ -11,15 +12,42 @@ async def focus_name_box():
     menu = await get_new_game_menu()
     await menu_utils.click_component(menu['nameBoxCC'])
 
+async def click_farm(farm):
+    menu = await get_new_game_menu()
+    cmp = menu_utils.find_component_by_field(menu['farmTypeButtons'], 'name', farm)
+    await menu_utils.click_component(cmp)
 
-# sleeping = False
+async def click_arrow_field(field, cmp_list_name, count):
+    menu = await get_new_game_menu()
+    cmp = menu_utils.find_component_by_field(menu[cmp_list_name], 'name', field)
+    for i in range(count):
+        await menu_utils.click_component(cmp)
+        if i < count - 1:
+            await asyncio.sleep(0.1)
 
+farm_types = {
+    "standard": "Standard",
+    "riverland": "Riverland",
+    "forest": "Forest",
+    "hill [top]": "Hills",
+    "wilderness": "Wilderness",
+    "four corners": "Four Corners",
+    "beach": "Beach",
+}
 
-# def notify(message):
-#     if message == "sleep":
-#         print("Sleeping...")
-#     elif message == "wake":
-#         print("Awake...")
+arrows = {
+    "previous": "leftSelectionButtons",
+    "next": "rightSelectionButtons",
+}
+arrow_fields = {
+    "(accessory | accessories)": "Acc",  
+    "direction": "Direction",  
+    "hair": "Hair",  
+    "pants": "Pants Style",
+    "(pet | animal)": "Pet",
+    "shirt": "Shirt",
+    "skin": "Skin",
+}
 
 mapping = {
     "name": df_utils.async_action(focus_box, 'nameBoxCC'),
@@ -27,6 +55,9 @@ mapping = {
     "favorite thing": df_utils.async_action(focus_box, 'favThingBoxCC'),
     "(random | [roll] dice)": df_utils.async_action(focus_box, 'randomButton'),
     "(ok [button] | start game)": df_utils.async_action(focus_box, 'okButton'),
+    "skip (intro | introduction)": df_utils.async_action(focus_box, 'skipIntroButton'),
+    "<farm_types> farm": df_utils.async_action(click_farm, 'farm_types'),
+    "[<positive_num>] <arrows> <arrow_fields>": df_utils.async_action(click_arrow_field, 'arrow_fields', 'arrows', 'positive_num'),
 }
 
 def is_active():
@@ -38,7 +69,13 @@ def load_grammar():
     main_rule = df.MappingRule(
         name="new_game_menu_rule",
         mapping=mapping,
-        extras=[],
+        extras=[
+            df.Choice("farm_types", farm_types),
+            df.Choice("arrow_fields", arrow_fields),
+            df.Choice("arrows", arrows),
+            df_utils.positive_num
+        ],
+        defaults={'positive_num': 1},
         context=df.FuncContext(lambda: is_active()),
     )
     grammar.add_rule(main_rule)

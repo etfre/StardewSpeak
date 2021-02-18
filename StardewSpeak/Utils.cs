@@ -181,6 +181,7 @@ namespace StardewSpeak
                     farmTypeButtons = SerializeComponentList(ccm.farmTypeButtons, mousePosition),
                     favThingBoxCC = SerializeClickableCmp(ccm.favThingBoxCC, mousePosition),
                     farmnameBoxCC = SerializeClickableCmp(ccm.farmnameBoxCC, mousePosition),
+                    genderButtons = SerializeComponentList(ccm.genderButtons, mousePosition),
                     leftSelectionButtons = SerializeComponentList(ccm.leftSelectionButtons, mousePosition),
                     nameBoxCC = SerializeClickableCmp(ccm.nameBoxCC, mousePosition),
                     okButton = SerializeClickableCmp(ccm.okButton, mousePosition),
