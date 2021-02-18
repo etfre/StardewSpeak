@@ -31,10 +31,9 @@ namespace StardewSpeak
 
         public void LaunchProcess()
         {
-            ModEntry.Log("start wait");
             var fileName = "\"" + Path.Combine(Environment.CurrentDirectory, @"Mods\StardewSpeak\StardewSpeak\lib\speech-client\Scripts\python.exe") + "\"";
+            //var fileName = "\"" + Path.Combine(Environment.CurrentDirectory, @"Mods\StardewSpeak\StardewSpeak\lib\speech-client\dist\speech-client.exe") + "\"";
             var arguments = "\"" + Path.Combine(Environment.CurrentDirectory, @"Mods\StardewSpeak\StardewSpeak\lib\speech-client\speech-client\main.py") + "\"";
-            ModEntry.Log("end wait");
             Task.Factory.StartNew(() => RunProcessAsync(fileName, arguments));
             //await this.RunProcessAsync(fileName, arguments);
         }

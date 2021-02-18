@@ -275,7 +275,6 @@ namespace StardewSpeak
                 name = i.Name,
                 type = "",
                 isTool = false,
-                isMeleeWeapon = false,
             };
             if (i is Tool) 
             {
@@ -292,8 +291,8 @@ namespace StardewSpeak
             if (i is MeleeWeapon)
             {
                 var mw = i as MeleeWeapon;
-                obj = Utils.Merge(obj, new { isMeleeWeapon = true });
-                if (mw.isScythe()) obj = Utils.Merge(obj, new { type = "scythe" });
+                string type = mw.isScythe() ? "scythe" : "meleeWeapon";
+                obj = Utils.Merge(obj, new { type });
             }
             else if (i is FishingRod)
             {
@@ -306,6 +305,7 @@ namespace StardewSpeak
                     fr.isLostItem,
                     fr.isReeling,
                     fr.isTimingCast,
+                    type = "fishingRod",
                 });
             }
             else if (i is Axe)
@@ -320,10 +320,11 @@ namespace StardewSpeak
             {
                 obj = Utils.Merge(obj, new { type = "wateringCan" });
             }
-            else if (i is Hoe)
-            {
-                obj = Utils.Merge(obj, new { type = "hoe" });
-            }
+            else if (i is Hoe) obj = Utils.Merge(obj, new { type = "hoe" });
+            else if (i is MilkPail) obj = Utils.Merge(obj, new { type = "milkPail" });
+            else if (i is Pan) obj = Utils.Merge(obj, new { type = "pan" });
+            else if (i is Shears) obj = Utils.Merge(obj, new { type = "shears" });
+
             return obj;
         }
     }

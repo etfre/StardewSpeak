@@ -42,11 +42,15 @@ nums_to_keys = {
 directions = {k: k for k in direction_keys}
 tools = {
     "axe": constants.AXE,
-    "fishing rod": constants.FISHING_ROD,
+    "fishing (rod | pole)": constants.FISHING_ROD,
     "hoe": constants.HOE,
     "pickaxe": constants.PICKAXE,
     "scythe": constants.SCYTHE,
     "watering can": constants.WATERING_CAN,
+    "milk pail": constants.MILK_PAIL,
+    "pan": constants.PAN,
+    "shears": constants.SHEARS,
+    "[melee] weapon": constants.MELEE_WEAPON,
 }
 mouse_directions = {
     "up": "up",
