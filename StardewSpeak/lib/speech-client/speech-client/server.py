@@ -346,8 +346,11 @@ async def set_mouse_position(x: int, y: int):
 async def set_mouse_position_relative(x: int, y: int):
     await request('SET_MOUSE_POSITION_RELATIVE', {'x': x, 'y': y})
 
-async def mouse_click(btn='left'):
-    await request('MOUSE_CLICK', {'btn': btn})
+async def mouse_click(btn='left', count=1):
+    for i in range(count):
+        await request('MOUSE_CLICK', {'btn': btn})
+        if i + 1 < count:
+            await asyncio.sleep(0.1)
 
 def handle_event(event_type, data):
     if event_type == "ON_WARPED":

@@ -14,7 +14,7 @@ from dragonfly import *
 from srabuilder import rules
 
 from srabuilder.actions import directinput
-import constants, server, game, objective, locations, container_menu, title_menu, menu_utils, fishing_menu, letters, new_game_menu
+import constants, server, game, objective, locations, container_menu, title_menu, menu_utils, fishing_menu, letters, new_game_menu, df_utils
 
 
 direction_keys = {
@@ -103,6 +103,7 @@ def rule_builder():
             name="stardew_non_repeat",
             extras=[
                 rules.num,
+                df_utils.positive_num,
                 num2,
                 Choice("direction_keys", direction_keys),
                 Choice("direction_nums", direction_nums),
@@ -113,7 +114,7 @@ def rule_builder():
                 Choice("locations", locations.location_commands(locations.locations)),
                 title_menu.main_button_choice,
             ],
-            defaults={"n": 1},
+            defaults={"n": 1, 'positive_num': 1},
         )
     )
     # builder.repeat.append(
@@ -171,7 +172,7 @@ non_repeat_mapping = {
     "go inside": function_objective(game.go_inside),
     "scroll up": async_action(menu_utils.try_menus, [menu_utils.click_menu_button, title_menu.click_submenu_button], constants.UP_ARROW),
     "scroll down": async_action(menu_utils.try_menus, [menu_utils.click_menu_button, title_menu.click_submenu_button], constants.DOWN_ARROW),
-    "click": async_action(server.mouse_click),
+    "[<positive_num>] click": async_action(server.mouse_click, "left", "positive_num"),
     "[<n>] mouse <mouse_directions>": async_action(game.move_mouse_in_direction, 'mouse_directions', 'n'),
     "load game <n>": server.AsyncFunction(title_menu.load_game, format_args=lambda **kw: [kw['n'] - 1]),
     "<main_buttons> game": async_action(title_menu.click_main_button, 'main_buttons'),
