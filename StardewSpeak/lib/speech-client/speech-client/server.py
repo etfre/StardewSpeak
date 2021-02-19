@@ -306,19 +306,31 @@ def on_message(msg_str):
         fut = mod_requests.pop(msg_data["id"], None)
         if fut:
             resp_value = msg_data["value"]
+            resp_error = msg_data["error"]
             try:
-                fut.set_result(resp_value)
+                if resp_error is None:
+                    fut.set_result(resp_value)
+                else:
+                    exception = Exception(resp_value)
+                    fut.set_exception(exception)
             except asyncio.InvalidStateError:
                 pass
     elif msg_type == "STREAM_MESSAGE":
         stream_id = msg_data["stream_id"]
+
         stream = streams.get(stream_id)
         if stream is None:
             log(f"Can't find {stream_id}")
             send_message("STOP_STREAM", stream_id)
             return
-        stream.set_value(msg_data["value"])
-        stream.latest_value = msg_data["value"]
+        stream_value = msg_data["value"]
+        stream_error = msg_data["error"]
+        if stream_error is not None:
+            log(f"Stream {stream_id} error: {stream_value}")
+            stream.close()
+            return
+        stream.set_value(stream_value)
+        stream.latest_value = stream_value
         try:
             stream.future.set_result(None)
         except asyncio.InvalidStateError:

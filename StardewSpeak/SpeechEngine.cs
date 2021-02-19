@@ -98,14 +98,30 @@ namespace StardewSpeak
             {
                 return;
             }
-            string msgType = msg.type;
             string msgId = msg.id;
+            dynamic resp;
+            try
+            {
+                resp = HandleRequest(msg);
+            }
+            catch (Exception e) {
+                string body = e.ToString();
+                string error = "STACK_TRACE";
+                resp = new { body, error };
+            }
+            this.SendResponse(msgId, resp.body, resp.error);
+            }
+
+        dynamic HandleRequest(dynamic msg) 
+        {
+            string msgType = msg.type;
             dynamic data = msg.data;
             string streamId;
             var player = Game1.player;
             int playerX = player.getTileX();
             int playerY = player.getTileY();
-            dynamic resp = null;
+            dynamic body = null;
+            dynamic error = null;
             switch (msgType)
             {
                 case "LOG":
@@ -115,12 +131,12 @@ namespace StardewSpeak
                 case "HEARTBEAT": // engine will shutdown if heartbeat not received after 10 seconds
                     break;
                 case "PLAYER_POSITION":
-                    resp = GameState.PlayerPosition;
+                    body = GameState.PlayerPosition;
                     break;
                 case "FACE_DIRECTION":
                     int direction = msg.data;
                     Game1.player.faceDirection(direction);
-                    resp = true;
+                    body = true;
                     break;
                 case "NEW_STREAM":
                     {
@@ -148,10 +164,10 @@ namespace StardewSpeak
                         GameLocation fromLocation = player.currentLocation;
                         string toLocationStr = data.toLocation;
                         GameLocation toLocation = Routing.FindLocationByName(toLocationStr);
-                        resp = Routing.GetRoute(fromLocation.NameOrUniqueName, toLocation.NameOrUniqueName);
+                        body = Routing.GetRoute(fromLocation.NameOrUniqueName, toLocation.NameOrUniqueName);
                         break;
                     }
-                case "ROUTE_INDOORS": 
+                case "ROUTE_INDOORS":
                     {
                         GameLocation fromLocation = player.currentLocation;
                         break;
@@ -161,68 +177,69 @@ namespace StardewSpeak
                         int targetX = data.x;
                         int targetY = data.y;
                         var path = Pathfinder.Pathfinder.FindPath(player.currentLocation, playerX, playerY, targetX, targetY);
-                        resp = path;
+                        body = path;
                         break;
                     }
-                case "LOCATION_CONNECTION": 
+                case "LOCATION_CONNECTION":
                     {
                         GameLocation fromLocation = player.currentLocation;
                         string toLocationStr = data.toLocation;
                         GameLocation toLocation = Routing.FindLocationByName(toLocationStr);
                         var locationConnection = Routing.FindLocationConnection(fromLocation, toLocation);
-                        resp = locationConnection;
+                        body = locationConnection;
                         break;
                     }
-                case "GET_LOCATION_CONNECTIONS": 
+                case "GET_LOCATION_CONNECTIONS":
                     {
                         GameLocation fromLocation = player.currentLocation;
-                        resp = Routing.MapConnections[fromLocation.NameOrUniqueName];
+                        body = Routing.MapConnections[fromLocation.NameOrUniqueName];
                         break;
                     }
-                case "GET_TREES": 
+                case "GET_TREES":
                     {
-                        resp = GameState.Trees();
+                        body = GameState.Trees();
                         break;
                     }
                 case "GET_DEBRIS":
                     {
-                        resp = GameState.Debris();
+                        body = GameState.Debris();
                         break;
                     }
                 case "GET_HOE_DIRT":
                     {
-                        resp = GameState.HoeDirtTiles();    
+                        body = GameState.HoeDirtTiles();
                         break;
                     }
                 case "GET_LOCATION_OBJECTS":
                     {
-                        resp = GameState.LocationObjects();
+                        body = GameState.LocationObjects();
                         break;
                     }
                 case "GET_DIGGABLE_TILES":
                     {
                         List<dynamic> testTiles = data.tiles.ToObject<List<dynamic>>();
-                        resp = testTiles.Where(tile => Utils.IsTileHoeable(Game1.player.currentLocation, (int)tile.tileX, (int)tile.tileY));
+                        body = testTiles.Where(tile => Utils.IsTileHoeable(Game1.player.currentLocation, (int)tile.tileX, (int)tile.tileY));
                         break;
                     }
                 case "EQUIP_ITEM":
                     {
                         string item = data.item;
-                        resp = Actions.EquipToolIfOnHotbar(item);
+                        body = Actions.EquipToolIfOnHotbar(item);
                         break;
                     }
                 case "EQUIP_ITEM_INDEX":
                     {
                         int index = data.index;
                         Game1.player.CurrentToolIndex = index;
-                        resp = true;
+                        body = true;
                         break;
                     }
                 case "GET_WATER_TILES":
                     {
                         bool[,] allTiles = Game1.player.currentLocation.waterTiles;
                         var wt = new List<List<int>>();
-                        if (allTiles != null) {
+                        if (allTiles != null)
+                        {
                             int width = allTiles.GetLength(0);
                             int height = allTiles.GetLength(1);
                             for (int x = 0; x < width; x++)
@@ -238,18 +255,18 @@ namespace StardewSpeak
                                 }
                             }
                         }
-                        resp = wt;
+                        body = wt;
                         break;
                     }
                 case "GET_ACTIVE_MENU":
-                    resp = Utils.SerializeMenu(Game1.activeClickableMenu);
+                    body = Utils.SerializeMenu(Game1.activeClickableMenu);
                     break;
                 case "SET_MOUSE_POSITION":
                     {
                         int x = data.x;
                         int y = data.y;
                         Game1.setMousePosition(x, y);
-                        resp = true;
+                        body = true;
                         break;
                     }
                 case "SET_MOUSE_POSITION_RELATIVE":
@@ -257,7 +274,7 @@ namespace StardewSpeak
                         int x = data.x;
                         int y = data.y;
                         Game1.setMousePosition(Game1.getMouseX() + x, Game1.getMouseY() + y);
-                        resp = true;
+                        body = true;
                         break;
                     }
                 case "MOUSE_CLICK":
@@ -265,21 +282,21 @@ namespace StardewSpeak
                         var acm = Game1.activeClickableMenu;
                         if (acm == null)
                         {
-                            resp = false;
+                            body = false;
                         }
                         else
                         {
                             string btn = data.btn;
                             acm.receiveLeftClick(Game1.getMouseX(), Game1.getMouseY());
-                            resp = true;
+                            body = true;
                         }
-                        resp = true;
+                        body = true;
                         break;
                     }
                 case "CATCH_FISH":
                     {
                         var am = Game1.activeClickableMenu;
-                        if (am is BobberBar) 
+                        if (am is BobberBar)
                         {
                             var bb = am as BobberBar;
                             var distanceFromCatching = (float)Utils.GetPrivateField(bb, "distanceFromCatching");
@@ -293,23 +310,24 @@ namespace StardewSpeak
                         }
                         break;
                     }
-                case "GET_RESOURCE_CLUMPS": 
+                case "GET_RESOURCE_CLUMPS":
                     {
-                        resp = GameState.ResourceClumps();
+                        body = GameState.ResourceClumps();
                         break;
                     }
             }
-            this.SendResponse(msgId, resp);
-        }
+            return new { body, error };
+        } 
 
         void onError(string data)
         {
             ModEntry.Log($"Speech engine error: {data}");
         }
 
-        void SendResponse(string id, object value = null) 
+        void SendResponse(string id, object value = null, object error = null) 
         {
-            var respData = new ResponseData(id, value);
+            //var respData = new ResponseData(id, value);
+            var respData = new { id, value, error };
             this.SendMessage("RESPONSE", respData);
         }
 

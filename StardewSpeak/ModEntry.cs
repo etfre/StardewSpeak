@@ -178,8 +178,18 @@ namespace StardewSpeak
                 var id = pair.Key;
                 var stream = pair.Value;
                 if (stream.Name != "UPDATE_TICKED" || !e.IsMultipleOf((uint)stream.Data.ticks)) continue;
-                var value = stream.Gather(e);
-                var message = new { stream_id = id, value };
+                string error = null;
+                dynamic value;
+                try
+                {
+                    value = stream.Gather(e);
+                }
+                catch (Exception exception)
+                {
+                    value = exception.ToString();
+                    error = "STREAM_EXCEPTION";
+                }
+                var message = new { stream_id = id, value, error };
                 this.speechEngine.SendMessage("STREAM_MESSAGE", message);
             }
         }
