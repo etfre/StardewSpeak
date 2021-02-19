@@ -324,7 +324,7 @@ def on_message(msg_str):
             send_message("STOP_STREAM", stream_id)
             return
         stream_value = msg_data["value"]
-        stream_error = msg_data["error"]
+        stream_error = msg_data.get("error")
         if stream_error is not None:
             log(f"Stream {stream_id} error: {stream_value}")
             stream.close()
