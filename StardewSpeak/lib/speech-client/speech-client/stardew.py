@@ -14,7 +14,7 @@ from dragonfly import *
 from srabuilder import rules
 
 from srabuilder.actions import directinput
-import constants, server, game, objective, locations, container_menu, title_menu, menu_utils, fishing_menu, letters, new_game_menu, df_utils
+import constants, server, game, objective, locations, items, container_menu, title_menu, menu_utils, fishing_menu, letters, new_game_menu, df_utils
 
 
 direction_keys = {

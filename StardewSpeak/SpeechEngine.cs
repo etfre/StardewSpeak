@@ -339,7 +339,14 @@ namespace StardewSpeak
             string msgStr = JsonConvert.SerializeObject(message, Formatting.None, settings);
             lock (this.StandardInLock) 
             {
-                this.Proc.StandardInput.WriteLine(msgStr);
+                try
+                {
+                    this.Proc.StandardInput.WriteLine(msgStr);
+                }
+                catch (System.InvalidOperationException e) 
+                {
+                    
+                }
             }
         }
 

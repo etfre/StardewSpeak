@@ -238,8 +238,9 @@ async def menu_changed():
                 new_menu = done_task.result()
             current_menu = game.context_variables['ACTIVE_MENU']
             is_new_menu = not is_same_menu(current_menu, new_menu)
+            game.context_variables['ACTIVE_MENU'] = new_menu
             if is_new_menu:
-                await game.on_menu_changed(new_menu)
+                await stop_everything()
 
 def is_same_menu(menu1, menu2):
     if (menu1, menu2) == (None, None):

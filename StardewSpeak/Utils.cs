@@ -117,18 +117,31 @@ namespace StardewSpeak
                 var sm = menu as ShopMenu;
                 var forSale = sm.forSale.Select(x => Utils.SerializeItem((Item)x));
                 var forSaleButtons = Utils.SerializeComponentList(sm.forSaleButtons, mousePosition);
-                menuTypeObj = new 
-                { 
+                menuTypeObj = new
+                {
                     menuType = "shopMenu",
                     forSale,
                     forSaleButtons,
                     sm.currentItemIndex,
-                    inventory = Utils.SerializeMenu(sm.inventory),
+                    inventory = SerializeMenu(sm.inventory),
                     upArrow = SerializeClickableCmp(sm.upArrow, mousePosition),
                     downArrow = SerializeClickableCmp(sm.downArrow, mousePosition),
-                    scrollBar = SerializeClickableCmp(sm.scrollBar
-                    , mousePosition),
-
+                    scrollBar = SerializeClickableCmp(sm.scrollBar, mousePosition),
+                };
+            }
+            else if (menu is GameMenu) 
+            {
+                var gm = menu as GameMenu;
+                var tabs = Utils.SerializeComponentList(gm.tabs, mousePosition);
+                //var currentPage = gm.();
+                var pages = gm.pages.Select(x => Page.SerializePage(x)).ToList();
+                menuTypeObj = new
+                {
+                    menuType = "gameMenu",
+                    gm.currentTab,
+                    //currentPage,
+                    pages,
+                    tabs,   
                 };
             }
             else if (menu is InventoryMenu)

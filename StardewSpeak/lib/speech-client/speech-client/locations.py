@@ -2,14 +2,18 @@ import re
 
 class Location:
 
-    def __init__(self, name: str, commands=None, possessive=False):
+    def __init__(self, name: str, commands=None):
         self.name = name
-        self.commands = self.format_name(name) if commands is None else commands
-        self.possessive = possessive
+        if commands is None:
+            self.commands = self.commands_from_name(name)
+        else:
+            self.commands = commands
 
-    def format_name(self, s: str):
-        capitals_split = re.findall('[A-Z][a-z]*', s)
-        return [x.lower() for x in capitals_split]
+    def commands_from_name(self, name: str):
+        # 'FarmCave' -> ['farm cave']
+        capitals_split = re.findall('[A-Z][a-z]*', name)
+        command = ' '.join(capitals_split).lower()
+        return [f"[the] {command}"]
 
 def init_locations():
     return (
@@ -17,37 +21,35 @@ def init_locations():
         Location("Backwoods"),
         Location("Beach"),
         Location("Blacksmith"),
-        Location("BusStop", ["bus stop"]),
-        Location("ElliotHouse", ["elliot's house"], possessive=True),
+        Location("BusStop"),
+        Location("ElliotHouse", ["elliot's house"]),
         Location("Farm"),
-        Location("FarmCave", ["farm cave"]),
-        Location("FarmHouse", ["farm house"]),
+        Location("FarmCave"),
+        Location("FarmHouse"),
         Location("FishShop"),
         Location("Forest"),
-        Location("HaleyHouse", ["haley's house"], possessive=True),
+        Location("HaleyHouse", ["haley's house", "emily's house", "to willow lane"]),
         Location("Hospital"),
-        Location("Mountain"),
-        Location("JoshHouse", ["josh's house"], possessive=True),
-        Location("LeahHouse", ["leah's house"], possessive=True),
+        Location("JoshHouse", ["josh's house"]),
+        Location("LeahHouse", ["leah's house"]),
         Location("ManorHouse", ["manor house", "[mayor] lewis' house"]),
         Location("Mine", ["mine", "mines"]),
         Location("Mountain"),
-        Location("SamHouse", ["sam's house"], possessive=True),
+        Location("SamHouse", ["sam's house"]),
         Location("Saloon", ["[stardrop] saloon"]),
         Location("ScienceHouse"),
-        Location("SeedShop", ["[the] seed shop", "pierre's [general] shop", "[pierre's] general shop"], possessive=True),
+        Location("SeedShop", ["[the] seed (shop | store)", "pierre's [general] (shop | store)", "[pierre's] general (shop | store)", "[the] general (shop | store)"]),
         Location("Town"),
         Location("Trailer"),
         Location("Woods"),
     )
 
 def location_commands(locs):
+    import server
     commands = {}
     for loc in locs:
         for cmd in loc.commands:
             assert cmd not in commands
-            if not loc.possessive:
-                cmd = f'[the] {cmd}'
             commands[cmd] = loc
     return commands
 

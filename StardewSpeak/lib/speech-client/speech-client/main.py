@@ -26,6 +26,7 @@ from srabuilder import sleep, environment
 import srabuilder
 
 import stardew, new_game_menu, shop_menu, container_menu
+from game_menu import game_menu, crafting_page
 
 
 # --------------------------------------------------------------------------
@@ -75,6 +76,8 @@ def main(args):
     new_game_menu.load_grammar()
     shop_menu.load_grammar()
     container_menu.load_grammar()
+    game_menu.load_grammar()
+    crafting_page.load_grammar()
 
     # threading.Thread(target=command_line_loop, args=(engine,), daemon=True).start()
     srabuilder.run_engine()

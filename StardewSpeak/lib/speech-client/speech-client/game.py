@@ -594,11 +594,17 @@ async def move_mouse_in_direction(direction: str, amount: int):
     await server.set_mouse_position_relative(dx * smallest_unit, dy * smallest_unit)
 
 async def on_menu_changed(new_menu):
-    context_variables['ACTIVE_MENU'] = new_menu
     await server.stop_everything()
 
-def get_context_menu():
-    return context_variables['ACTIVE_MENU']
+def get_context_menu(menu_type=None):
+    import menu_utils
+    menu = context_variables['ACTIVE_MENU']
+    if menu_type is not None:
+        if menu is None:
+            raise menu_utils.InvalidMenuOption(f'Expecting {menu_type}, got None')
+        if menu['menuType'] != menu_type:
+            raise menu_utils.InvalidMenuOption(f"Expecting {menu_type}, got {menu['menuType']}")
+    return menu
 
 async def get_location_connections():
     return await server.request('GET_LOCATION_CONNECTIONS')
