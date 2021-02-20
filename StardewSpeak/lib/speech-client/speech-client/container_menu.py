@@ -36,7 +36,7 @@ async def focus_item(new_row, new_col):
 mapping = {
     "item <positive_index>": df_utils.async_action(focus_item, None, 'positive_index'),
     "row <positive_index>": df_utils.async_action(focus_item, 'positive_index', None),
-    "inventory": df_utils.async_action(set_item_grab_submenu, 'inventoryMenu'),
+    "backpack": df_utils.async_action(set_item_grab_submenu, 'inventoryMenu'),
     "container": df_utils.async_action(set_item_grab_submenu, 'itemsToGrabMenu'),
 
 }

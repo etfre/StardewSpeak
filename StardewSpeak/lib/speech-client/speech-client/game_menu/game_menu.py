@@ -43,9 +43,9 @@ mapping = {
     "<tabs>": df_utils.async_action(click_tab, 'tabs'),
 }
 
+@menu_utils.valid_menu_test
 def is_active():
-    menu = game.get_context_menu()
-    return menu and menu['menuType'] == 'gameMenu' 
+    game.get_context_menu('gameMenu')
 
 def load_grammar():
     grammar = df.Grammar("game_menu")
@@ -57,7 +57,7 @@ def load_grammar():
             df_utils.positive_num,
         ],
         defaults={'positive_num': 1},
-        context=df.FuncContext(lambda: is_active()),
+        context=is_active,
     )
     grammar.add_rule(main_rule)
     grammar.load()

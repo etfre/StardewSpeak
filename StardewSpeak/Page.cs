@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web.UI.WebControls;
 
 namespace StardewSpeak
 {
@@ -15,8 +16,10 @@ namespace StardewSpeak
         {
             if (obj == null) return null;
             if (obj is CataloguePage) return SerializeCataloguePage(obj);
+            if (obj is CollectionsPage) return SerializeCollectionsPage(obj);
             if (obj is CraftingPage) return SerializeCraftingPage(obj);
             if (obj is InventoryPage) return SerializeInventoryPage(obj);
+            if (obj is ExitPage) return SerializeExitPage(obj);
             else return new { type = "unknown" };
         }
         public static object SerializeCataloguePage(CataloguePage page) 
@@ -62,6 +65,37 @@ namespace StardewSpeak
                 pagesOfCraftingRecipes,
                 inventory = Utils.SerializeMenu(page.inventory, mousePosition),
                 trashCan = Utils.SerializeClickableCmp(page.trashCan, mousePosition),
+            };
+        }
+        public static object SerializeCollectionsPage(CollectionsPage page)
+        {
+            Point mousePosition = Game1.getMousePosition();
+            return new
+            {
+                type = "collectionsPage",
+            };
+        }
+
+        public static object SerializeFarmInfoPage(FarmInfoPage page)
+        {
+            Point mousePosition = Game1.getMousePosition();
+            var upperRightCloseButton = Utils.SerializeClickableCmp(page.upperRightCloseButton, mousePosition);
+            return new
+            {
+                type = "farmInfoPage",
+                upperRightCloseButton,
+            };
+        }
+        public static object SerializeExitPage(ExitPage page)
+        {
+            Point mousePosition = Game1.getMousePosition();
+            var exitToDesktop = Utils.SerializeClickableCmp(page.exitToDesktop, mousePosition);
+            var exitToTitle = Utils.SerializeClickableCmp(page.exitToTitle, mousePosition);
+            return new
+            {
+                type = "exitPage",
+                exitToDesktop,
+                exitToTitle,
             };
         }
     }

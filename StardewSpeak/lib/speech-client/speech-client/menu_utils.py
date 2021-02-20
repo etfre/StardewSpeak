@@ -1,3 +1,4 @@
+import dragonfly as df
 import server
 import asyncio
 
@@ -62,6 +63,16 @@ async def try_menus(try_fns, *a):
             pass
         else:
             return
+
+def valid_menu_test(fn):
+    def test_fn():
+        try:
+            res = fn()
+        except InvalidMenuOption:
+            return False
+        else:
+            return res is not False
+    return df.FuncContext(test_fn)
 
 class InventoryMenuWrapper:
 

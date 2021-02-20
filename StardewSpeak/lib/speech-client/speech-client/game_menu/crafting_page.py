@@ -16,16 +16,13 @@ async def focus_item(item):
             return
 
 mapping = {
-    "<items>": df_utils.async_action(focus_item, 'items'),
+    "<craftable_items>": df_utils.async_action(focus_item, 'craftable_items'),
 }
 
+@menu_utils.valid_menu_test
 def is_active():
-    try:
-        menu = game.get_context_menu('gameMenu')
-        game_menu.get_page_by_name(menu, 'craftingPage')
-    except menu_utils.InvalidMenuOption:
-        return False
-    return True
+    menu = game.get_context_menu('gameMenu')
+    game_menu.get_page_by_name(menu, 'craftingPage')
 
 def load_grammar():
     grammar = df.Grammar("crafting_page")
@@ -34,10 +31,10 @@ def load_grammar():
         mapping=mapping,
         extras=[
             df_utils.positive_num,
-            items.items_choice,
+            items.craftable_items_choice,
         ],
         defaults={'positive_num': 1},
-        context=df.FuncContext(lambda: is_active()),
+        context=is_active,
     )
     grammar.add_rule(main_rule)
     grammar.load()

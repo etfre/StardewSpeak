@@ -49,7 +49,7 @@ mapping = {
     "item <positive_index>": df_utils.async_action(focus_item, 'positive_index', 'item'),
     "row <positive_index>": df_utils.async_action(focus_item, 'positive_index', 'row'),
     "(shop | store)": df_utils.async_action(focus_menu_section, 'forSale'),
-    "inventory": df_utils.async_action(focus_menu_section, 'inventory'),
+    "backpack": df_utils.async_action(focus_menu_section, 'inventory'),
 }
 
 def is_active():
