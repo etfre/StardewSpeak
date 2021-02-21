@@ -1,4 +1,4 @@
-import game, server, menu_utils, df_utils
+import game, server, menu_utils, df_utils, items
 from srabuilder import rules
 import functools
 import dragonfly as df
@@ -9,13 +9,6 @@ item_grab = {
     'inventoryMenu': menu_utils.InventoryMenuWrapper(),
     'itemsToGrabMenu': menu_utils.InventoryMenuWrapper(),
 }
-
-def reset_item_grab_state():
-    global item_grab
-    item_grab = {
-        'inventoryMenu': (0, 0),
-        'itemsToGrabMenu': (0, 0),
-    }      
 
 async def set_item_grab_submenu(submenu_name: str):
     assert submenu_name in ('inventoryMenu', 'itemsToGrabMenu')
@@ -33,12 +26,15 @@ async def focus_item(new_row, new_col):
     submenu_wrapper = item_grab[submenu_name]
     await submenu_wrapper.focus_box(submenu, new_row, new_col)
 
+async def focus_item_by_name(item):
+    server.log(item.name)
+
 mapping = {
     "item <positive_index>": df_utils.async_action(focus_item, None, 'positive_index'),
     "row <positive_index>": df_utils.async_action(focus_item, 'positive_index', None),
     "backpack": df_utils.async_action(set_item_grab_submenu, 'inventoryMenu'),
     "container": df_utils.async_action(set_item_grab_submenu, 'itemsToGrabMenu'),
-
+    # "<items>":df_utils.async_action(focus_item_by_name, 'items'),
 }
 
 def is_active():

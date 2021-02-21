@@ -1,4 +1,7 @@
 import time
+import os
+import os.path
+import json
 import collections
 import contextlib
 import asyncio
@@ -616,3 +619,13 @@ async def go_inside():
             current_tile = await get_current_tile(pss)
             indoors_connections.sort(key=lambda t: distance_between_tiles(current_tile, (t['X'], t['Y'])))
             await pathfind_to_next_location(indoors_connections[0]['TargetName'], pss)
+
+def log(obj, name):
+    path = os.path.abspath(name)
+    server.log(path)
+    with open(path, 'w') as f:
+    # with open(os.path.join('..', 'debug', name), 'w') as f:
+        if isinstance(obj, str):
+            f.write(obj)
+        else:
+            json.dump(obj, f)

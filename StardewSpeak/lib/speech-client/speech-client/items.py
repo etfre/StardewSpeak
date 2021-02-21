@@ -77,6 +77,13 @@ craftable_items = (
     Item("Wood Sign"),
 )
 
+tools = ()
+
+other_items = (
+    Item("Banana Slug"),
+    Item("Baseball Bat"),
+)
+
 def item_commands(items):
     commands = {}
     for item in items:
@@ -86,4 +93,6 @@ def item_commands(items):
     return commands
 
 craftable_commands = item_commands(craftable_items)
+other_item_commands = item_commands(other_items)
 craftable_items_choice = df.Choice("craftable_items", craftable_commands)
+items_choice = df.Choice("items", {**craftable_commands, **other_item_commands})

@@ -12,14 +12,20 @@ def find_component_containing_mouse(list_of_cmp_rows):
             if cmp['containsMouse']:
                 return row_num, col_num
 
-def list_of_rows(cmps):
+def list_of_rows(cmps, y_threshold=25):
     '''
     Use center y property to create a list of rows from top to bottom. Assumes all items in a row
     have the same y value
     '''
-    rows = []
-    for cmp in sorted(cmps, key=lambda c: c['center'][1]):
-        if not rows or cmp['center'][1] > rows[-1][-1]['center'][1]:
+    if not cmps:
+        return []
+    y_sorted = sorted(cmps, key=lambda c: c['center'][1])
+    rows = [[y_sorted[0]]]
+    for cmp in y_sorted[1:]:
+        cmp_y = cmp['center'][1]
+        first_in_row_y = rows[-1][0]['center'][1]
+        new_row = cmp_y >= first_in_row_y + y_threshold
+        if new_row:
             rows.append([])
         rows[-1].append(cmp)
     return rows
@@ -92,6 +98,9 @@ class InventoryMenuWrapper:
         await focus_component(cmp)
         self.row = row
         self.col = col
+
+    async def focus_box_by_item_name(self, name: str):
+        pass
 
 class InvalidMenuOption(Exception):
     pass

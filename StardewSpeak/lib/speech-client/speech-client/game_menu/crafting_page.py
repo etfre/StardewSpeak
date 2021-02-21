@@ -3,17 +3,21 @@ import dragonfly as df
 import title_menu, menu_utils, server, df_utils, game, letters, items, server
 from game_menu import game_menu
 
+inventory = menu_utils.InventoryMenuWrapper(),
+
 async def get_crafting_page():
-    return await menu_utils.get_active_menu('gameMenu')
+    menu = await menu_utils.get_active_menu('gameMenu')
+    page = game_menu.get_page_by_name(menu, 'craftingPage')
+    return page
 
 async def focus_item(item):
-    menu = await game_menu.get_game_menu()
-    page = game_menu.get_page_by_name(menu, 'craftingPage')
+    page = await get_crafting_page()
     current_crafting_page = page['pagesOfCraftingRecipes'][page['currentCraftingPageIndex']]
     for cmp, serialized_item in current_crafting_page:
         if item.name == serialized_item['name']:
             await menu_utils.focus_component(cmp)
-            return
+            return True
+    return False
 
 mapping = {
     "<craftable_items>": df_utils.async_action(focus_item, 'craftable_items'),
