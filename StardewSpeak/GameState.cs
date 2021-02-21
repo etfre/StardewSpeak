@@ -37,10 +37,21 @@ namespace StardewSpeak
 
         public static object PlayerItems() 
         {
-            var items = Game1.player.Items.Select(i => {
+            var player = Game1.player;
+            var items = player.Items.Select(i => {
                 return Utils.SerializeItem(i);
              });
-            return new { currentToolIndex = Game1.player.CurrentToolIndex, items };
+            var cursorSlotItem = Utils.SerializeItem(player.CursorSlotItem);
+            var equippedItems = new 
+            {
+                boots = Utils.SerializeItem(player.boots.Value),
+                hat = Utils.SerializeItem(player.hat.Value),
+                leftRing = Utils.SerializeItem(player.leftRing.Value),
+                pants = Utils.SerializeItem(player.pantsItem.Value),
+                rightRing = Utils.SerializeItem(player.rightRing.Value),
+                shirt = Utils.SerializeItem(player.shirtItem.Value),
+            };
+            return new { currentToolIndex = Game1.player.CurrentToolIndex, items, cursorSlotItem, equippedItems };
         }
 
         public static object CharactersAtLocation(GameLocation location)

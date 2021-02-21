@@ -133,7 +133,6 @@ namespace StardewSpeak
             {
                 var gm = menu as GameMenu;
                 var tabs = Utils.SerializeComponentList(gm.tabs, mousePosition);
-                //var currentPage = gm.();
                 var pages = gm.pages.Select(x => Page.SerializePage(x)).ToList();
                 menuTypeObj = new
                 {
