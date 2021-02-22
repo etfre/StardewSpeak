@@ -10,6 +10,14 @@ async def get_crafting_page():
     page = game_menu.get_page_by_name(menu, 'craftingPage')
     return page
 
+async def scroll_up(n):
+    page = await get_crafting_page()
+    await menu_utils.scroll_up(page, n)
+
+async def scroll_down(n):
+    page = await get_crafting_page()
+    await menu_utils.scroll_down(page, n)
+
 async def focus_item(item):
     page = await get_crafting_page()
     current_crafting_page = page['pagesOfCraftingRecipes'][page['currentCraftingPageIndex']]
@@ -21,6 +29,8 @@ async def focus_item(item):
 
 mapping = {
     "<craftable_items>": df_utils.async_action(focus_item, 'craftable_items'),
+    "[<positive_num>] scroll up": df_utils.async_action(scroll_up, 'positive_num'),
+    "[<positive_num>] scroll down": df_utils.async_action(scroll_down, 'positive_num'),
 }
 
 @menu_utils.valid_menu_test

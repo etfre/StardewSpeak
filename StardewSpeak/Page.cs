@@ -62,9 +62,11 @@ namespace StardewSpeak
             {
                 type = "craftingPage",
                 currentCraftingPageIndex,
+                downArrow = Utils.SerializeClickableCmp(page.downButton, mousePosition),
                 pagesOfCraftingRecipes,
                 inventory = Utils.SerializeMenu(page.inventory, mousePosition),
                 trashCan = Utils.SerializeClickableCmp(page.trashCan, mousePosition),
+                upArrow = Utils.SerializeClickableCmp(page.upButton, mousePosition),
             };
         }
         public static object SerializeCollectionsPage(CollectionsPage page)

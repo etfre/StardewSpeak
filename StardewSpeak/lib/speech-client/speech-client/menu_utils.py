@@ -1,5 +1,5 @@
 import dragonfly as df
-import server
+import server, constants
 import asyncio
 
 async def focus_component(cmp):
@@ -60,6 +60,17 @@ async def click_component(cmp):
     await asyncio.sleep(0.1) # TODO some kind of mouse stream
     await server.mouse_click()
 
+async def scroll_up(menu, count=1):
+    cmp = menu[constants.UP_ARROW]
+    for i in range(count):
+        await click_component(cmp)
+        await asyncio.sleep(0.1)
+
+async def scroll_down(menu, count=1):
+    cmp = menu[constants.DOWN_ARROW]
+    for i in range(count):
+        await click_component(cmp)
+        await asyncio.sleep(0.1)
 
 async def try_menus(try_fns, *a):
     for fn in try_fns:
