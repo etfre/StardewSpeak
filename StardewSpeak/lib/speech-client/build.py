@@ -3,6 +3,7 @@ cxfreeze command line tool
 """
 
 import argparse
+import subprocess
 import os
 import json
 import io
@@ -260,8 +261,14 @@ def copy_dir(root_src_dir, root_dst_dir, filter=None):
 def filter_commands():
     pass
 
+def build_release():
+    msbuild = r"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe"
+    sln = os.path.abspath(os.path.join('..', '..', '..', 'StardewSpeak.sln'))
+    subprocess.run([msbuild, sln, '/p:Configuration=Release'])
+
 def main():
     args = parse_command_line(prepare_parser())
+    build_release()
     app_name = 'speech-client'
     app_root = os.path.join('dist')
     try_remove_directory(app_root)

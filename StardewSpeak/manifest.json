@@ -1,7 +1,7 @@
 {
   "Name": "StardewSpeak",
   "Author": "evfredericksen",
-  "Version": "1.0.0",
+  "Version": "0.0.1",
   "Description": "One or two sentences about the mod",
   "UniqueID": "evfredericksen.StardewSpeak",
   "EntryDll": "StardewSpeak.dll",

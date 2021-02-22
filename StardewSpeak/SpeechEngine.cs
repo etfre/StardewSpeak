@@ -15,6 +15,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using StardewValley.Menus;
+using System.Reflection;
 
 namespace StardewSpeak
 {
@@ -31,9 +32,13 @@ namespace StardewSpeak
 
         public void LaunchProcess()
         {
-            var fileName = "\"" + Path.Combine(Environment.CurrentDirectory, @"Mods\StardewSpeak\StardewSpeak\lib\speech-client\Scripts\python.exe") + "\"";
+            string rootDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            ModEntry.Log(rootDir);
+            var fileName = "\"" + Path.Combine(rootDir, @"StardewSpeak\lib\speech-client\Scripts\python.exe") + "\"";
+            var arguments = "\"" + Path.Combine(rootDir, @"StardewSpeak\lib\speech-client\speech-client\main.py") + "\"";
+            System.Threading.Thread.Sleep(10000);
             //var fileName = "\"" + Path.Combine(Environment.CurrentDirectory, @"Mods\StardewSpeak\StardewSpeak\lib\speech-client\dist\speech-client.exe") + "\"";
-            var arguments = "\"" + Path.Combine(Environment.CurrentDirectory, @"Mods\StardewSpeak\StardewSpeak\lib\speech-client\speech-client\main.py") + "\"";
+            //string arguments = null;
             Task.Factory.StartNew(() => RunProcessAsync(fileName, arguments));
             //await this.RunProcessAsync(fileName, arguments);
         }
