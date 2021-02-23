@@ -268,7 +268,7 @@ def build_release():
 
 def main():
     args = parse_command_line(prepare_parser())
-    build_release()
+    # build_release()
     app_name = 'speech-client'
     app_root = os.path.join('dist')
     try_remove_directory(app_root)

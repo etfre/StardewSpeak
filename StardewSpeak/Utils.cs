@@ -53,21 +53,6 @@ namespace StardewSpeak
             {
                 result[kvp.key] = kvp.value;
             }
-            //if (item1 is ExpandoObject) {
-            //    var exp = item1 as ExpandoObject;
-            //    foreach (var kvp in exp)
-            //    {
-            //        result[kvp.Key] = kvp.Value;
-            //    }
-            //}
-            //foreach (System.Reflection.PropertyInfo fi in item1.GetType().GetProperties())
-            //{
-            //    result[fi.Name] = fi.GetValue(item1, null);
-            //}
-            //foreach (System.Reflection.PropertyInfo fi in item2.GetType().GetProperties())
-            //{
-            //    result[fi.Name] = fi.GetValue(item2, null);
-            //}
             return result;
         }
 

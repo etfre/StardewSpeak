@@ -2,9 +2,9 @@
   "Name": "StardewSpeak",
   "Author": "evfredericksen",
   "Version": "0.0.1",
-  "Description": "One or two sentences about the mod",
+  "Description": "Play Stardew Valley by voice",
   "UniqueID": "evfredericksen.StardewSpeak",
   "EntryDll": "StardewSpeak.dll",
-  "MinimumApiVersion": "3.0.0",
+  "MinimumApiVersion": "3.9.1",
   "UpdateKeys": []
 }

@@ -33,14 +33,16 @@ namespace StardewSpeak
         public void LaunchProcess()
         {
             string rootDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            ModEntry.Log(rootDir);
-            var fileName = "\"" + Path.Combine(rootDir, @"StardewSpeak\lib\speech-client\Scripts\python.exe") + "\"";
-            var arguments = "\"" + Path.Combine(rootDir, @"StardewSpeak\lib\speech-client\speech-client\main.py") + "\"";
-            System.Threading.Thread.Sleep(10000);
-            //var fileName = "\"" + Path.Combine(Environment.CurrentDirectory, @"Mods\StardewSpeak\StardewSpeak\lib\speech-client\dist\speech-client.exe") + "\"";
-            //string arguments = null;
-            Task.Factory.StartNew(() => RunProcessAsync(fileName, arguments));
-            //await this.RunProcessAsync(fileName, arguments);
+            #if DEBUG
+                ModEntry.Log("Running in debug mode");
+                var fileName = "\"" + Path.Combine(rootDir, @"StardewSpeak\lib\speech-client\Scripts\python.exe") + "\"";
+                var arguments = "\"" + Path.Combine(rootDir, @"StardewSpeak\lib\speech-client\speech-client\main.py") + "\"";
+                Task.Factory.StartNew(() => RunProcessAsync(fileName, arguments));
+            #else
+                ModEntry.Log("Running in release mode");
+                string exePath = "\"" + Path.Combine(rootDir, @"lib\speech-client\dist\speech-client.exe") + "\"";
+                Task.Factory.StartNew(() => RunProcessAsync(exePath, null));
+            #endif
         }
 
         public async Task<int> RunProcessAsync(string fileName, string args)
