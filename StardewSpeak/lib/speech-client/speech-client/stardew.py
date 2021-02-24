@@ -13,7 +13,7 @@ import json
 from dragonfly import *
 from srabuilder import rules
 
-from srabuilder.actions import directinput
+from srabuilder.actions import directinput, pydirectinput
 import constants, server, game, objective, locations, items, container_menu, title_menu, menu_utils, fishing_menu, letters, new_game_menu, df_utils
 
 
@@ -104,6 +104,7 @@ def rule_builder():
             extras=[
                 rules.num,
                 df_utils.positive_num,
+                df_utils.positive_index,
                 num2,
                 Choice("direction_keys", direction_keys),
                 Choice("direction_nums", direction_nums),
@@ -114,7 +115,7 @@ def rule_builder():
                 Choice("locations", locations.location_commands(locations.locations)),
                 title_menu.main_button_choice,
             ],
-            defaults={"n": 1, 'positive_num': 1},
+            defaults={"n": 1, 'positive_num': 1, 'positive_index': 0},
         )
     )
     # builder.repeat.append(
@@ -156,7 +157,8 @@ non_repeat_mapping = {
     "stop": async_action(server.stop_everything),
     "swing": Function(lambda: directinput.send("c")),
     "(action|check)": Function(lambda: directinput.send("x")),
-    "(escape | menu)": Function(lambda: directinput.send("esc")),
+    "(escape | menu)": Function(lambda: pydirectinput.press(["esc"])),
+    "next toolbar": Function(lambda: pydirectinput.press(["tab"])),
     "<n> <directions>": objective_action(objective.MoveNTilesObjective, "directions", "n"),
     "go to mailbox": objective_action(objective.MoveToPointObjective),
     "go to <locations>": objective_action(objective.MoveToLocationObjective, "locations"),
@@ -166,9 +168,11 @@ non_repeat_mapping = {
     "clear debris": objective_action(objective.ClearDebrisObjective),
     "hoe <n> by <n2>": objective_action(objective.HoePlotObjective, "n", "n2"),
     "equip <tools>": async_action(game.equip_item, 'tools'),
+    "item <positive_index>": async_action(game.equip_item_by_index, 'positive_index'),
     "talk to <npcs>": objective_action(objective.TalkToNPCObjective, "npcs"),
     "refill watering can": function_objective(game.refill_watering_can),
-    "pick up crafted": function_objective(game.pick_up_crafted_items),
+    "gather crafting": function_objective(game.gather_crafted_items),
+    "gather (objects | items)": function_objective(game.gather_items),
     "go inside": function_objective(game.go_inside),
     # "scroll up": async_action(menu_utils.try_menus, [menu_utils.click_menu_button, title_menu.click_submenu_button], constants.UP_ARROW),
     # "scroll down": async_action(menu_utils.try_menus, [menu_utils.click_menu_button, title_menu.click_submenu_button], constants.DOWN_ARROW),

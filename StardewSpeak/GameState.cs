@@ -190,12 +190,15 @@ namespace StardewSpeak
         public static dynamic LocationObjects() 
         {
             var objs = new List<dynamic>();
-            foreach (var o in Game1.currentLocation.Objects.Values) 
+            foreach (var kvp in Game1.currentLocation.Objects.Pairs) 
             {
-                var tileX = (int)o.TileLocation.X;
-                var tileY = (int)o.TileLocation.Y;
+                var tileLocation = kvp.Key;
+                var tileX = (int)tileLocation.X;
+                var tileY = (int)tileLocation.Y;
+                var o = kvp.Value;
                 bool readyForHarvest = o.readyForHarvest.Value;
-                var formattedObj = new {name = o.Name, tileX, tileY, type = o.Type, readyForHarvest };
+                bool canBeGrabbed = o.canBeGrabbed.Value;
+                var formattedObj = new {name = o.Name, tileX, tileY, type = o.Type, readyForHarvest, canBeGrabbed };
                 objs.Add(formattedObj);
             }
             return objs;

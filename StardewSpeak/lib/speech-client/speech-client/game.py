@@ -452,6 +452,9 @@ async def equip_item(item: str):
                 else:
                     return await server.request('EQUIP_ITEM_INDEX', {"index": matched_index})
 
+async def equip_item_by_index(idx: int):
+    return await server.request('EQUIP_ITEM_INDEX', {"index": idx})
+
 def generic_next_item_key(start_tile, current_tile, item, player_status):
     target_tile = item['tileX'], item['tileY']
     score = score_objects_by_distance(start_tile, current_tile, target_tile)
@@ -566,11 +569,21 @@ async def get_ready_crafted(loc):
     ready_crafted = [x for x in objs if x['readyForHarvest'] and x['type'] == "Crafting"]
     return ready_crafted
 
-async def pick_up_crafted_items():
-    await modify_tiles(get_ready_crafted, generic_next_item_key, at_crafted)
+async def get_basic_items(loc):
+    objs = await get_location_objects(loc)
+    server.log(objs)
+    items = [x for x in objs if x['canBeGrabbed'] and x['type'] == "Basic"]
+    server.log(items)
+    return items
 
-async def at_crafted(obj):
+async def gather_crafted_items():
+    await modify_tiles(get_ready_crafted, generic_next_item_key, at_item)
+
+async def at_item(obj):
     await do_action()
+
+async def gather_items():
+    await modify_tiles(get_basic_items, generic_next_item_key, at_item)
 
 async def pathfind_to_nearest_water(stream: server.Stream):
     water_tiles = await server.request('GET_WATER_TILES')
