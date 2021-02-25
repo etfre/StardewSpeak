@@ -569,10 +569,10 @@ async def get_ready_crafted(loc):
     ready_crafted = [x for x in objs if x['readyForHarvest'] and x['type'] == "Crafting"]
     return ready_crafted
 
-async def get_basic_items(loc):
+async def get_basic_visible_items(loc):
     objs = await get_location_objects(loc)
     server.log(objs)
-    items = [x for x in objs if x['canBeGrabbed'] and x['type'] == "Basic"]
+    items = [x for x in objs if x['canBeGrabbed'] and x['type'] == "Basic" and x['isOnScreen']]
     server.log(items)
     return items
 
@@ -583,7 +583,7 @@ async def at_item(obj):
     await do_action()
 
 async def gather_items():
-    await modify_tiles(get_basic_items, generic_next_item_key, at_item)
+    await modify_tiles(get_basic_visible_items, generic_next_item_key, at_item)
 
 async def pathfind_to_nearest_water(stream: server.Stream):
     water_tiles = await server.request('GET_WATER_TILES')

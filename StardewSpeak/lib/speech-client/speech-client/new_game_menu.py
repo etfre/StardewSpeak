@@ -2,8 +2,11 @@ import asyncio
 import dragonfly as df
 import title_menu, menu_utils, server, df_utils, game, letters
 
+CHARACTER_CUSTOMIZATION_MENU = 'characterCustomizationMenu'
+
 async def get_new_game_menu():
-    return await title_menu.get_submenu('characterCustomizationMenu')
+    menu = await menu_utils.get_active_menu(title_menu.TITLE_MENU)
+    return await title_menu.get_submenu(menu, CHARACTER_CUSTOMIZATION_MENU)
 
 async def focus_box(cmp_name):
     await menu_utils.click_menu_button(cmp_name, menu_getter=get_new_game_menu)
@@ -61,9 +64,9 @@ mapping = {
     "<letters_and_keys>": df.Function(lambda **kw: letters.type_letters(kw['letters_and_keys'])),
 }
 
+@menu_utils.valid_menu_test
 def is_active():
-    menu_type = title_menu.active_submenu_type(game.get_context_menu())
-    return menu_type == 'characterCustomizationMenu' 
+    title_menu.get_submenu(game.get_context_menu(title_menu.TITLE_MENU), 'characterCustomizationMenu')
 
 def load_grammar():
     grammar = df.Grammar("new_game_menu")
@@ -78,7 +81,7 @@ def load_grammar():
             letters.letters_and_keys
         ],
         defaults={'positive_num': 1},
-        context=df.FuncContext(lambda: is_active()),
+        context=is_active
     )
     grammar.add_rule(main_rule)
     grammar.load()

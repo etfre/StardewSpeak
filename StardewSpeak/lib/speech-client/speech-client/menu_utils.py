@@ -113,5 +113,20 @@ class InventoryMenuWrapper:
     async def focus_box_by_item_name(self, name: str):
         pass
 
+def scroll_commands(menu_getter):
+    import df_utils
+
+    async def scroll_up_wrapper(n):
+        menu = await menu_getter()
+        await scroll_up(menu, n)
+
+    async def scroll_down_wrapper(n):
+        menu = await menu_getter()
+        await scroll_down(menu, n)
+
+    return {
+        "[<positive_num>] scroll up": df_utils.async_action(scroll_up_wrapper, 'positive_num'),
+        "[<positive_num>] scroll down": df_utils.async_action(scroll_down_wrapper, 'positive_num'),
+    }
 class InvalidMenuOption(Exception):
     pass

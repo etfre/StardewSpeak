@@ -178,8 +178,6 @@ non_repeat_mapping = {
     # "scroll down": async_action(menu_utils.try_menus, [menu_utils.click_menu_button, title_menu.click_submenu_button], constants.DOWN_ARROW),
     "[<positive_num>] click": async_action(server.mouse_click, "left", "positive_num"),
     "[<n>] mouse <mouse_directions>": async_action(game.move_mouse_in_direction, 'mouse_directions', 'n'),
-    "load game <n>": server.AsyncFunction(title_menu.load_game, format_args=lambda **kw: [kw['n'] - 1]),
-    "<main_buttons> game": async_action(title_menu.click_main_button, 'main_buttons'),
     "start fishing": async_action(fishing_menu.start_fishing),
     "catch fish": async_action(fishing_menu.catch_fish),
     # "(capital | uppercase) <letters_and_keys>": Function(lambda **kw: letters.type_letters(kw['letters'].upper())),
