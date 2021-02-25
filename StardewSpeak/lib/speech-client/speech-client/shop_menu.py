@@ -50,6 +50,7 @@ mapping = {
     "row <positive_index>": df_utils.async_action(focus_item, 'positive_index', 'row'),
     "(shop | store)": df_utils.async_action(focus_menu_section, 'forSale'),
     "backpack": df_utils.async_action(focus_menu_section, 'inventory'),
+    **menu_utils.scroll_commands(get_shop_menu),
 }
 
 def is_active():
@@ -60,8 +61,9 @@ def load_grammar():
     main_rule = df.MappingRule(
         name="shop_menu_rule",
         mapping=mapping,
-        extras=[rules.num, df_utils.positive_index],
+        extras=[rules.num, df_utils.positive_index, df_utils.positive_num],
         context=df.FuncContext(lambda: is_active()),
+        defaults={'positive_num': 1},
     )
     grammar.add_rule(main_rule)
     grammar.load()

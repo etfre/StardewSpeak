@@ -174,11 +174,8 @@ non_repeat_mapping = {
     "gather crafting": function_objective(game.gather_crafted_items),
     "gather (objects | items)": function_objective(game.gather_items),
     "go inside": function_objective(game.go_inside),
-    # "scroll up": async_action(menu_utils.try_menus, [menu_utils.click_menu_button, title_menu.click_submenu_button], constants.UP_ARROW),
-    # "scroll down": async_action(menu_utils.try_menus, [menu_utils.click_menu_button, title_menu.click_submenu_button], constants.DOWN_ARROW),
     "[<positive_num>] click": async_action(server.mouse_click, "left", "positive_num"),
     "[<n>] mouse <mouse_directions>": async_action(game.move_mouse_in_direction, 'mouse_directions', 'n'),
     "start fishing": async_action(fishing_menu.start_fishing),
     "catch fish": async_action(fishing_menu.catch_fish),
-    # "(capital | uppercase) <letters_and_keys>": Function(lambda **kw: letters.type_letters(kw['letters'].upper())),
 }
