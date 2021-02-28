@@ -166,6 +166,7 @@ non_repeat_mapping = {
     "start planting": objective_action(objective.PlantSeedsOrFertilizerObjective),
     "water crops": objective_action(objective.WaterCropsObjective),
     "clear debris": objective_action(objective.ClearDebrisObjective),
+    "defend": objective_action(objective.DefendObjective),
     "hoe <n> by <n2>": objective_action(objective.HoePlotObjective, "n", "n2"),
     "equip <tools>": async_action(game.equip_item, 'tools'),
     "item <positive_index>": async_action(game.equip_item_by_index, 'positive_index'),

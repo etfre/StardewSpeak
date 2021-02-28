@@ -1,4 +1,5 @@
 import time
+import math
 import os
 import os.path
 import json
@@ -62,7 +63,11 @@ class Path:
 def distance_between_tiles(t1, t2):
     # pathfinding doesn't move diagonally for simplicity so just sum differences between x and y
     return abs(t1[0] - t2[0]) + abs(t1[1] - t2[1]) 
-
+    
+def distance_between_tiles_diagonal(t1, t2):
+    x_score = abs(t1[0] - t2[0]) ** 2
+    y_score = abs(t1[1] - t2[1]) ** 2
+    return math.sqrt(x_score + y_score) 
 
 def score_objects_by_distance(start_tile, current_tile, obj_tile, start_weight=0.25, current_weight=0.75):
     assert start_weight + current_weight == 1
@@ -352,6 +357,14 @@ def direction_from_tiles(tile, target_tile):
         return constants.WEST
     raise ValueError(f'Could not extract direction from {tile} to {target_tile}')
 
+def direction_from_positions(xy, target_xy):
+    x, y = xy
+    target_x, target_y = target_xy
+    xdiff = target_x - x
+    ydiff = target_y - y
+    if abs(xdiff) > abs(ydiff):
+        return constants.EAST if xdiff > 0 else constants.WEST
+    return constants.SOUTH if ydiff > 0 else constants.NORTH
 
 def facing_tile_center(player_status):
     """Keep moving towards center of tile before a turn for smoother pathfinding"""
@@ -361,8 +374,8 @@ def facing_tile_center(player_status):
     # x rounds to the nearest tile, y rounds down unless above (or at?) .75, e.g. (21.68, 17.68) becomes (22, 17) and (21.44, 17.77) becomes (21, 18).
     # Normalize so greater than 0 means right/below the center and less than 0 means left/above
     x, y, = (
-        position["x"] / tile_size - tile_x,
-        position["y"] / tile_size - tile_y - 0.25,
+        position[0] / tile_size - tile_x,
+        position[1] / tile_size - tile_y - 0.25,
     )
     assert -0.5 <= x <= 0.5
     assert -0.5 <= y <= 0.5
@@ -642,3 +655,6 @@ def log(obj, name):
             f.write(obj)
         else:
             json.dump(obj, f)
+
+async def move():
+    pass

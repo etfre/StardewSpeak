@@ -18,7 +18,7 @@ namespace StardewSpeak
             var player = Game1.player;
             string location = player.currentLocation?.Name;
             var playerPosition = player.Position;
-            var position = new { x = playerPosition.X, y = playerPosition.Y };
+            var position = new List<float>{ playerPosition.X, playerPosition.Y };
             var facingDirection = player.FacingDirection;
             var isMoving = player.isMoving();
             var status = new
@@ -59,12 +59,15 @@ namespace StardewSpeak
             var chars = new List<dynamic>();
             foreach (var character in location.characters) 
             {
-                var position = new { x = character.Position.X, y = character.Position.Y };
+                var position = new List<float> { character.Position.X, character.Position.Y };
                 var charObj = new
                 {
                     name = character.Name,
                     tileX = character.getTileX(),
                     tileY = character.getTileY(),
+                    isMonster = character.IsMonster,
+                    isInvisible = character.IsInvisible,
+                    facingDirection = character.FacingDirection,
                     position,
                 };
                 chars.Add(charObj);

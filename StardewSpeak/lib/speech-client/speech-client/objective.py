@@ -201,7 +201,8 @@ class ClearDebrisObjective(Objective):
         else:
             assert obj['type'] == 'resource_clump'
             await game.clear_resource_clump(obj)
-        await game.gather_items_on_ground(5)
+        if obj['type'] != 'resource_clump':
+            await game.gather_items_on_ground(5)
 
     async def run(self):
         await game.modify_tiles(self.get_debris, game.next_debris_key, self.at_tile)
@@ -281,6 +282,30 @@ class TalkToNPCObjective(Objective):
                     pathfind_coro = game.pathfind_to_adjacent(npc_tile[0], npc_tile[1], player_stream)
                     pathfind_task_wrapper = self.add_task(pathfind_coro)
             await game.do_action()
+
+class DefendObjective(Objective):
+
+    async def run(self):
+        async with server.characters_at_location_stream() as char_stream, server.player_status_stream() as player_stream:
+            player_position = (await player_stream.next())['position']
+            while True:
+                chars = await char_stream.next()
+                monsters = [x for x in chars if x['isMonster']]
+                if not monsters:
+                    return
+                visible_monster_positions = [x['position'] for x in chars if not x['isInvisible']]
+                if not visible_monster_positions:
+                    continue
+                if player_stream.has_value:
+                    player_position = player_stream.latest_value['position']
+                visible_monster_positions.sort(key=lambda x: game.distance_between_tiles_diagonal(player_position, x))
+                closest_monster_position = visible_monster_positions[0]
+                distance_from_monster = game.distance_between_tiles_diagonal(player_position, closest_monster_position)
+                if distance_from_monster > 0:
+                    direction_to_face = game.direction_from_positions(player_position, closest_monster_position)
+                    await game.face_direction(direction_to_face, player_stream)
+                if distance_from_monster  < 110:
+                    await game.swing_tool()
 
 
 

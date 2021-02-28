@@ -61,7 +61,7 @@ def command_line_loop(engine):
 
 def main(args):
     logging.basicConfig(level=logging.INFO)
-    engine = srabuilder.setup_engine(silence_timeout=250)
+    engine = srabuilder.setup_engine(silence_timeout=275)
 
     # Register a recognition observer
     observer = Observer()
