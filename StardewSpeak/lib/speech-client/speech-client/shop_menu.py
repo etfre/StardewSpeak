@@ -53,8 +53,9 @@ mapping = {
     **menu_utils.scroll_commands(get_shop_menu),
 }
 
+@menu_utils.valid_menu_test
 def is_active():
-    return menu_utils.test_menu_type(game.get_context_menu(), 'shopMenu')
+    game.get_context_menu('shopMenu')
 
 def load_grammar():
     grammar = df.Grammar("shop_menu")
@@ -62,7 +63,7 @@ def load_grammar():
         name="shop_menu_rule",
         mapping=mapping,
         extras=[rules.num, df_utils.positive_index, df_utils.positive_num],
-        context=df.FuncContext(lambda: is_active()),
+        context=is_active,
         defaults={'positive_num': 1},
     )
     grammar.add_rule(main_rule)

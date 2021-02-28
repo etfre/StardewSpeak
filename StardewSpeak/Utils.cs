@@ -127,6 +127,18 @@ namespace StardewSpeak
                     scrollBar = SerializeClickableCmp(sm.scrollBar, mousePosition),
                 };
             }
+            else if (menu is DialogueBox)
+            {
+                var db = menu as DialogueBox;
+                var responseCC = SerializeComponentList(db.responseCC, mousePosition);
+                var responses = db.responses.Select(x => new { x.responseKey, x.responseText, x.hotkey }).ToList();
+                menuTypeObj = new
+                {
+                    menuType = "dialogueBox",
+                    responseCC,
+                    responses,
+                };
+            }
             else if (menu is GameMenu) 
             {
                 var gm = menu as GameMenu;

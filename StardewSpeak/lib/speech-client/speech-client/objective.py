@@ -304,7 +304,7 @@ class DefendObjective(Objective):
                 if distance_from_monster > 0:
                     direction_to_face = game.direction_from_positions(player_position, closest_monster_position)
                     await game.face_direction(direction_to_face, player_stream)
-                if distance_from_monster  < 110:
+                if distance_from_monster < 110:
                     await game.swing_tool()
 
 
@@ -326,3 +326,23 @@ async def new_active_objective(new_objective: Objective):
         pending_objective = None
         active_objective = new_objective
         await new_objective.wrap_run()
+
+
+def objective_action(objective_cls, *args):
+    format_args = lambda **kw: [objective_cls(*[kw[a] for a in args])]
+    return server.AsyncFunction(new_active_objective, format_args=format_args)
+
+def function_objective(async_fn, *args):
+    format_args = lambda **kw: [FunctionObjective(async_fn, *[kw[a] for a in args])]
+    return server.AsyncFunction(new_active_objective, format_args=format_args)
+
+
+def format_args(args, **kw):
+    formatted_args = []
+    for a in args:
+        try:
+            formatted_arg = kw.get(a, a)
+        except TypeError:
+            formatted_arg = a
+        formatted_args.append(formatted_arg)
+    return formatted_args

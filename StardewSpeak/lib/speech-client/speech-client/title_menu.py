@@ -13,7 +13,7 @@ async def click_main_button(btn_name: str):
     await menu_utils.click_component(button)
 
 
-async def get_submenu(title_menu, menu_type=None):
+def get_submenu(title_menu, menu_type=None):
     submenu = title_menu.get('subMenu')
     if not submenu or (menu_type is not None and submenu['menuType'] != menu_type):
         raise menu_utils.InvalidMenuOption()

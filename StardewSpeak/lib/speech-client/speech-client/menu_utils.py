@@ -49,9 +49,6 @@ async def click_menu_button(button_property, menu_getter=get_active_menu):
         raise InvalidMenuOption()
     await click_component(btn)
 
-def test_menu_type(menu, menu_type):
-    return menu is not None and 'menuType' in menu and menu['menuType'] == menu_type
-
 def find_component_by_field(list_of_components, field_name, field_value):
     return next((x for x in list_of_components if x.get(field_name) == field_value), None)
 

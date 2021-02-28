@@ -34,11 +34,11 @@ mapping = {
     "row <positive_index>": df_utils.async_action(focus_item, 'positive_index', None),
     "backpack": df_utils.async_action(set_item_grab_submenu, 'inventoryMenu'),
     "container": df_utils.async_action(set_item_grab_submenu, 'itemsToGrabMenu'),
-    # "<items>":df_utils.async_action(focus_item_by_name, 'items'),
 }
 
+@menu_utils.valid_menu_test
 def is_active():
-    return menu_utils.test_menu_type(game.get_context_menu(), 'itemsToGrabMenu')
+    return game.get_context_menu('itemsToGrabMenu')
 
 def load_grammar():
     grammar = df.Grammar("items_to_grab_menu")
@@ -46,7 +46,7 @@ def load_grammar():
         name="items_to_grab_menu_rule",
         mapping=mapping,
         extras=[rules.num, df_utils.positive_index],
-        context=df.FuncContext(lambda: is_active()),
+        context=is_active
     )
     grammar.add_rule(main_rule)
     grammar.load()

@@ -30,7 +30,7 @@ namespace StardewSpeak
                 canMove = player.CanMove,
                 facingDirection,
                 isMoving,
-                lastWarp = LastWarp
+                lastWarp = LastWarp,
             };
             return status;
         }

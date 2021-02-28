@@ -123,60 +123,32 @@ def rule_builder():
     # )
     return builder
 
-
-def objective_action(objective_cls, *args):
-    format_args = lambda **kw: [objective_cls(*[kw[a] for a in args])]
-    return server.AsyncFunction(objective.new_active_objective, format_args=format_args)
-
-def function_objective(async_fn, *args):
-    format_args = lambda **kw: [objective.FunctionObjective(async_fn, *[kw[a] for a in args])]
-    return server.AsyncFunction(objective.new_active_objective, format_args=format_args)
-
-
-def format_args(args, **kw):
-    formatted_args = []
-    for a in args:
-        try:
-            formatted_arg = kw.get(a, a)
-        except TypeError:
-            formatted_arg = a
-        formatted_args.append(formatted_arg)
-    return formatted_args
-
-def sync_action(fn, *args):
-    format_args_fn = functools.partial(format_args, args)
-    return server.SyncFunction(fn, format_args=format_args_fn)
-
-def async_action(async_fn, *args):
-    format_args_fn = functools.partial(format_args, args)
-    return server.AsyncFunction(async_fn, format_args=format_args_fn)
-
 non_repeat_mapping = {
-    "<direction_keys>": objective_action(objective.HoldKeyObjective, "direction_keys"),
-    "face <direction_nums>": objective_action(objective.FaceDirectionObjective, "direction_nums"),
-    "stop": async_action(server.stop_everything),
+    "<direction_keys>": objective.objective_action(objective.HoldKeyObjective, "direction_keys"),
+    "face <direction_nums>": objective.objective_action(objective.FaceDirectionObjective, "direction_nums"),
+    "stop": df_utils.async_action(server.stop_everything),
     "swing": Function(lambda: directinput.send("c")),
     "(action|check)": Function(lambda: directinput.send("x")),
     "(escape | menu)": Function(lambda: pydirectinput.press(["esc"])),
     "next toolbar": Function(lambda: pydirectinput.press(["tab"])),
-    "<n> <directions>": objective_action(objective.MoveNTilesObjective, "directions", "n"),
-    "go to mailbox": objective_action(objective.MoveToPointObjective),
-    "go to <locations>": objective_action(objective.MoveToLocationObjective, "locations"),
-    "start chopping trees": objective_action(objective.ChopTreesObjective),
-    "start planting": objective_action(objective.PlantSeedsOrFertilizerObjective),
-    "water crops": objective_action(objective.WaterCropsObjective),
-    "clear debris": objective_action(objective.ClearDebrisObjective),
-    "defend": objective_action(objective.DefendObjective),
-    "hoe <n> by <n2>": objective_action(objective.HoePlotObjective, "n", "n2"),
-    "equip <tools>": async_action(game.equip_item, 'tools'),
-    "item <positive_index>": async_action(game.equip_item_by_index, 'positive_index'),
-    "talk to <npcs>": objective_action(objective.TalkToNPCObjective, "npcs"),
-    "refill watering can": function_objective(game.refill_watering_can),
-    "gather crafting": function_objective(game.gather_crafted_items),
-    "gather (objects | items)": function_objective(game.gather_items),
-    "go inside": function_objective(game.go_inside),
-    "[<positive_num>] click": async_action(server.mouse_click, "left", "positive_num"),
-    "[<n>] mouse <mouse_directions>": async_action(game.move_mouse_in_direction, 'mouse_directions', 'n'),
-    "start fishing": async_action(fishing_menu.start_fishing),
-    "catch fish": async_action(fishing_menu.catch_fish),
+    "<n> <directions>": objective.objective_action(objective.MoveNTilesObjective, "directions", "n"),
+    "go to mailbox": objective.objective_action(objective.MoveToPointObjective),
+    "go to <locations>": objective.objective_action(objective.MoveToLocationObjective, "locations"),
+    "start chopping trees": objective.objective_action(objective.ChopTreesObjective),
+    "start planting": objective.objective_action(objective.PlantSeedsOrFertilizerObjective),
+    "water crops": objective.objective_action(objective.WaterCropsObjective),
+    "clear debris": objective.objective_action(objective.ClearDebrisObjective),
+    "defend": objective.objective_action(objective.DefendObjective),
+    "hoe <n> by <n2>": objective.objective_action(objective.HoePlotObjective, "n", "n2"),
+    "equip <tools>": df_utils.async_action(game.equip_item, 'tools'),
+    # "item <positive_index>": df_utils.async_action(game.equip_item_by_index, 'positive_index'),
+    "talk to <npcs>": objective.objective_action(objective.TalkToNPCObjective, "npcs"),
+    "refill watering can": objective.function_objective(game.refill_watering_can),
+    "gather crafting": objective.function_objective(game.gather_crafted_items),
+    "gather (objects | items)": objective.function_objective(game.gather_items),
+    "go inside": objective.function_objective(game.go_inside),
+    "[<positive_num>] click": df_utils.async_action(server.mouse_click, "left", "positive_num"),
+    "[<n>] mouse <mouse_directions>": df_utils.async_action(game.move_mouse_in_direction, 'mouse_directions', 'n'),
+    "start fishing": df_utils.async_action(fishing_menu.start_fishing),
+    "catch fish": df_utils.async_action(fishing_menu.catch_fish),
 }
