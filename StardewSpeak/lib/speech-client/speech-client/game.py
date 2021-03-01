@@ -75,12 +75,13 @@ def score_objects_by_distance(start_tile, current_tile, obj_tile, start_weight=0
     distance_from_current = distance_between_tiles(current_tile, obj_tile)
     return start_weight * distance_from_start  + current_weight * distance_from_current
 
-
-
 async def get_trees(location: str):
     trees = await server.request('GET_TREES', {"location": location})
     return trees
 
+async def get_fully_grown_trees_and_stumps(location: str):
+    trees = await get_trees(location)
+    return [t for t in trees if t['stump'] or (t['growthStage'] >= 5 and not t['tapped'])] 
 
 async def get_hoe_dirt(location: str):
     hoe_dirt = await server.request('GET_HOE_DIRT', {"location": location})
@@ -129,7 +130,7 @@ async def gather_items_on_ground(radius):
                 within_radius = distance_between_tiles(start_tile, (item['tileX'], item['tileY'])) < radius
                 if within_radius:
                     debris_tile = item['tileX'], item['tileY']
-                    for tile in adjacent_tiles(debris_tile) + [debris_tile]:
+                    for tile in get_adjacent_tiles(debris_tile) + [debris_tile]:
                         items_to_gather[tile] += 1
                         if tile not in tile_blacklist:
                             test_tiles_set.add(tile)
@@ -138,7 +139,7 @@ async def gather_items_on_ground(radius):
             player_status = await stream.next()
             current_tile = player_status["tileX"], player_status["tileY"]
             test_tiles = sort_test_tiles(test_tiles_set, start_tile, current_tile, items_to_gather)
-            path, invalid = await pathfind_to_resource(test_tiles, location, stream)
+            path, invalid = await pathfind_to_resource(test_tiles, location, stream, cutoff=250)
             if path is None:
                 server.log(f'Unable to gather {len(test_tiles)} in radius {radius}')
                 return
@@ -166,12 +167,12 @@ def sort_test_tiles(tiles, start_tile, current_tile, items_to_gather):
 
     return sorted(tiles, key=score_tile)
 
-async def pathfind_to_resource(tiles, location, stream):
+async def pathfind_to_resource(tiles, location, stream, cutoff=-1):
     path = None
     invalid = []
     for tile in tiles:
         try:
-            path_to_take = await path_to_position(tile[0], tile[1], location)
+            path_to_take = await path_to_position(tile[0], tile[1], location, cutoff=cutoff)
             path = await pathfind_to_position(path_to_take, stream)
         except RuntimeError as e:
             invalid.append(tile)
@@ -212,8 +213,8 @@ async def path_to_next_location(next_location: str, status_stream):
     return path, door_direction
 
 
-async def path_to_position(x, y, location):
-    path = await server.request("PATH_TO_POSITION", {"x": x, "y": y, "location": location})
+async def path_to_position(x, y, location, cutoff=-1):
+    path = await server.request("PATH_TO_POSITION", {"x": x, "y": y, "location": location, "cutoff": cutoff})
     if path is None:
         raise RuntimeError(f"Cannot pathfind to {x}, {y} at location {location}")
     return Path(path, location)
@@ -269,15 +270,16 @@ async def pathfind_to_position(path: Path, status_stream: server.Stream):
         stop_moving()
     return path
 
-def adjacent_tiles(tile):
+def get_adjacent_tiles(tile):
     x, y = tile
     return [(x, y - 1), (x + 1, y), (x, y + 1), (x - 1, y)]
 
-async def path_to_adjacent(x, y, status_stream: server.Stream):
+async def path_to_adjacent(x, y, status_stream: server.Stream, cutoff=-1, impassable_tiles=()):
     player_status = await status_stream.next()
     location = player_status['location']
     current_tile = player_status["tileX"], player_status["tileY"]
     adjacent_tiles = [(x, y - 1), (x + 1, y), (x, y + 1), (x - 1, y)]
+    adjacent_tiles = [t for t in adjacent_tiles if t not in impassable_tiles]
     adjacent_tiles.sort(key=lambda t: distance_between_tiles(current_tile, t))
     potential_paths = {}
     shortest_path = None
@@ -287,7 +289,7 @@ async def path_to_adjacent(x, y, status_stream: server.Stream):
             continue
         tested_tiles.add(adjacent_tile)
         try:
-            path = await path_to_position(adjacent_tile[0], adjacent_tile[1], location)
+            path = await path_to_position(adjacent_tile[0], adjacent_tile[1], location, cutoff=cutoff)
         except RuntimeError:
             continue
         # shortcut if path goes through another adjacent tile
@@ -313,8 +315,8 @@ async def path_to_adjacent(x, y, status_stream: server.Stream):
     return shortest_path
 
 
-async def pathfind_to_adjacent(x, y, status_stream: server.Stream):
-    path = await path_to_adjacent(x, y, status_stream)
+async def pathfind_to_adjacent(x, y, status_stream: server.Stream, cutoff=-1, impassable_tiles=()):
+    path = await path_to_adjacent(x, y, status_stream, cutoff=cutoff, impassable_tiles=impassable_tiles)
     await pathfind_to_position(path, status_stream)
     direction_to_face = direction_from_tiles(path.tiles[-1], (x, y))
     await face_direction(direction_to_face, status_stream)
@@ -515,11 +517,13 @@ async def modify_tiles(get_items, sort_items, at_tile):
                 raise RuntimeError('Unable to modify current tile')
             previous_item_count = len(items)
             item_path = None
+            impassable_tiles = set()
             for item in sorted(items, key=lambda t: sort_items(start_tile, current_tile, t, player_status)):
                 try:
-                    item_path = await pathfind_to_adjacent(item['tileX'], item['tileY'], stream)
+                    item_path = await pathfind_to_adjacent(item['tileX'], item['tileY'], stream, cutoff=500, impassable_tiles=impassable_tiles)
                 except RuntimeError:
-                    continue
+                    tile = (item['tileX'], item['tileY'])
+                    impassable_tiles.update(get_adjacent_tiles(tile))
                 else:
                     await at_tile(item)
                     break
@@ -544,7 +548,7 @@ async def chop_tree_and_gather_resources(tree):
     async with server.on_terrain_feature_list_changed_stream() as terrain_stream:
         with press_and_release(constants.TOOL_KEY):
             event = await terrain_stream.next()
-    await gather_items_on_ground(5)
+    await gather_items_on_ground(10)
 
 async def clear_resource_clump(clump):
     tile_x, tile_y = clump['tileX'], clump['tileY']

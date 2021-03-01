@@ -173,6 +173,14 @@ namespace StardewSpeak
         }
         private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)
         {
+            lock (speechEngine.RequestQueueLock) 
+            {
+                if (speechEngine.RequestQueue.Count > 0) // only handle 1 request per tick to minimize dropping frames
+                {
+                    var msg = speechEngine.RequestQueue.Dequeue();
+                    speechEngine.RespondToMessage(msg);
+                }
+            }
             foreach (var pair in ModEntry.Streams)
             {
                 var id = pair.Key;

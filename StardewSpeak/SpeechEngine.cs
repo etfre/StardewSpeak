@@ -23,11 +23,15 @@ namespace StardewSpeak
     {
         Process Proc;
         private readonly object StandardInLock;
+        public readonly object RequestQueueLock;
+        public Queue<dynamic> RequestQueue;
 
         public SpeechEngine()
         {
             ModEntry.Log("engine");
             this.StandardInLock = new object();
+            this.RequestQueueLock = new object();
+            this.RequestQueue = new Queue<dynamic>();
         }
 
         public void LaunchProcess()
@@ -71,7 +75,7 @@ namespace StardewSpeak
             var tcs = new TaskCompletionSource<int>();
 
             process.Exited += (s, ea) => OnExit(process, tcs);
-            process.OutputDataReceived += (s, ea) => this.onMessage(ea.Data);
+            process.OutputDataReceived += (s, ea) => this.OnMessage(ea.Data);
             process.ErrorDataReceived += (s, ea) => this.onError("ERR: " + ea.Data);
 
             bool started = process.Start();
@@ -94,7 +98,7 @@ namespace StardewSpeak
             LaunchProcess();
         }
 
-        void onMessage(string messageText)
+        void OnMessage(string messageText)
         {
             dynamic msg;
             try
@@ -105,19 +109,29 @@ namespace StardewSpeak
             {
                 return;
             }
-            string msgId = msg.id;
+            lock (RequestQueueLock)
+            {
+                RequestQueue.Enqueue(msg);
+            }
+            //RespondToMessage(msg);
+        }
+
+        public void RespondToMessage(dynamic msg) 
+        {
             dynamic resp;
             try
             {
                 resp = HandleRequest(msg);
             }
-            catch (Exception e) {
+            catch (Exception e)
+            {
                 string body = e.ToString();
                 string error = "STACK_TRACE";
                 resp = new { body, error };
             }
+            string msgId = msg.id;
             this.SendResponse(msgId, resp.body, resp.error);
-            }
+        }
 
         dynamic HandleRequest(dynamic msg) 
         {
@@ -183,7 +197,8 @@ namespace StardewSpeak
                     {
                         int targetX = data.x;
                         int targetY = data.y;
-                        var path = Pathfinder.Pathfinder.FindPath(player.currentLocation, playerX, playerY, targetX, targetY);
+                        int cutoff = data.cutoff;
+                        var path = Pathfinder.Pathfinder.FindPath(player.currentLocation, playerX, playerY, targetX, targetY, cutoff);
                         body = path;
                         break;
                     }

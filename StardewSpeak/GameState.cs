@@ -91,7 +91,15 @@ namespace StardewSpeak
                 {
                     var tree = tf as Tree;
                     var tileLocation = tree.currentTileLocation;
-                    features.Add(new { type = "tree", treeType = tree.treeType.Value, tileX = (int)tileLocation.X, tileY = (int)tileLocation.Y, tapped = tree.tapped.Value, stump = tree.stump.Value });
+                    features.Add(new { 
+                        type = "tree",
+                        treeType = tree.treeType.Value, 
+                        tileX = (int)tileLocation.X, 
+                        tileY = (int)tileLocation.Y, 
+                        tapped = tree.tapped.Value, 
+                        stump = tree.stump.Value,
+                        growthStage = tree.growthStage.Value,
+                    });
                 }
                 else 
                 {

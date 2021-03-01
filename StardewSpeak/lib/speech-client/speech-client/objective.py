@@ -161,7 +161,7 @@ class ChopTreesObjective(Objective):
 
     async def run(self):
         await game.equip_item(constants.AXE)
-        await game.modify_tiles(game.get_trees, game.generic_next_item_key, game.chop_tree_and_gather_resources)
+        await game.modify_tiles(game.get_fully_grown_trees_and_stumps, game.generic_next_item_key, game.chop_tree_and_gather_resources)
 class WaterCropsObjective(Objective):
 
     def __init__(self):
