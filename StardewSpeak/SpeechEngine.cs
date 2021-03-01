@@ -202,6 +202,15 @@ namespace StardewSpeak
                         body = path;
                         break;
                     }
+                case "PATH_TO_PLAYER":
+                    {
+                        int fromX = data.x;
+                        int fromY = data.y;
+                        int cutoff = data.cutoff;
+                        var path = Pathfinder.Pathfinder.FindPath(player.currentLocation, fromX, fromY, playerX, playerY, cutoff);
+                        body = path;
+                        break;
+                    }
                 case "LOCATION_CONNECTION":
                     {
                         GameLocation fromLocation = player.currentLocation;

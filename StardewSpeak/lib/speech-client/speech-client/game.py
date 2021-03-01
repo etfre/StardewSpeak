@@ -60,6 +60,9 @@ class Path:
         self.tiles = tuple(tiles)
         self.location = location
 
+    def pop(self):
+        self.tiles = self.tiles[:-1]
+
 def distance_between_tiles(t1, t2):
     # pathfinding doesn't move diagonally for simplicity so just sum differences between x and y
     return abs(t1[0] - t2[0]) + abs(t1[1] - t2[1]) 
@@ -219,6 +222,12 @@ async def path_to_position(x, y, location, cutoff=-1):
         raise RuntimeError(f"Cannot pathfind to {x}, {y} at location {location}")
     return Path(path, location)
 
+async def path_to_player(x, y, location, cutoff=-1):
+    path = await server.request("PATH_TO_PLAYER", {"x": x, "y": y, "location": location, "cutoff": cutoff})
+    if path is None:
+        raise RuntimeError(f"Cannot pathfind to player from {x}, {y} at location {location}")
+    return Path(reversed(path), location)
+
 
 async def pathfind_to_next_location(
     next_location: str,
@@ -274,49 +283,16 @@ def get_adjacent_tiles(tile):
     x, y = tile
     return [(x, y - 1), (x + 1, y), (x, y + 1), (x - 1, y)]
 
-async def path_to_adjacent(x, y, status_stream: server.Stream, cutoff=-1, impassable_tiles=()):
+async def path_to_adjacent(x, y, status_stream: server.Stream, cutoff=-1):
     player_status = await status_stream.next()
     location = player_status['location']
-    current_tile = player_status["tileX"], player_status["tileY"]
-    adjacent_tiles = [(x, y - 1), (x + 1, y), (x, y + 1), (x - 1, y)]
-    adjacent_tiles = [t for t in adjacent_tiles if t not in impassable_tiles]
-    adjacent_tiles.sort(key=lambda t: distance_between_tiles(current_tile, t))
-    potential_paths = {}
-    shortest_path = None
-    tested_tiles = set()
-    for adjacent_tile in adjacent_tiles:
-        if adjacent_tile in tested_tiles:
-            continue
-        tested_tiles.add(adjacent_tile)
-        try:
-            path = await path_to_position(adjacent_tile[0], adjacent_tile[1], location, cutoff=cutoff)
-        except RuntimeError:
-            continue
-        # shortcut if path goes through another adjacent tile
-        tile_indices = {}
-        for i, tile in enumerate(path.tiles[:-1]):
-            tile_indices[tile] = i
-            if tile in adjacent_tiles:
-                tested_tiles.add(tile)
-                path.tiles = path.tiles[:i + 1]
-                path.tile_indices = tile_indices
-                break
-        if shortest_path is None or len(path.tiles) < len(shortest_path.tiles):
-            shortest_path = path
-            tile_diff = distance_between_tiles(current_tile, shortest_path.tiles[-1])
-            if not tile_diff:
-                break
-            extra_tiles_ratio = len(path.tiles) / tile_diff
-            is_efficient = len(path.tiles) <= 8 or extra_tiles_ratio  <= 1.5
-            if is_efficient:
-                break
-    if shortest_path is None:
-        raise RuntimeError(f"No path found adjacent to {x}, {y}")
-    return shortest_path
+    path = await server.request("PATH_TO_PLAYER", {"x": x, "y": y, "location": location, "cutoff": cutoff})
+    if path is None:
+        raise RuntimeError(f"Cannot pathfind to player from {x}, {y} at location {location}")
+    return Path(reversed(path[1:]), location)
 
-
-async def pathfind_to_adjacent(x, y, status_stream: server.Stream, cutoff=-1, impassable_tiles=()):
-    path = await path_to_adjacent(x, y, status_stream, cutoff=cutoff, impassable_tiles=impassable_tiles)
+async def pathfind_to_adjacent(x, y, status_stream: server.Stream, cutoff=-1):
+    path = await path_to_adjacent(x, y, status_stream, cutoff=cutoff)
     await pathfind_to_position(path, status_stream)
     direction_to_face = direction_from_tiles(path.tiles[-1], (x, y))
     await face_direction(direction_to_face, status_stream)
@@ -517,13 +493,11 @@ async def modify_tiles(get_items, sort_items, at_tile):
                 raise RuntimeError('Unable to modify current tile')
             previous_item_count = len(items)
             item_path = None
-            impassable_tiles = set()
             for item in sorted(items, key=lambda t: sort_items(start_tile, current_tile, t, player_status)):
                 try:
-                    item_path = await pathfind_to_adjacent(item['tileX'], item['tileY'], stream, cutoff=500, impassable_tiles=impassable_tiles)
+                    item_path = await pathfind_to_adjacent(item['tileX'], item['tileY'], stream, cutoff=500)
                 except RuntimeError:
-                    tile = (item['tileX'], item['tileY'])
-                    impassable_tiles.update(get_adjacent_tiles(tile))
+                    pass
                 else:
                     await at_tile(item)
                     break
