@@ -147,6 +147,7 @@ non_repeat_mapping = {
     "gather crafting": objective.function_objective(game.gather_crafted_items),
     "gather (objects | items)": objective.function_objective(game.gather_items),
     "go inside": objective.function_objective(game.go_inside),
+    "pet animals": objective.function_objective(objective.pet_animals),
     "[<positive_num>] click": df_utils.async_action(server.mouse_click, "left", "positive_num"),
     "[<n>] mouse <mouse_directions>": df_utils.async_action(game.move_mouse_in_direction, 'mouse_directions', 'n'),
     "start fishing": df_utils.async_action(fishing_menu.start_fishing),

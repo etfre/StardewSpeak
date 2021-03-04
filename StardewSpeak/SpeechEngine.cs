@@ -226,6 +226,32 @@ namespace StardewSpeak
                         body = Routing.MapConnections[fromLocation.NameOrUniqueName];
                         break;
                     }
+                case "PET_ANIMAL_BY_NAME":
+                    {
+                        string name = data.name;
+                        FarmAnimal animal = Utils.FindAnimalByName(name);
+                        bool didPet = false;
+                        if (animal != null)
+                        {
+                            animal.pet(player);
+                            didPet = true;
+                        }
+                        body = didPet;
+                        break;
+                    }
+                case "USE_TOOL_ON_ANIMAL_BY_NAME":
+                    {
+                        string name = data.name;
+                        FarmAnimal animal = Utils.FindAnimalByName(name);
+                        bool didUseTool = false;
+                        if (animal != null && player.CurrentTool.BaseName == animal.toolUsedForHarvest)
+                        {
+                            player.CurrentTool.beginUsing(player.currentLocation, (int)animal.Position.X, (int)animal.Position.Y, player);
+                            didUseTool = true;
+                        }
+                        body = didUseTool;
+                        break;
+                    }
                 case "GET_TREES":
                     {
                         body = GameState.Trees();
@@ -296,6 +322,12 @@ namespace StardewSpeak
                     {
                         int x = data.x;
                         int y = data.y;
+                        bool fromViewport = data.from_viewport;
+                        if (fromViewport)
+                        {
+                            x -= Game1.viewport.X;
+                            y -= Game1.viewport.Y;
+                        }
                         Game1.setMousePosition(x, y);
                         body = true;
                         break;

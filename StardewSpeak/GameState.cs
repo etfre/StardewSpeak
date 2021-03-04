@@ -75,6 +75,34 @@ namespace StardewSpeak
             return chars;
         }
 
+        public static dynamic AnimalsAtLocation(GameLocation location)
+        {
+            var animals = new List<dynamic>();
+            if (location is IAnimalLocation)
+            {
+                foreach (FarmAnimal animal in (location as IAnimalLocation).Animals.Values)
+                {
+                    var position = new List<float> { animal.Position.X, animal.Position.Y };
+                    bool isMature = (int)animal.age >= (byte)animal.ageWhenMature;
+                    int currentProduce = animal.currentProduce.Value;
+                    var animalObj = new
+                    {
+                        position,
+                        tileX = animal.getTileX(),
+                        tileY = animal.getTileY(),
+                        wasPet = animal.wasPet.Value,
+                        type = animal.type.Value,
+                        name = animal.Name,
+                        isMature,
+                        currentProduce,
+                        toolUsedForHarvest = animal.toolUsedForHarvest.Value,
+                    };
+                    animals.Add(animalObj);
+                } 
+            }
+            return animals;
+        }
+
         public static object ToolStatus()
         {
             var player = Game1.player;

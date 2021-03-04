@@ -242,6 +242,18 @@ namespace StardewSpeak
             return components?.Select(x => SerializeClickableCmp(x, mousePosition)).ToList();
         }
 
+        public static FarmAnimal FindAnimalByName(string name) 
+        {
+            var location = Game1.player.currentLocation;
+            if (location is IAnimalLocation)
+            {
+                foreach (FarmAnimal animal in (location as IAnimalLocation).Animals.Values)
+                {
+                    if (name == animal.Name) return animal;
+                }
+            }
+            return null;
+        }
         public static object SerializeClickableCmp(ClickableComponent cmp, Point mousePosition)
         {
             if (cmp == null) return null;

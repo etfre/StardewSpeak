@@ -545,6 +545,13 @@ async def find_npc_by_name(name: str, characters_stream):
             return char
     raise RuntimeError(f'{name} is not in the current location')
 
+async def find_animal_by_name(name: str, animals_stream):
+    animals = await animals_stream.next()
+    for animal in animals:
+        if animal['name'] == name:
+            return animal
+    raise RuntimeError(f'{name} is not in the current location')
+
 async def get_current_tile(stream: server.Stream):
     ps = await stream.next()
     current_tile = ps['tileX'], ps['tileY']
@@ -626,6 +633,22 @@ async def go_inside():
             indoors_connections.sort(key=lambda t: distance_between_tiles(current_tile, (t['X'], t['Y'])))
             await pathfind_to_next_location(indoors_connections[0]['TargetName'], pss)
 
+async def get_unpetted(animals_stream):
+    animals = await animals_stream.next()
+    unpetted = [x for x in animals if not x['wasPet']]
+    return unpetted
+
+
+async def get_closest_unpetted(animals_stream, player_stream):
+    animals, player_status = await asyncio.gather(animals_stream.next(), player_stream.next())
+    server.log(player_status)
+    unpetted = [x for x in animals if not x['wasPet']]
+    if not unpetted:
+        return
+    player_tile = player_status['tileX'], player_status['tileY']
+    unpetted.sort(key=lambda x: distance_between_tiles(player_tile, (x['tileX'], x['tileY'])))
+    return unpetted[0]
+
 def log(obj, name):
     path = os.path.abspath(name)
     server.log(path)
@@ -636,5 +659,45 @@ def log(obj, name):
         else:
             json.dump(obj, f)
 
-async def move():
-    pass
+async def pet_animal_by_name(name: str):
+    resp = await server.request("PET_ANIMAL_BY_NAME", {"name": name})
+
+async def move_to_character(get_npc):
+    import objective
+    npc_tile = None
+    pathfind_task_wrapper = None
+    tile_error_count = 0
+    async with server.player_status_stream() as player_stream:
+        while True:
+            if pathfind_task_wrapper and pathfind_task_wrapper.done:
+                if pathfind_task_wrapper.exception:
+                    if tile_error_count < 2:
+                        pathfind_coro = pathfind_to_adjacent(npc_tile[0], npc_tile[1], player_stream)
+                        pathfind_task_wrapper = objective.active_objective.add_task(pathfind_coro)
+                        tile_error_count += 1
+                        continue
+                    else:
+                        raise pathfind_task_wrapper.exception
+                break
+            npc = await get_npc()
+            if npc is None:
+                return
+            next_npc_tile = npc['tileX'], npc['tileY']
+            if npc_tile != next_npc_tile:
+                tile_error_count = 0
+                if pathfind_task_wrapper:
+                    await pathfind_task_wrapper.cancel()
+                npc_tile = next_npc_tile
+                pathfind_coro = pathfind_to_adjacent(npc_tile[0], npc_tile[1], player_stream)
+                pathfind_task_wrapper = objective.active_objective.add_task(pathfind_coro)
+        npc = await get_npc()
+        if npc is None:
+            return
+        npx_x, npc_y = npc['position']
+        await server.set_mouse_position(npx_x, npc_y, from_viewport=True)
+        return npc
+        # await move_directly_to_character(get_character, player_stream, npc_stream)
+
+async def move_directly_to_character(get_character, player_stream, npc_stream):
+    while True:
+        break

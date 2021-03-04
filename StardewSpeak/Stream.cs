@@ -33,6 +33,8 @@ namespace StardewSpeak
                     return GameState.ToolStatus();
                 case "CHARACTERS_AT_LOCATION":
                     return GameState.CharactersAtLocation(Game1.currentLocation);
+                case "ANIMALS_AT_LOCATION":
+                    return GameState.AnimalsAtLocation(Game1.currentLocation);
                 case "PLAYER_ITEMS":
                     return GameState.PlayerItems();
             }

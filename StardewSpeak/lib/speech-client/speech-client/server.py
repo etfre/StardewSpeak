@@ -133,6 +133,9 @@ def tool_status_stream(ticks=1):
 def characters_at_location_stream(ticks=1):
     return Stream("UPDATE_TICKED", data={"state": "CHARACTERS_AT_LOCATION", "ticks": ticks})
 
+def animals_at_location_stream(ticks=1):
+    return Stream("UPDATE_TICKED", data={"state": "ANIMALS_AT_LOCATION", "ticks": ticks})
+
 def player_items_stream(ticks=1):
     return Stream("UPDATE_TICKED", data={"state": "PLAYER_ITEMS", "ticks": ticks})
 
@@ -341,8 +344,8 @@ def on_message(msg_str):
     else:
         raise RuntimeError(f"Unhandled message type from mod: {msg_type}")
 
-async def set_mouse_position(x: int, y: int):
-    await request('SET_MOUSE_POSITION', {'x': x, 'y': y})
+async def set_mouse_position(x: int, y: int, from_viewport=False):
+    await request('SET_MOUSE_POSITION', {'x': x, 'y': y, 'from_viewport': from_viewport})
 
 async def set_mouse_position_relative(x: int, y: int):
     await request('SET_MOUSE_POSITION_RELATIVE', {'x': x, 'y': y})

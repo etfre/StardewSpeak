@@ -257,32 +257,67 @@ class TalkToNPCObjective(Objective):
         self.npc_name = npc_name
 
     async def run(self):
-        npc_tile = None
-        pathfind_task_wrapper = None
-        tile_error_count = 0
-        async with server.characters_at_location_stream() as npc_stream, server.player_status_stream() as player_stream:
-            while True:
-                if pathfind_task_wrapper and pathfind_task_wrapper.done:
-                    if pathfind_task_wrapper.exception:
-                        if tile_error_count < 2:
-                            pathfind_coro = game.pathfind_to_adjacent(npc_tile[0], npc_tile[1], player_stream)
-                            pathfind_task_wrapper = self.add_task(pathfind_coro)
-                            tile_error_count += 1
-                            continue
-                        else:
-                            raise pathfind_task_wrapper.exception
-                    break
-                npc = await game.find_npc_by_name(self.npc_name, npc_stream)
-                next_npc_tile = npc['tileX'], npc['tileY']
-                if npc_tile != next_npc_tile:
-                    tile_error_count = 0
-                    if pathfind_task_wrapper:
-                        await pathfind_task_wrapper.cancel()
-                    npc_tile = next_npc_tile
-                    pathfind_coro = game.pathfind_to_adjacent(npc_tile[0], npc_tile[1], player_stream)
-                    pathfind_task_wrapper = self.add_task(pathfind_coro)
-            await game.do_action()
+        # npc_tile = None
+        # pathfind_task_wrapper = None
+        # tile_error_count = 0
+        # async with server.characters_at_location_stream() as npc_stream, server.player_status_stream() as player_stream:
+        #     while True:
+        #         if pathfind_task_wrapper and pathfind_task_wrapper.done:
+        #             if pathfind_task_wrapper.exception:
+        #                 if tile_error_count < 2:
+        #                     pathfind_coro = game.pathfind_to_adjacent(npc_tile[0], npc_tile[1], player_stream)
+        #                     pathfind_task_wrapper = self.add_task(pathfind_coro)
+        #                     tile_error_count += 1
+        #                     continue
+        #                 else:
+        #                     raise pathfind_task_wrapper.exception
+        #             break
+        #         npc = await game.find_npc_by_name(self.npc_name, npc_stream)
+        #         next_npc_tile = npc['tileX'], npc['tileY']
+        #         if npc_tile != next_npc_tile:
+        #             tile_error_count = 0
+        #             if pathfind_task_wrapper:
+        #                 await pathfind_task_wrapper.cancel()
+        #             npc_tile = next_npc_tile
+        #             pathfind_coro = game.pathfind_to_adjacent(npc_tile[0], npc_tile[1], player_stream)
+        #             pathfind_task_wrapper = self.add_task(pathfind_coro)
+        async with server.characters_at_location_stream() as npc_stream:
+            fn = functools.partial(game.find_npc_by_name, self.npc_name, npc_stream)
+            await game.move_to_character(fn)
+        await game.do_action()
 
+async def pet_animals():
+    async with server.animals_at_location_stream() as animals_stream, server.player_status_stream() as player_stream:
+        while True:
+            animal = await game.get_closest_unpetted(animals_stream, player_stream)
+            if not animal:
+                return
+            fn = functools.partial(game.find_animal_by_name, animal['name'], animals_stream)
+            try:
+                res = await game.move_to_character(fn)
+            except RuntimeError:
+                continue
+            if res:
+                await game.pet_animal_by_name(animal['name'])
+                await asyncio.sleep(0.1)
+        server.log(animals)
+
+async def use_tool_on_animals():
+    async with server.animals_at_location_stream() as animals_stream, server.player_status_stream() as player_stream:
+        while True:
+            animal = await game.get_closest_unpetted(animals_stream, player_stream)
+            if not animal:
+                return
+            fn = functools.partial(game.find_animal_by_name, animal['name'], animals_stream)
+            try:
+                res = await game.move_to_character(fn)
+            except RuntimeError:
+                continue
+            if res:
+                await game.pet_animal_by_name(animal['name'])
+                await asyncio.sleep(0.1)
+        server.log(animals)
+        
 class DefendObjective(Objective):
 
     async def run(self):
