@@ -15,7 +15,7 @@ from dragonfly import *
 from srabuilder import rules
 
 from srabuilder.actions import directinput
-import constants, server, game
+import constants, server, game, df_utils
 
 active_objective = None
 pending_objective = None
@@ -286,37 +286,46 @@ class TalkToNPCObjective(Objective):
             await game.move_to_character(fn)
         await game.do_action()
 
+async def use_tool_on_animals(tool: str, animal_type=None):
+    async with server.animals_at_location_stream() as animals_stream, server.player_status_stream() as player_stream:
+        await game.equip_item(tool)
+        consecutive_errors = 0
+        consecutive_error_threshold = 5
+        while True:
+            animals = await game.get_animals(animals_stream, player_stream)
+            animal = next((x for x in animals if x["isMature"] and x['currentProduce'] > 0 and x['toolUsedForHarvest'] == tool), None)
+            if not animal:
+                return
+            fn = functools.partial(game.find_animal_by_name, animal['name'], animals_stream)
+            try:
+                await game.move_to_character(fn)
+            except game.NavigationFailed:
+                consecutive_errors += 1
+            else:
+                did_use = await game.use_tool_on_animal_by_name(animal['name'])
+                if not did_use:
+                    consecutive_errors += 1
+                else:
+                    consecutive_errors = 0
+                await asyncio.sleep(0.1)
+            if consecutive_errors >= consecutive_error_threshold:
+                raise RuntimeError()
+
 async def pet_animals():
     async with server.animals_at_location_stream() as animals_stream, server.player_status_stream() as player_stream:
         while True:
-            animal = await game.get_closest_unpetted(animals_stream, player_stream)
+            animals = await game.get_animals(animals_stream, player_stream)
+            animal = next((x for x in animals if not x["wasPet"]), None)
             if not animal:
                 return
             fn = functools.partial(game.find_animal_by_name, animal['name'], animals_stream)
             try:
                 res = await game.move_to_character(fn)
-            except RuntimeError:
+            except game.NavigationFailed:
                 continue
             if res:
                 await game.pet_animal_by_name(animal['name'])
                 await asyncio.sleep(0.1)
-        server.log(animals)
-
-async def use_tool_on_animals():
-    async with server.animals_at_location_stream() as animals_stream, server.player_status_stream() as player_stream:
-        while True:
-            animal = await game.get_closest_unpetted(animals_stream, player_stream)
-            if not animal:
-                return
-            fn = functools.partial(game.find_animal_by_name, animal['name'], animals_stream)
-            try:
-                res = await game.move_to_character(fn)
-            except RuntimeError:
-                continue
-            if res:
-                await game.pet_animal_by_name(animal['name'])
-                await asyncio.sleep(0.1)
-        server.log(animals)
         
 class DefendObjective(Objective):
 
@@ -368,9 +377,9 @@ def objective_action(objective_cls, *args):
     return server.AsyncFunction(new_active_objective, format_args=format_args)
 
 def function_objective(async_fn, *args):
-    format_args = lambda **kw: [FunctionObjective(async_fn, *[kw[a] for a in args])]
-    return server.AsyncFunction(new_active_objective, format_args=format_args)
-
+    formatted_args = df_utils.format_args(args)
+    obj = FunctionObjective(async_fn, *formatted_args)
+    return df_utils.async_action(new_active_objective, obj)
 
 def format_args(args, **kw):
     formatted_args = []

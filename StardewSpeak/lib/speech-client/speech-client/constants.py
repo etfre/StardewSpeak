@@ -10,7 +10,7 @@ PICKAXE = 'pickaxe'
 SCYTHE = 'scythe'
 WATERING_CAN = 'wateringCan'
 SHEARS = 'shears'
-MILK_PAIL = 'milkPail'
+MILK_PAIL = 'Milk Pail'
 PAN = 'pan'
 MELEE_WEAPON = 'meleeWeapon'
 

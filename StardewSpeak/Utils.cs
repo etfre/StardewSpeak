@@ -40,6 +40,19 @@ namespace StardewSpeak
             }
             return false;
         }
+
+        public static bool GetClosestAnimal(Vector2 positionTile, int acceptableDistanceFromScreenNonTile, GameLocation location = null)
+        {
+            if (location != null && !location.Equals(Game1.currentLocation))
+            {
+                return false;
+            }
+            if (positionTile.X * 64 > Game1.viewport.X - acceptableDistanceFromScreenNonTile && positionTile.X * 64 < Game1.viewport.X + Game1.viewport.Width + acceptableDistanceFromScreenNonTile && positionTile.Y * 64 > Game1.viewport.Y - acceptableDistanceFromScreenNonTile)
+            {
+                return positionTile.Y * 64 < Game1.viewport.Y + Game1.viewport.Height + acceptableDistanceFromScreenNonTile;
+            }
+            return false;
+        }
         public static void WriteJson(string fname, object obj)
         {
             var settings = new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
@@ -356,7 +369,7 @@ namespace StardewSpeak
                 obj = Utils.Merge(obj, new { type = "wateringCan" });
             }
             else if (i is Hoe) obj = Utils.Merge(obj, new { type = "hoe" });
-            else if (i is MilkPail) obj = Utils.Merge(obj, new { type = "milkPail" });
+            else if (i is MilkPail) obj = Utils.Merge(obj, new { type = "Milk Pail" });
             else if (i is Pan) obj = Utils.Merge(obj, new { type = "pan" });
             else if (i is Shears) obj = Utils.Merge(obj, new { type = "shears" });
 

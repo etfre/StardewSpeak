@@ -231,7 +231,7 @@ namespace StardewSpeak
                         string name = data.name;
                         FarmAnimal animal = Utils.FindAnimalByName(name);
                         bool didPet = false;
-                        if (animal != null)
+                        if (animal != null && !animal.wasPet)
                         {
                             animal.pet(player);
                             didPet = true;
@@ -244,9 +244,15 @@ namespace StardewSpeak
                         string name = data.name;
                         FarmAnimal animal = Utils.FindAnimalByName(name);
                         bool didUseTool = false;
-                        if (animal != null && player.CurrentTool.BaseName == animal.toolUsedForHarvest)
+                        if (animal != null && player.CurrentTool?.BaseName == animal.toolUsedForHarvest.Value)
                         {
-                            player.CurrentTool.beginUsing(player.currentLocation, (int)animal.Position.X, (int)animal.Position.Y, player);
+                            Rectangle rect = animal.GetHarvestBoundingBox();
+                            int x = rect.Center.X - Game1.viewport.X;
+                            int y = rect.Center.Y - Game1.viewport.Y;
+                            
+                            Game1.setMousePosition(x, y);
+                            Game1.pressUseToolButton();
+                            //player.CurrentTool.beginUsing(player.currentLocation, (int)animal.Position.X, (int)animal.Position.Y, player);
                             didUseTool = true;
                         }
                         body = didUseTool;
@@ -328,6 +334,14 @@ namespace StardewSpeak
                             x -= Game1.viewport.X;
                             y -= Game1.viewport.Y;
                         }
+                        Game1.setMousePosition(x, y);
+                        body = true;
+                        break;
+                    }
+                case "SET_MOUSE_POSITION_ON_TILE":
+                    {
+                        int x = data.x*64 + 32 - Game1.viewport.X;
+                        int y = data.y * 64 + 32 - Game1.viewport.Y;
                         Game1.setMousePosition(x, y);
                         body = true;
                         break;

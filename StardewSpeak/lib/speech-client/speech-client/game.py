@@ -177,7 +177,7 @@ async def pathfind_to_resource(tiles, location, stream, cutoff=-1):
         try:
             path_to_take = await path_to_position(tile[0], tile[1], location, cutoff=cutoff)
             path = await pathfind_to_position(path_to_take, stream)
-        except RuntimeError as e:
+        except NavigationFailed as e:
             invalid.append(tile)
         else:
             break
@@ -194,7 +194,7 @@ async def move_to_location(location: str, stream: server.Stream):
 async def request_route(location: str):
     route = await server.request("ROUTE", {"toLocation": location})
     if route is None:
-        raise RuntimeError(f"Cannot route to location {location}")
+        raise NavigationFailed(f"Cannot route to location {location}")
     return route
 
 
@@ -203,7 +203,7 @@ async def path_to_next_location(next_location: str, status_stream):
     location = player_status['location']
     location_connection = await server.request("LOCATION_CONNECTION", {"toLocation": next_location})
     if location_connection is None:
-        raise RuntimeError(f"No connection to location {location}")
+        raise NavigationFailed(f"No connection to location {location}")
     x, y, is_door = location_connection['X'], location_connection['Y'], location_connection['IsDoor']
     if is_door:
         path = await path_to_adjacent(x, y, status_stream)
@@ -212,20 +212,20 @@ async def path_to_next_location(next_location: str, status_stream):
         path = await path_to_position(x, y, location)
         door_direction = None
     if path is None:
-        raise RuntimeError(f"Cannot pathfind to connection to location {location}")
+        raise NavigationFailed(f"Cannot pathfind to connection to location {location}")
     return path, door_direction
 
 
 async def path_to_position(x, y, location, cutoff=-1):
     path = await server.request("PATH_TO_POSITION", {"x": x, "y": y, "location": location, "cutoff": cutoff})
     if path is None:
-        raise RuntimeError(f"Cannot pathfind to {x}, {y} at location {location}")
+        raise NavigationFailed(f"Cannot pathfind to {x}, {y} at location {location}")
     return Path(path, location)
 
 async def path_to_player(x, y, location, cutoff=-1):
     path = await server.request("PATH_TO_PLAYER", {"x": x, "y": y, "location": location, "cutoff": cutoff})
     if path is None:
-        raise RuntimeError(f"Cannot pathfind to player from {x}, {y} at location {location}")
+        raise NavigationFailed(f"Cannot pathfind to player from {x}, {y} at location {location}")
     return Path(reversed(path), location)
 
 
@@ -241,7 +241,7 @@ async def pathfind_to_next_location(
         if current_location != path.location:
             if current_location == next_location:
                 break
-            raise RuntimeError(
+            raise NavigationFailed(
                 f"Unexpected location {current_location}, pathfinding for {path.location}"
             )
         is_done = move_along_path(path, player_status)
@@ -262,7 +262,7 @@ async def pathfind_to_position(path: Path, status_stream: server.Stream):
                 player_status = await status_stream.next()
                 current_location = player_status["location"]
                 if current_location != path.location:
-                    raise RuntimeError(
+                    raise NavigationFailed(
                         f"Unexpected location {current_location}, pathfinding for {path.location}"
                     )
                 try:
@@ -286,16 +286,18 @@ def get_adjacent_tiles(tile):
 async def path_to_adjacent(x, y, status_stream: server.Stream, cutoff=-1):
     player_status = await status_stream.next()
     location = player_status['location']
-    path = await server.request("PATH_TO_PLAYER", {"x": x, "y": y, "location": location, "cutoff": cutoff})
-    if path is None:
-        raise RuntimeError(f"Cannot pathfind to player from {x}, {y} at location {location}")
-    return Path(reversed(path[1:]), location)
+    tiles = await server.request("PATH_TO_PLAYER", {"x": x, "y": y, "location": location, "cutoff": cutoff})
+    if tiles is None:
+        raise NavigationFailed(f"Cannot pathfind to player from {x}, {y} at location {location}")
+    tiles =  tiles if len(tiles) == 1 else reversed(tiles[1:])
+    return Path(tiles, location)
 
 async def pathfind_to_adjacent(x, y, status_stream: server.Stream, cutoff=-1):
     path = await path_to_adjacent(x, y, status_stream, cutoff=cutoff)
     await pathfind_to_position(path, status_stream)
-    direction_to_face = direction_from_tiles(path.tiles[-1], (x, y))
-    await face_direction(direction_to_face, status_stream)
+    if path.tiles[-1] != (x, y):
+        direction_to_face = direction_from_tiles(path.tiles[-1], (x, y))
+        await face_direction(direction_to_face, status_stream)
     return path
     
 
@@ -496,13 +498,19 @@ async def modify_tiles(get_items, sort_items, at_tile):
             for item in sorted(items, key=lambda t: sort_items(start_tile, current_tile, t, player_status)):
                 try:
                     item_path = await pathfind_to_adjacent(item['tileX'], item['tileY'], stream, cutoff=500)
-                except RuntimeError:
+                except NavigationFailed:
                     pass
                 else:
+                    item_tile = item['tileX'], item['tileY']
+                    await set_mouse_position_on_tile(item_tile)
                     await at_tile(item)
                     break
             if not item_path:
                 return
+
+async def set_mouse_position_on_tile(tile):
+    x, y = tile
+    await server.request('SET_MOUSE_POSITION_ON_TILE', {'x': x, 'y': y})
 
 def is_debris(obj):
     return obj.get('name') in DEBRIS
@@ -543,14 +551,14 @@ async def find_npc_by_name(name: str, characters_stream):
     for char in characters:
         if char['name'] == name:
             return char
-    raise RuntimeError(f'{name} is not in the current location')
+    raise NavigationFailed(f'{name} is not in the current location')
 
 async def find_animal_by_name(name: str, animals_stream):
     animals = await animals_stream.next()
     for animal in animals:
         if animal['name'] == name:
             return animal
-    raise RuntimeError(f'{name} is not in the current location')
+    raise NavigationFailed(f'{name} is not in the current location')
 
 async def get_current_tile(stream: server.Stream):
     ps = await stream.next()
@@ -592,7 +600,7 @@ async def pathfind_to_nearest_water(stream: server.Stream):
     for wt in water_tiles:
         try:
             return await pathfind_to_adjacent(wt[0], wt[1], stream)
-        except RuntimeError:
+        except NavigationFailed:
             pass
     raise RuntimeError('Cannot access any water tiles in the current location')
 
@@ -633,21 +641,17 @@ async def go_inside():
             indoors_connections.sort(key=lambda t: distance_between_tiles(current_tile, (t['X'], t['Y'])))
             await pathfind_to_next_location(indoors_connections[0]['TargetName'], pss)
 
-async def get_unpetted(animals_stream):
-    animals = await animals_stream.next()
-    unpetted = [x for x in animals if not x['wasPet']]
-    return unpetted
-
-
-async def get_closest_unpetted(animals_stream, player_stream):
+async def get_animals(animals_stream, player_stream):
     animals, player_status = await asyncio.gather(animals_stream.next(), player_stream.next())
-    server.log(player_status)
-    unpetted = [x for x in animals if not x['wasPet']]
-    if not unpetted:
-        return
     player_tile = player_status['tileX'], player_status['tileY']
-    unpetted.sort(key=lambda x: distance_between_tiles(player_tile, (x['tileX'], x['tileY'])))
-    return unpetted[0]
+    animals.sort(key=lambda x: distance_between_tiles(player_tile, (x['tileX'], x['tileY'])))
+    return animals
+
+async def use_tool_on_animal_by_name(name: str):
+    did_use = await server.request('USE_TOOL_ON_ANIMAL_BY_NAME', {'name': name})
+    async with server.tool_status_stream() as tss:
+        await tss.wait(lambda t: not t['inUse'])
+    return did_use
 
 def log(obj, name):
     path = os.path.abspath(name)
@@ -661,6 +665,9 @@ def log(obj, name):
 
 async def pet_animal_by_name(name: str):
     resp = await server.request("PET_ANIMAL_BY_NAME", {"name": name})
+
+class NavigationFailed(Exception):
+    pass
 
 async def move_to_character(get_npc):
     import objective
@@ -681,7 +688,7 @@ async def move_to_character(get_npc):
                 break
             npc = await get_npc()
             if npc is None:
-                return
+                raise NavigationFailed
             next_npc_tile = npc['tileX'], npc['tileY']
             if npc_tile != next_npc_tile:
                 tile_error_count = 0
@@ -692,7 +699,7 @@ async def move_to_character(get_npc):
                 pathfind_task_wrapper = objective.active_objective.add_task(pathfind_coro)
         npc = await get_npc()
         if npc is None:
-            return
+            raise NavigationFailed
         npx_x, npc_y = npc['position']
         await server.set_mouse_position(npx_x, npc_y, from_viewport=True)
         return npc
