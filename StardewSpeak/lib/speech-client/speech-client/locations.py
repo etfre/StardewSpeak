@@ -1,4 +1,5 @@
 import re
+import game, constants
 
 class Location:
 
@@ -14,6 +15,23 @@ class Location:
         capitals_split = re.findall('[A-Z][a-z]*', name)
         command = ' '.join(capitals_split).lower()
         return [f"[the] {command}"]
+
+class Point:
+
+    def __init__(self, commands, tile, location, adjacent=False, facing_direction=None, on_arrival=None):
+        self.commands = commands
+        self.tile = tile
+        self.location = location
+        self.adjacent = adjacent
+        self.facing_direction = facing_direction
+        self.on_arrival = on_arrival
+
+    def commands_from_name(self, name: str):
+        # 'FarmCave' -> ['farm cave']
+        capitals_split = re.findall('[A-Z][a-z]*', name)
+        command = ' '.join(capitals_split).lower()
+        return [f"[the] {command}"]
+
 
 def init_locations():
     return (
@@ -44,7 +62,14 @@ def init_locations():
         Location("Woods"),
     )
 
-def location_commands(locs):
+points = (
+    Point(["go to mail box", "(check | read) mail"], (68, 16), "Farm", adjacent=True, on_arrival=game.do_action),
+    Point(["buy backpack"], (7, 19), "SeedShop", facing_direction=constants.NORTH, on_arrival=game.do_action),
+    Point(["buy seeds"], (4, 19), "SeedShop", facing_direction=constants.NORTH, on_arrival=game.do_action),
+)
+
+
+def commands(locs):
     import server
     commands = {}
     for loc in locs:
@@ -52,5 +77,6 @@ def location_commands(locs):
             assert cmd not in commands
             commands[cmd] = loc
     return commands
+
 
 locations = init_locations()

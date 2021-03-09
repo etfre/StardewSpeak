@@ -127,5 +127,18 @@ def scroll_commands(menu_getter, page_size=4):
         "[<positive_num>] page up": df_utils.AsyncFunction(scroll_up_wrapper, format_args=lambda **kw: [kw['positive_num'] * page_size]),
         "[<positive_num>] page down": df_utils.AsyncFunction(scroll_down_wrapper, format_args=lambda **kw: [kw['positive_num'] * page_size]),
     }
+
 class InvalidMenuOption(Exception):
     pass
+
+def yield_clickable_components(item):
+    if isinstance(item, dict):
+        if item.get('type') == 'clickableComponent':
+            if item['visible']:
+                yield item
+        else:
+            for child in item.values():
+                yield from yield_clickable_components(child)
+    if isinstance(item, (list, tuple)):
+        for child in item:
+            yield from yield_clickable_components(child)

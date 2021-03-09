@@ -154,6 +154,24 @@ class MoveToLocationObjective(Objective):
         async with server.player_status_stream() as stream:
             await game.move_to_location(self.location.name, stream)
 
+async def move_to_point(point):
+    async with server.player_status_stream() as stream:
+        player_status = await stream.next()
+        if player_status['location'] != point.location:
+            raise game.NavigationFailed(f'Currently in {player_status["location"]} - unable to move to point in location {point.location}')
+        server.log(player_status['location'])
+        server.log(point.location)
+        x, y  = point.tile
+        if point.adjacent:
+            await game.pathfind_to_adjacent(x, y, stream)
+        else:
+            path = await game.path_to_position(x, y, point.location)
+            await game.pathfind_to_position(path, stream)
+            if point.facing_direction:
+                await game.facing_direction(point.facing_direction)
+        if point.on_arrival:
+            await point.on_arrival()
+
 class ChopTreesObjective(Objective):
 
     def __init__(self):
@@ -377,9 +395,8 @@ def objective_action(objective_cls, *args):
     return server.AsyncFunction(new_active_objective, format_args=format_args)
 
 def function_objective(async_fn, *args):
-    formatted_args = df_utils.format_args(args)
-    obj = FunctionObjective(async_fn, *formatted_args)
-    return df_utils.async_action(new_active_objective, obj)
+    format_args = lambda **kw: [FunctionObjective(async_fn, *[kw[a] for a in args])]
+    return server.AsyncFunction(new_active_objective, format_args=format_args)
 
 def format_args(args, **kw):
     formatted_args = []

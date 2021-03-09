@@ -152,6 +152,43 @@ namespace StardewSpeak
                     responses,
                 };
             }
+            else if (menu is ShippingMenu)
+            {
+                var sm = menu as ShippingMenu;
+                menuTypeObj = new
+                {
+                    menuType = "shippingMenu",
+                    sm.itemsPerCategoryPage,
+                    okButton = SerializeClickableCmp(sm.okButton, mousePosition),
+                    sm.currentPage,
+                };
+            }
+            else if (menu is MineElevatorMenu)
+            {
+                var mem = menu as MineElevatorMenu;
+                var elevators = SerializeComponentList(mem.elevators, mousePosition);
+                menuTypeObj = new
+                {
+                    menuType = "mineElevatorMenu",
+                    elevators,
+                };
+            }
+            else if (menu is LetterViewerMenu)
+            {
+                var lvm = menu as LetterViewerMenu;
+                var itemsToGrab = SerializeComponentList(lvm.itemsToGrab, mousePosition);
+                var acceptQuestButton = SerializeClickableCmp(lvm.acceptQuestButton, mousePosition);
+                var backButton = SerializeClickableCmp(lvm.backButton, mousePosition);
+                var forwardButton = SerializeClickableCmp(lvm.forwardButton, mousePosition);
+                menuTypeObj = new
+                {
+                    menuType = "letterViewerMenu",
+                    acceptQuestButton,
+                    backButton,
+                    forwardButton,
+                    itemsToGrab,
+                };
+            }
             else if (menu is GameMenu) 
             {
                 var gm = menu as GameMenu;
@@ -197,13 +234,18 @@ namespace StardewSpeak
                 menuTypeObj = new
                 {
                     menuType = "titleMenu",
-                    backButton = SerializeClickableCmp(tm.backButton, mousePosition),
                     buttons = SerializeComponentList(tm.buttons, mousePosition),
                     languageButton = SerializeClickableCmp(tm.languageButton, mousePosition),
                     skipButton = SerializeClickableCmp(tm.skipButton, mousePosition),
                     windowedButton = SerializeClickableCmp(tm.windowedButton, mousePosition),
                     subMenu = SerializeMenu(TitleMenu.subMenu),
+                    backButton = SerializeClickableCmp(tm.backButton, mousePosition),
                 };
+                if (menuTypeObj.subMenu != null) 
+                {
+                 //   var backButton = SerializeClickableCmp(tm.backButton, mousePosition);
+                   // menuTypeObj.submenu = Merge(menuTypeObj.submenu, new { backButton });
+                }
             }
             else if (menu is CharacterCustomization)
             {
@@ -274,10 +316,12 @@ namespace StardewSpeak
             bool containsMouse = cmp.containsPoint(mousePosition.X, mousePosition.Y);
             return new
             {
+                type = "clickableComponent",
                 bounds = new { x = bounds.X, y = bounds.Y, width = bounds.Width, height = bounds.Height },
                 center = new List<int> { bounds.Center.X, bounds.Center.Y },
                 cmp.name,
                 containsMouse,
+                cmp.visible,
             };
         }
         public static object GetPrivateField(object obj, string fieldName)

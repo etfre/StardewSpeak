@@ -238,7 +238,7 @@ namespace StardewSpeak
                 var o = kvp.Value;
                 bool readyForHarvest = o.readyForHarvest.Value;
                 bool canBeGrabbed = o.canBeGrabbed.Value;
-                var formattedObj = new {name = o.Name, tileX, tileY, type = o.Type, readyForHarvest, canBeGrabbed, isOnScreen };
+                var formattedObj = new {name = o.Name, tileX, tileY, type = o.Type, readyForHarvest, canBeGrabbed, isOnScreen, parentSheetIndex = o.ParentSheetIndex };
                 objs.Add(formattedObj);
             }
             return objs;

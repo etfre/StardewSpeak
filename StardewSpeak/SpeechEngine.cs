@@ -324,6 +324,11 @@ namespace StardewSpeak
                 case "GET_ACTIVE_MENU":
                     body = Utils.SerializeMenu(Game1.activeClickableMenu);
                     break;
+                case "GET_MOUSE_POSITION":
+                    {
+                        body = new List<int>{ Game1.getMouseX(), Game1.getMouseY()};
+                        break;
+                    }
                 case "SET_MOUSE_POSITION":
                     {
                         int x = data.x;

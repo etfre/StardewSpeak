@@ -347,6 +347,9 @@ def on_message(msg_str):
 async def set_mouse_position(x: int, y: int, from_viewport=False):
     await request('SET_MOUSE_POSITION', {'x': x, 'y': y, 'from_viewport': from_viewport})
 
+async def get_mouse_position():
+    return await request('GET_MOUSE_POSITION')
+
 async def set_mouse_position_relative(x: int, y: int):
     await request('SET_MOUSE_POSITION_RELATIVE', {'x': x, 'y': y})
 
