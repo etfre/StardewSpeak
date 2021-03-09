@@ -362,5 +362,5 @@ MigrationBackup/
 FodyWeavers.xsd
 StardewSpeak.dll
 .vscode/
-lib/
+/lib/
 manifest.json
