@@ -20,8 +20,7 @@ async def scroll_down(n):
 
 async def focus_item(item):
     page = await get_crafting_page()
-    current_crafting_page = page['pagesOfCraftingRecipes'][page['currentCraftingPageIndex']]
-    for cmp, serialized_item in current_crafting_page:
+    for cmp, serialized_item in page['currentRecipePage']:
         if item.name == serialized_item['name']:
             await menu_utils.focus_component(cmp)
             return True

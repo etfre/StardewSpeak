@@ -137,6 +137,10 @@ def yield_clickable_components(item):
             if item['visible']:
                 yield item
         else:
+            menu_type = item.get('menuType')
+            # if menu_type == 'gameMenu':
+            #     item = item.copy()
+            #     item['pages'] = [item['pages'][item['currentTab']]]
             for child in item.values():
                 yield from yield_clickable_components(child)
     if isinstance(item, (list, tuple)):

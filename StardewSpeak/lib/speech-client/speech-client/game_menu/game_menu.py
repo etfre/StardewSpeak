@@ -12,16 +12,12 @@ async def focus_name_box():
     menu = await get_new_game_menu()
     await menu_utils.click_component(menu['nameBoxCC'])
 
-def active_page(menu):
-    return menu['pages'][menu['currentTab']]
-
 def get_page_by_name(menu, page_type):
-    import server
-    page = menu_utils.find_component_by_field(menu['pages'], 'type', page_type)
-    is_active = page['type'] == active_page(menu)['type']
+    current_page = menu['currentPage']
+    is_active = page_type == current_page['type']
     if not is_active:
         raise menu_utils.InvalidMenuOption()
-    return page
+    return current_page
 
 async def click_tab(tab_name):
     menu = await get_game_menu()

@@ -140,6 +140,22 @@ namespace StardewSpeak
                     scrollBar = SerializeClickableCmp(sm.scrollBar, mousePosition),
                 };
             }
+            if (menu is ProfileMenu)
+            {
+                var pm = menu as ProfileMenu;
+                var clickableProfileItems = Utils.SerializeComponentList(pm.clickableProfileItems, mousePosition);
+                menuTypeObj = new
+                {
+                    menuType = "profileMenu",
+                    backButton = Utils.SerializeClickableCmp(pm.backButton, mousePosition),
+                    forwardButton = Utils.SerializeClickableCmp(pm.forwardButton, mousePosition),
+                    previousCharacterButton = Utils.SerializeClickableCmp(pm.previousCharacterButton, mousePosition),
+                    nextCharacterButton = Utils.SerializeClickableCmp(pm.nextCharacterButton, mousePosition),
+                    clickableProfileItems,
+                    upArrow = SerializeClickableCmp(pm.upArrow, mousePosition),
+                    downArrow = SerializeClickableCmp(pm.downArrow, mousePosition),
+                };
+            }
             else if (menu is DialogueBox)
             {
                 var db = menu as DialogueBox;
@@ -193,13 +209,12 @@ namespace StardewSpeak
             {
                 var gm = menu as GameMenu;
                 var tabs = Utils.SerializeComponentList(gm.tabs, mousePosition);
+                var currentPage = Page.SerializePage(gm.pages[gm.currentTab]);
                 var pages = gm.pages.Select(x => Page.SerializePage(x)).ToList();
                 menuTypeObj = new
                 {
                     menuType = "gameMenu",
-                    gm.currentTab,
-                    //currentPage,
-                    pages,
+                    currentPage,
                     tabs,   
                 };
             }

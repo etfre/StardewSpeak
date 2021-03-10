@@ -657,7 +657,6 @@ def log(obj, name):
     path = os.path.abspath(name)
     server.log(path)
     with open(path, 'w') as f:
-    # with open(os.path.join('..', 'debug', name), 'w') as f:
         if isinstance(obj, str):
             f.write(obj)
         else:

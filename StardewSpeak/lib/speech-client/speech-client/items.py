@@ -31,6 +31,7 @@ craftable_items = (
     Item("Cask"),
     Item("Charcoal Kiln"),
     Item("Cheese Press"),
+    Item("Cherry Bomb"),
     Item("Chest"),
     Item("Cobblestone Path"),
     Item("Cookout Kit"),
