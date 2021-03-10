@@ -699,7 +699,7 @@ async def move_to_character(get_npc):
         npc = await get_npc()
         if npc is None:
             raise NavigationFailed
-        npx_x, npc_y = npc['position']
+        npx_x, npc_y = npc['center']
         await server.set_mouse_position(npx_x, npc_y, from_viewport=True)
         return npc
         # await move_directly_to_character(get_character, player_stream, npc_stream)

@@ -52,10 +52,7 @@ def flatten_list(rep):
     return flattened
 
 letters_and_keys_choice = df.Choice(None, {**letter_map, **capital_letter_map, **keys})
-letters_and_keys_num = df.Modifier(df.Sequence([df.Optional(df_utils.positive_num, default=1), letters_and_keys_choice]), multiply_keys) 
-
-letters_rep = df.Repetition(letters_and_keys_num, name="letters_and_keys", min=1, max=16)
-letters_and_keys = df.Modifier(letters_rep, flatten_list)
+letters_and_keys = df.Repetition(letters_and_keys_choice, name="letters_and_keys", min=1, max=16)
 
 def type_letters(letters: str):
     shift_down = False

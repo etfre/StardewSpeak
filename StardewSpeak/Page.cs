@@ -17,11 +17,11 @@ namespace StardewSpeak
             if (obj == null) return null;
             Point mousePosition = Game1.getMousePosition();
             if (obj is CataloguePage) return SerializeCataloguePage(obj);
-            if (obj is CollectionsPage) return SerializeCollectionsPage(obj);
+            if (obj is CollectionsPage) return SerializeCollectionsPage(obj, mousePosition);
             if (obj is CraftingPage) return SerializeCraftingPage(obj);
             if (obj is InventoryPage) return SerializeInventoryPage(obj);
             if (obj is SocialPage) return SerializeSocialPage(obj, mousePosition);
-            if (obj is ExitPage) return SerializeExitPage(obj);
+            if (obj is ExitPage) return SerializeExitPage(obj, mousePosition);
             else return new { type = "unknown" };
         }
         public static object SerializeCataloguePage(CataloguePage page) 
@@ -83,11 +83,16 @@ namespace StardewSpeak
                 upArrow = Utils.SerializeClickableCmp(page.upButton, mousePosition),
             };
         }
-        public static object SerializeCollectionsPage(CollectionsPage page)
+        public static object SerializeCollectionsPage(CollectionsPage page, Point mousePosition)
         {
-            Point mousePosition = Game1.getMousePosition();
+            //page.sideTabs;
+            var backButton = Utils.SerializeClickableCmp(page.backButton, mousePosition);
+            var forwardButton = Utils.SerializeClickableCmp(page.forwardButton, mousePosition);
+
             return new
             {
+                backButton,
+                forwardButton,
                 type = "collectionsPage",
             };
         }
@@ -102,9 +107,8 @@ namespace StardewSpeak
                 upperRightCloseButton,
             };
         }
-        public static object SerializeExitPage(ExitPage page)
+        public static object SerializeExitPage(ExitPage page, Point mousePosition)
         {
-            Point mousePosition = Game1.getMousePosition();
             var exitToDesktop = Utils.SerializeClickableCmp(page.exitToDesktop, mousePosition);
             var exitToTitle = Utils.SerializeClickableCmp(page.exitToTitle, mousePosition);
             return new

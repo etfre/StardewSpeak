@@ -6,7 +6,7 @@ CHARACTER_CUSTOMIZATION_MENU = 'characterCustomizationMenu'
 
 async def get_new_game_menu():
     menu = await menu_utils.get_active_menu(title_menu.TITLE_MENU)
-    return await title_menu.get_submenu(menu, CHARACTER_CUSTOMIZATION_MENU)
+    return title_menu.get_submenu(menu, CHARACTER_CUSTOMIZATION_MENU)
 
 async def focus_box(cmp_name):
     await menu_utils.click_menu_button(cmp_name, menu_getter=get_new_game_menu)

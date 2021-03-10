@@ -140,7 +140,7 @@ namespace StardewSpeak
                     scrollBar = SerializeClickableCmp(sm.scrollBar, mousePosition),
                 };
             }
-            if (menu is ProfileMenu)
+            else if (menu is ProfileMenu)
             {
                 var pm = menu as ProfileMenu;
                 var clickableProfileItems = Utils.SerializeComponentList(pm.clickableProfileItems, mousePosition);

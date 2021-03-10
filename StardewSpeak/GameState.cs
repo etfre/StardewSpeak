@@ -21,10 +21,12 @@ namespace StardewSpeak
             var position = new List<float>{ playerPosition.X, playerPosition.Y };
             var facingDirection = player.FacingDirection;
             var isMoving = player.isMoving();
+            var center = new List<int> { player.getStandingX(), player.getStandingY() };
             var status = new
             {
                 location,
                 position,
+                center,
                 tileX = player.getTileX(),
                 tileY = player.getTileY(),
                 canMove = player.CanMove,
@@ -60,6 +62,7 @@ namespace StardewSpeak
             foreach (var character in location.characters) 
             {
                 var position = new List<float> { character.Position.X, character.Position.Y };
+                var center = new List<int> { character.getStandingX(), character.getStandingY() };
                 var charObj = new
                 {
                     name = character.Name,
@@ -69,6 +72,7 @@ namespace StardewSpeak
                     isInvisible = character.IsInvisible,
                     facingDirection = character.FacingDirection,
                     position,
+                    center,
                 };
                 chars.Add(charObj);
             }
@@ -85,9 +89,11 @@ namespace StardewSpeak
                     var position = new List<float> { animal.Position.X, animal.Position.Y };
                     bool isMature = (int)animal.age >= (byte)animal.ageWhenMature;
                     int currentProduce = animal.currentProduce.Value;
+                    var center = new List<int> { animal.getStandingX(), animal.getStandingY() };
                     var animalObj = new
                     {
                         position,
+                        center,
                         tileX = animal.getTileX(),
                         tileY = animal.getTileY(),
                         wasPet = animal.wasPet.Value,
