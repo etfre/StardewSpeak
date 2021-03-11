@@ -106,7 +106,7 @@ class FaceDirectionObjective(Objective):
 
     async def run(self):
         async with server.player_status_stream() as stream:
-            await game.face_direction(self.direction, stream)
+            await game.face_direction(self.direction, stream, move_cursor=True)
 
 
 class MoveNTilesObjective(Objective):
@@ -130,8 +130,8 @@ class MoveNTilesObjective(Objective):
                 to_x -= self.n
             else:
                 raise ValueError(f"Unexpected direction {self.direction}")
-            path = await game.path_to_position(to_x, to_y, status['location'])
-            await game.pathfind_to_position(path, stream)
+            path = await game.path_to_tile(to_x, to_y, status['location'])
+            await game.pathfind_to_tile(path, stream)
 
 class MoveToPointObjective(Objective):
     def __init__(self):
@@ -143,8 +143,8 @@ class MoveToPointObjective(Objective):
     async def run(self):
         async with server.player_status_stream() as stream:
             await game.move_to_location(self.location, stream)
-            path = await game.path_to_position(self.x, self.y, self.location)
-            await game.pathfind_to_position(path, stream)
+            path = await game.path_to_tile(self.x, self.y, self.location)
+            await game.pathfind_to_tile(path, stream)
 
 class MoveToLocationObjective(Objective):
     def __init__(self, location):
@@ -165,8 +165,8 @@ async def move_to_point(point):
         if point.adjacent:
             await game.pathfind_to_adjacent(x, y, stream)
         else:
-            path = await game.path_to_position(x, y, point.location)
-            await game.pathfind_to_position(path, stream)
+            path = await game.path_to_tile(x, y, point.location)
+            await game.pathfind_to_tile(path, stream)
             if point.facing_direction:
                 await game.facing_direction(point.facing_direction)
         if point.on_arrival:
@@ -275,30 +275,6 @@ class TalkToNPCObjective(Objective):
         self.npc_name = npc_name
 
     async def run(self):
-        # npc_tile = None
-        # pathfind_task_wrapper = None
-        # tile_error_count = 0
-        # async with server.characters_at_location_stream() as npc_stream, server.player_status_stream() as player_stream:
-        #     while True:
-        #         if pathfind_task_wrapper and pathfind_task_wrapper.done:
-        #             if pathfind_task_wrapper.exception:
-        #                 if tile_error_count < 2:
-        #                     pathfind_coro = game.pathfind_to_adjacent(npc_tile[0], npc_tile[1], player_stream)
-        #                     pathfind_task_wrapper = self.add_task(pathfind_coro)
-        #                     tile_error_count += 1
-        #                     continue
-        #                 else:
-        #                     raise pathfind_task_wrapper.exception
-        #             break
-        #         npc = await game.find_npc_by_name(self.npc_name, npc_stream)
-        #         next_npc_tile = npc['tileX'], npc['tileY']
-        #         if npc_tile != next_npc_tile:
-        #             tile_error_count = 0
-        #             if pathfind_task_wrapper:
-        #                 await pathfind_task_wrapper.cancel()
-        #             npc_tile = next_npc_tile
-        #             pathfind_coro = game.pathfind_to_adjacent(npc_tile[0], npc_tile[1], player_stream)
-        #             pathfind_task_wrapper = self.add_task(pathfind_coro)
         async with server.characters_at_location_stream() as npc_stream:
             fn = functools.partial(game.find_npc_by_name, self.npc_name, npc_stream)
             await game.move_to_character(fn)

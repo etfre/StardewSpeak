@@ -193,7 +193,7 @@ namespace StardewSpeak
                         GameLocation fromLocation = player.currentLocation;
                         break;
                     }
-                case "PATH_TO_POSITION":
+                case "path_to_tile":
                     {
                         int targetX = data.x;
                         int targetY = data.y;

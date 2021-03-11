@@ -175,8 +175,8 @@ async def pathfind_to_resource(tiles, location, stream, cutoff=-1):
     invalid = []
     for tile in tiles:
         try:
-            path_to_take = await path_to_position(tile[0], tile[1], location, cutoff=cutoff)
-            path = await pathfind_to_position(path_to_take, stream)
+            path_to_take = await path_to_tile(tile[0], tile[1], location, cutoff=cutoff)
+            path = await pathfind_to_tile(path_to_take, stream)
         except NavigationFailed as e:
             invalid.append(tile)
         else:
@@ -209,15 +209,15 @@ async def path_to_next_location(next_location: str, status_stream):
         path = await path_to_adjacent(x, y, status_stream)
         door_direction = direction_from_tiles(path.tiles[-1], (x, y))
     else:
-        path = await path_to_position(x, y, location)
+        path = await path_to_tile(x, y, location)
         door_direction = None
     if path is None:
         raise NavigationFailed(f"Cannot pathfind to connection to location {location}")
     return path, door_direction
 
 
-async def path_to_position(x, y, location, cutoff=-1):
-    path = await server.request("PATH_TO_POSITION", {"x": x, "y": y, "location": location, "cutoff": cutoff})
+async def path_to_tile(x, y, location, cutoff=-1):
+    path = await server.request("path_to_tile", {"x": x, "y": y, "location": location, "cutoff": cutoff})
     if path is None:
         raise NavigationFailed(f"Cannot pathfind to {x}, {y} at location {location}")
     return Path(path, location)
@@ -247,11 +247,11 @@ async def pathfind_to_next_location(
         is_done = move_along_path(path, player_status)
     stop_moving()
     if door_direction is not None:
-        await face_direction(door_direction, status_stream)
+        await face_direction(door_direction, status_stream, move_cursor=True)
         await do_action()
 
 
-async def pathfind_to_position(path: Path, status_stream: server.Stream):
+async def pathfind_to_tile(path: Path, status_stream: server.Stream):
     target_x, target_y = path.tiles[-1]
     is_done = False
     remaining_attempts = 5
@@ -269,7 +269,7 @@ async def pathfind_to_position(path: Path, status_stream: server.Stream):
                     is_done = move_along_path(path, player_status)
                 except KeyError as e:
                     if remaining_attempts:
-                        path = await path_to_position(target_x, target_y, path.location)
+                        path = await path_to_tile(target_x, target_y, path.location)
                         remaining_attempts -= 1
                     else:
                         raise e
@@ -294,7 +294,7 @@ async def path_to_adjacent(x, y, status_stream: server.Stream, cutoff=-1):
 
 async def pathfind_to_adjacent(x, y, status_stream: server.Stream, cutoff=-1):
     path = await path_to_adjacent(x, y, status_stream, cutoff=cutoff)
-    await pathfind_to_position(path, status_stream)
+    await pathfind_to_tile(path, status_stream)
     if path.tiles[-1] != (x, y):
         direction_to_face = direction_from_tiles(path.tiles[-1], (x, y))
         await face_direction(direction_to_face, status_stream)
@@ -420,10 +420,15 @@ async def ensure_not_moving(stream: server.Stream):
     await stream.next()
 
 
-async def face_direction(direction: int, stream: server.Stream):
+async def face_direction(direction: int, stream: server.Stream, move_cursor=False):
     await ensure_not_moving(stream)
     await server.request("FACE_DIRECTION", direction)
     set_last_faced_direction(direction)
+    if move_cursor:
+        player_status = await stream.next()
+        current_tile = player_status['tileX'], player_status['tileY']
+        target_tile = next_tile(current_tile, direction)
+        await set_mouse_position_on_tile(target_tile)
     await stream.wait(lambda s: s["facingDirection"] == direction, timeout=1)
 
 async def equip_item(item: str):
