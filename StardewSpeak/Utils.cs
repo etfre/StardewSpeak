@@ -117,7 +117,7 @@ namespace StardewSpeak
             var menuBarObj = new
             {
                 menu.xPositionOnScreen,
-                allClickableComponents = SerializeComponentList(menu.allClickableComponents, mousePosition),
+                //allClickableComponents = SerializeComponentList(menu.allClickableComponents, mousePosition),
                 upperRightCloseButton = Utils.SerializeClickableCmp(menu.upperRightCloseButton, mousePosition),
                 containsMouse,
                 menuType = "unknown",

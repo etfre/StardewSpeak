@@ -159,16 +159,24 @@ async def move_to_point(point):
         player_status = await stream.next()
         if player_status['location'] != point.location:
             raise game.NavigationFailed(f'Currently in {player_status["location"]} - unable to move to point in location {point.location}')
-        x, y  = point.tile
-        if point.adjacent:
-            await game.pathfind_to_adjacent(x, y, stream)
+        if callable(point.tile):
+            tiles = await point.tile()
         else:
-            path = await game.path_to_tile(x, y, point.location)
-            await game.pathfind_to_tile(path, stream)
-            if point.facing_direction:
-                await game.facing_direction(point.facing_direction)
-        if point.on_arrival:
-            await point.on_arrival()
+            tiles = point.tile
+        if len(tiles) == 2 and isinstance(tiles[0], int):
+            tiles = [tiles] 
+        for x, y in tiles:
+            if point.adjacent:
+                path = game.path_to_adjacent(x, y, stream)
+            else:
+                path = await game.path_to_tile(x, y, point.location)
+            if path is not None:
+                await game.pathfind_to_tile(path, stream)
+                if point.facing_direction:
+                    await game.facing_direction(point.facing_direction)
+                if point.on_arrival:
+                    await point.on_arrival()
+                return
 
 class ChopTreesObjective(Objective):
 
@@ -177,7 +185,8 @@ class ChopTreesObjective(Objective):
 
     async def run(self):
         await game.equip_item_by_name(constants.AXE)
-        await game.modify_tiles(game.get_fully_grown_trees_and_stumps, game.generic_next_item_key, game.chop_tree_and_gather_resources)
+        async for tree in game.modify_tiles(game.get_fully_grown_trees_and_stumps, game.generic_next_item_key):
+            await game.chop_tree_and_gather_resources(tree)
 class WaterCropsObjective(Objective):
 
     def __init__(self):
@@ -188,12 +197,11 @@ class WaterCropsObjective(Objective):
         tiles_to_water = [hdt for hdt in hoe_dirt_tiles if hdt['crop'] and not hdt['isWatered']]
         return tiles_to_water
 
-    async def at_tile(self, obj):
-        await game.swing_tool()
-
     async def run(self):
         await game.equip_item_by_name(constants.WATERING_CAN)
-        await game.modify_tiles(self.get_unwatered_crops, game.generic_next_item_key, self.at_tile)
+        async for crop in game.modify_tiles(self.get_unwatered_crops, game.generic_next_item_key):
+            await game.swing_tool()
+
 
 class ClearDebrisObjective(Objective):
 
@@ -228,7 +236,8 @@ class ClearDebrisObjective(Objective):
             await game.gather_items_on_ground(6)
 
     async def run(self):
-        await game.modify_tiles(self.get_debris, game.next_debris_key, self.at_tile)
+        async for debris in game.modify_tiles(self.get_debris, game.next_debris_key):
+            await self.at_tile(debris)
 
 class PlantSeedsOrFertilizerObjective(Objective):
 
@@ -239,20 +248,14 @@ class PlantSeedsOrFertilizerObjective(Objective):
         hoe_dirt_tiles = await game.get_hoe_dirt('')
         return [x for x in hoe_dirt_tiles if x['canPlantThisSeedHere']]
 
-    async def at_tile(self, obj):
-        await game.do_action()
-
     async def run(self):
-        await game.modify_tiles(self.get_hoe_dirt, game.generic_next_item_key, self.at_tile)
+        async for hdt in game.modify_tiles(self.get_hoe_dirt, game.generic_next_item_key):
+            await game.do_action()
 class HoePlotObjective(Objective):
 
     def __init__(self, n1, n2):
         self.n1 = n1
         self.n2 = n2
-
-    async def at_tile(self, obj):
-        await game.swing_tool()
-
 
     async def run(self):
         async with server.player_status_stream() as stream:
@@ -270,7 +273,8 @@ class HoePlotObjective(Objective):
                 y = start_tile[1] + j * y_increment
                 plot_tiles.add((x, y))
         get_next_diggable = functools.partial(game.get_diggable_tiles, plot_tiles)
-        await game.modify_tiles(get_next_diggable, game.generic_next_item_key, self.at_tile)
+        async for hdt in game.modify_tiles(get_next_diggable, game.generic_next_item_key):
+            await game.swing_tool()
 
 
 class TalkToNPCObjective(Objective):

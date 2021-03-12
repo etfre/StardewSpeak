@@ -500,7 +500,7 @@ async def swing_tool():
 async def do_action():
     directinput.send(constants.ACTION_KEY)
 
-async def modify_tiles(get_items, sort_items, at_tile):
+async def modify_tiles(get_items, sort_items):
     async with server.player_status_stream() as stream:
         player_status = await stream.next()
         start_tile = player_status["tileX"], player_status["tileY"]
@@ -523,7 +523,7 @@ async def modify_tiles(get_items, sort_items, at_tile):
                 else:
                     item_tile = item['tileX'], item['tileY']
                     await set_mouse_position_on_tile(item_tile)
-                    await at_tile(item)
+                    yield item
                     break
             if not item_path:
                 return
@@ -603,13 +603,15 @@ async def get_basic_visible_items(loc):
     return items
 
 async def gather_crafted_items():
-    await modify_tiles(get_ready_crafted, generic_next_item_key, at_item)
+    async for item in modify_tiles(get_ready_crafted, generic_next_item_key):
+        await at_item(item)
 
 async def at_item(obj):
     await do_action()
 
 async def gather_items():
-    await modify_tiles(get_basic_visible_items, generic_next_item_key, at_item)
+    async for item in modify_tiles(get_basic_visible_items, generic_next_item_key):
+        await at_item(item)
 
 async def pathfind_to_nearest_water(stream: server.Stream):
     water_tiles = await server.request('GET_WATER_TILES')

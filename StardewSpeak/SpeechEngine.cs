@@ -375,6 +375,10 @@ namespace StardewSpeak
                         body = true;
                         break;
                     }
+                case "CLOSEST_SHIPPING_BIN":
+                    {
+                        break;
+                    }
                 case "CATCH_FISH":
                     {
                         var am = Game1.activeClickableMenu;
