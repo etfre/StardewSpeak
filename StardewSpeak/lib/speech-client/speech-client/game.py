@@ -597,21 +597,18 @@ async def get_ready_crafted(loc):
     ready_crafted = [x for x in objs if x['readyForHarvest'] and x['type'] == "Crafting"]
     return ready_crafted
 
-async def get_basic_visible_items(loc):
+async def get_forage_visible_items(loc):
     objs = await get_location_objects(loc)
-    items = [x for x in objs if x['canBeGrabbed'] and x['type'] == "Basic" and x['isOnScreen']]
+    items = [x for x in objs if x['canBeGrabbed'] and x['type'] == "Basic" and x['isOnScreen'] and x['isForage']]
     return items
 
 async def gather_crafted_items():
     async for item in modify_tiles(get_ready_crafted, generic_next_item_key):
-        await at_item(item)
+        await do_action()
 
-async def at_item(obj):
-    await do_action()
-
-async def gather_items():
-    async for item in modify_tiles(get_basic_visible_items, generic_next_item_key):
-        await at_item(item)
+async def gather_forage_items():
+    async for item in modify_tiles(get_forage_visible_items, generic_next_item_key):
+        await do_action()
 
 async def pathfind_to_nearest_water(stream: server.Stream):
     water_tiles = await server.request('GET_WATER_TILES')
@@ -680,7 +677,7 @@ def log(obj, name):
         if isinstance(obj, str):
             f.write(obj)
         else:
-            json.dump(obj, f)
+            json.dump(obj, f, indent=4)
 
 async def pet_animal_by_name(name: str):
     resp = await server.request("PET_ANIMAL_BY_NAME", {"name": name})

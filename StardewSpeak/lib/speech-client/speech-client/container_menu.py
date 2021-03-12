@@ -10,6 +10,12 @@ item_grab = {
     'itemsToGrabMenu': menu_utils.InventoryMenuWrapper(),
 }
 
+async def get_container_menu():
+    menu = await menu_utils.get_active_menu(menu_type='itemsToGrabMenu')
+    if menu['shippingBin']:
+        raise menu_utils.InvalidMenuOption()
+    return menu
+
 async def set_item_grab_submenu(submenu_name: str):
     assert submenu_name in ('inventoryMenu', 'itemsToGrabMenu')
     menu = await menu_utils.get_active_menu('itemsToGrabMenu')
@@ -20,7 +26,7 @@ async def set_item_grab_submenu(submenu_name: str):
     await menu_wrapper.focus_previous(submenu)
 
 async def focus_item(new_row, new_col):
-    menu = await menu_utils.get_active_menu(menu_type='itemsToGrabMenu')
+    menu = await get_container_menu()
     submenu_name = 'itemsToGrabMenu' if menu['itemsToGrabMenu']['containsMouse'] else 'inventoryMenu'
     submenu = menu[submenu_name]
     submenu_wrapper = item_grab[submenu_name]
@@ -38,7 +44,8 @@ mapping = {
 
 @menu_utils.valid_menu_test
 def is_active():
-    return game.get_context_menu('itemsToGrabMenu')
+    menu = game.get_context_menu('itemsToGrabMenu')
+    return not menu['shippingBin']
 
 def load_grammar():
     grammar = df.Grammar("items_to_grab_menu")

@@ -243,8 +243,10 @@ namespace StardewSpeak
                 var isOnScreen = Utils.isOnScreen(tileLocation, 0, Game1.player.currentLocation);
                 var o = kvp.Value;
                 bool readyForHarvest = o.readyForHarvest.Value;
-                bool canBeGrabbed = o.canBeGrabbed.Value;
-                var formattedObj = new {name = o.Name, tileX, tileY, type = o.Type, readyForHarvest, canBeGrabbed, isOnScreen, parentSheetIndex = o.ParentSheetIndex };
+                bool canBeGrabbed = o.CanBeGrabbed;
+                var category = o.Category;
+                bool isForage = o.isForage(Game1.currentLocation);
+                var formattedObj = new {name = o.Name, tileX, tileY, type = o.Type, isForage, readyForHarvest, canBeGrabbed, isOnScreen, parentSheetIndex = o.ParentSheetIndex, category };
                 objs.Add(formattedObj);
             }
             return objs;
