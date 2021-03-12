@@ -3,15 +3,15 @@ EAST = 1
 SOUTH = 2
 WEST = 3
 
-AXE = 'axe'
-FISHING_ROD = 'fishingRod'
-HOE = 'hoe'
-PICKAXE = 'pickaxe'
-SCYTHE = 'scythe'
-WATERING_CAN = 'wateringCan'
-SHEARS = 'shears'
+AXE = 'Axe'
+FISHING_ROD = 'Fishing Rod'
+HOE = 'Hoe'
+PICKAXE = 'Pickaxe'
+SCYTHE = 'Scythe'
+WATERING_CAN = 'Watering Can'
+SHEARS = 'Shears'
 MILK_PAIL = 'Milk Pail'
-PAN = 'pan'
+PAN = 'Pan'
 MELEE_WEAPON = 'meleeWeapon'
 
 WEEDS = 'Weeds'

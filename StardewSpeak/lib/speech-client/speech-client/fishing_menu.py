@@ -7,7 +7,7 @@ async def catch_fish():
 async def start_fishing():
     with server.player_status_stream() as stream:
         path = await game.pathfind_to_nearest_water(stream)
-        await game.equip_item(constants.FISHING_ROD)
+        await game.equip_item_by_name(constants.FISHING_ROD)
         await cast_fishing_rod()
         await wait_for_nibble()
 

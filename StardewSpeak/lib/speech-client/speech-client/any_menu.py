@@ -18,7 +18,6 @@ async def foobar(direction, n=1):
     current_position = None
     target_components = []
     clickable = list(menu_utils.yield_clickable_components(menu))
-    game.log(menu, 'menu.json')
     for cmp in menu_utils.yield_clickable_components(menu):
         center = cmp['center']
         if cmp['containsMouse']:

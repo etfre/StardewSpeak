@@ -50,7 +50,6 @@ tools = {
     "milk pail": constants.MILK_PAIL,
     "pan": constants.PAN,
     "shears": constants.SHEARS,
-    "[melee] weapon": constants.MELEE_WEAPON,
 }
 mouse_directions = {
     "up": "up",
@@ -142,7 +141,7 @@ non_repeat_mapping = {
     "clear debris": objective.objective_action(objective.ClearDebrisObjective),
     "defend": objective.objective_action(objective.DefendObjective),
     "hoe <n> by <n2>": objective.objective_action(objective.HoePlotObjective, "n", "n2"),
-    "equip <tools>": df_utils.async_action(game.equip_item, 'tools'),
+    "equip <tools>": df_utils.async_action(game.equip_item_by_name, 'tools'),
     "talk to <npcs>": objective.objective_action(objective.TalkToNPCObjective, "npcs"),
     "refill watering can": objective.function_objective(game.refill_watering_can),
     "gather crafting": objective.function_objective(game.gather_crafted_items),

@@ -27,18 +27,7 @@ nums_to_keys = {
     3: "a",
 }
 directions = {k: k for k in direction_keys}
-tools = {
-    "axe": constants.AXE,
-    "fishing (rod | pole)": constants.FISHING_ROD,
-    "hoe": constants.HOE,
-    "pickaxe": constants.PICKAXE,
-    "scythe": constants.SCYTHE,
-    "watering can": constants.WATERING_CAN,
-    "milk pail": constants.MILK_PAIL,
-    "pan": constants.PAN,
-    "shears": constants.SHEARS,
-    "[melee] weapon": constants.MELEE_WEAPON,
-}
+
 mouse_directions = {
     "up": "up",
     "right": "right",
@@ -46,46 +35,12 @@ mouse_directions = {
     "left": "left",
 }
 
-npcs = {
-    'abigail': constants.ABIGAIL,
-    'alex': constants.ALEX,
-    'caroline': constants.CAROLINE,
-    'demetrius': constants.DEMETRIUS,
-    'elliott': constants.ELLIOTT,
-    'emily': constants.EMILY,
-    'gus': constants.GUS,
-    'haley': constants.HALEY,
-    'harvey': constants.HARVEY,
-    'jas': constants.JAS,
-    'jodi': constants.JODI,
-    'kent': constants.KENT,
-    'leah': constants.LEAH,
-    'lewis': constants.LEWIS,
-    'marnie': constants.MARNIE,
-    'muh roo': constants.MARU,
-    'pam': constants.PAM,
-    'penny': constants.PENNY,
-    'pierre': constants.PIERRE,
-    'robin': constants.ROBIN,
-    'sam': constants.SAM,
-    'sebastian': constants.SEBASTIAN,
-    'shane': constants.SHANE,
-    'vincent': constants.VINCENT,
-    'willy': constants.WILLY,
-}
-
-
-numrep2 = df.Sequence(
-    [df.Choice(None, rules.nonZeroDigitMap), df.Repetition(df.Choice(None, rules.digitMap), min=0, max=10)],
-    name="n2",
-)
-num2 = df.Modifier(numrep2, rules.parse_numrep)
-
 
 mapping = {
     "<direction_keys>": objective.objective_action(objective.HoldKeyObjective, "direction_keys"),
     "<n> <directions>": objective.objective_action(objective.MoveNTilesObjective, "directions", "n"),
     "item <positive_index>": df_utils.async_action(game.equip_item_by_index, 'positive_index'),
+    "equip [melee] weapon": df_utils.async_action(game.equip_item, lambda x: x['type'] == constants.MELEE_WEAPON),
 }
 
 @menu_utils.valid_menu_test

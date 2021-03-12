@@ -35,7 +35,7 @@ tool_for_object = {
     constants.STONE: {'name': constants.PICKAXE, 'level': 0},
     constants.TWIG: {'name': constants.AXE, 'level': 0},
     constants.WEEDS: {'name': constants.SCYTHE, 'level': 0},
-    constants.BOULDER: {'name': constants.AXE, 'level': 2},
+    constants.BOULDER: {'name': constants.PICKAXE, 'level': 2},
     constants.HOLLOW_LOG: {'name': constants.AXE, 'level': 2},
     constants.STUMP: {'name': constants.AXE, 'level': 1},
     # constants.METEORITE: {'name': constants.AXE, 'level': 3},
@@ -101,6 +101,7 @@ async def get_resource_clumps(location: str):
 
 async def get_resource_clump_pieces(location: str):
     clumps = await get_resource_clumps(location)
+    log(clumps, 'clumps.json')
     clump_pieces = []
     # break up resource clump like a boulder into one object for each tile
     for c in clumps:
@@ -431,7 +432,7 @@ async def face_direction(direction: int, stream: server.Stream, move_cursor=Fals
         await set_mouse_position_on_tile(target_tile)
     await stream.wait(lambda s: s["facingDirection"] == direction, timeout=1)
 
-async def equip_item(item: str):
+async def equip_item(predicate):
     matched_index = None
     row_size = 12
     with server.player_items_stream(ticks=10) as stream, server.async_timeout.timeout(5):
@@ -439,7 +440,7 @@ async def equip_item(item: str):
             items_info = await stream.next()
             items = items_info['items']
             for idx, inventory_item in enumerate(items):
-                if inventory_item and inventory_item['type'] == item:
+                if inventory_item and predicate(inventory_item):
                     matched_index = idx
                     break
             if matched_index is None:
@@ -451,6 +452,10 @@ async def equip_item(item: str):
                     directinput.send(['tab'])
                 else:
                     return await server.request('EQUIP_ITEM_INDEX', {"index": matched_index})
+
+async def equip_item_by_name(name: str):
+    predicate = lambda x: x['netName'] == name
+    return await equip_item(predicate)
 
 async def equip_item_by_index(idx: int):
     return await server.request('EQUIP_ITEM_INDEX', {"index": idx})
@@ -475,6 +480,16 @@ def next_debris_key(start_tile, current_tile, debris_obj, player_status):
 def next_hoe_key(start_tile, current_tile, target_tile, player_status):
     score = score_objects_by_distance(start_tile, current_tile, target_tile)
     return score
+
+async def get_tools():
+    tools = {}
+    async with server.player_items_stream(ticks=10) as stream:
+        items_info = await stream.next()
+        items = items_info['items']
+        for item in items:
+            if item and item['isTool']:
+                tools[item['netName']] = item
+    return tools
 
 async def swing_tool():
     with server.tool_status_stream(ticks=1) as tss:
@@ -574,7 +589,7 @@ async def refill_watering_can():
     async with server.player_status_stream() as stream:
         path = await pathfind_to_nearest_water(stream)
         if path is not None:
-            await equip_item(constants.WATERING_CAN)
+            await equip_item_by_name(constants.WATERING_CAN)
             await swing_tool()
 
 async def get_ready_crafted(loc):
@@ -584,9 +599,7 @@ async def get_ready_crafted(loc):
 
 async def get_basic_visible_items(loc):
     objs = await get_location_objects(loc)
-    server.log(objs)
     items = [x for x in objs if x['canBeGrabbed'] and x['type'] == "Basic" and x['isOnScreen']]
-    server.log(items)
     return items
 
 async def gather_crafted_items():
@@ -659,8 +672,8 @@ async def use_tool_on_animal_by_name(name: str):
     return did_use
 
 def log(obj, name):
-    path = os.path.abspath(name)
-    server.log(path)
+    import __main__
+    path = os.path.join(os.path.dirname(__main__.__file__), '..', 'debug', name)
     with open(path, 'w') as f:
         if isinstance(obj, str):
             f.write(obj)

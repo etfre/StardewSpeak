@@ -159,8 +159,6 @@ async def move_to_point(point):
         player_status = await stream.next()
         if player_status['location'] != point.location:
             raise game.NavigationFailed(f'Currently in {player_status["location"]} - unable to move to point in location {point.location}')
-        server.log(player_status['location'])
-        server.log(point.location)
         x, y  = point.tile
         if point.adjacent:
             await game.pathfind_to_adjacent(x, y, stream)
@@ -178,7 +176,7 @@ class ChopTreesObjective(Objective):
         pass
 
     async def run(self):
-        await game.equip_item(constants.AXE)
+        await game.equip_item_by_name(constants.AXE)
         await game.modify_tiles(game.get_fully_grown_trees_and_stumps, game.generic_next_item_key, game.chop_tree_and_gather_resources)
 class WaterCropsObjective(Objective):
 
@@ -194,7 +192,7 @@ class WaterCropsObjective(Objective):
         await game.swing_tool()
 
     async def run(self):
-        await game.equip_item(constants.WATERING_CAN)
+        await game.equip_item_by_name(constants.WATERING_CAN)
         await game.modify_tiles(self.get_unwatered_crops, game.generic_next_item_key, self.at_tile)
 
 class ClearDebrisObjective(Objective):
@@ -203,8 +201,15 @@ class ClearDebrisObjective(Objective):
         pass
 
     async def get_debris(self, location):
-        debris_objects, resource_clumps = await asyncio.gather(self.get_debris_objects(location), game.get_resource_clump_pieces(location), loop=server.loop)
-        return debris_objects + resource_clumps
+        debris_objects, resource_clumps, tools = await asyncio.gather(self.get_debris_objects(location), game.get_resource_clump_pieces(location), game.get_tools(), loop=server.loop)
+        debris = debris_objects + resource_clumps
+        clearable_debris = []
+        for d in debris:
+            required_tool = game.tool_for_object[d['name']]
+            tool = tools.get(required_tool['name'])
+            if tool and tool['upgradeLevel'] >= required_tool['level']:
+                clearable_debris.append(d)
+        return clearable_debris
 
     async def get_debris_objects(self, location):
         objs = await game.get_location_objects(location)
@@ -213,14 +218,14 @@ class ClearDebrisObjective(Objective):
 
     async def at_tile(self, obj):
         needed_tool = game.tool_for_object[obj['name']]
-        await game.equip_item(needed_tool['name'])
+        await game.equip_item_by_name(needed_tool['name'])
         if obj['type'] == 'object':
             await game.swing_tool()
         else:
             assert obj['type'] == 'resource_clump'
             await game.clear_resource_clump(obj)
-        if obj['type'] != 'resource_clump':
-            await game.gather_items_on_ground(5)
+        if obj['type'] == 'resource_clump':
+            await game.gather_items_on_ground(6)
 
     async def run(self):
         await game.modify_tiles(self.get_debris, game.next_debris_key, self.at_tile)
@@ -244,7 +249,6 @@ class HoePlotObjective(Objective):
     def __init__(self, n1, n2):
         self.n1 = n1
         self.n2 = n2
-        server.log(n1, n2)
 
     async def at_tile(self, obj):
         await game.swing_tool()
@@ -252,7 +256,7 @@ class HoePlotObjective(Objective):
 
     async def run(self):
         async with server.player_status_stream() as stream:
-            await game.equip_item(constants.HOE)
+            await game.equip_item_by_name(constants.HOE)
             player_status = await stream.next()
         player_tile = player_status["tileX"], player_status["tileY"]
         facing_direction = player_status['facingDirection']
@@ -282,7 +286,7 @@ class TalkToNPCObjective(Objective):
 
 async def use_tool_on_animals(tool: str, animal_type=None):
     async with server.animals_at_location_stream() as animals_stream, server.player_status_stream() as player_stream:
-        await game.equip_item(tool)
+        await game.equip_item_by_name(tool)
         consecutive_errors = 0
         consecutive_error_threshold = 5
         while True:
@@ -367,11 +371,11 @@ async def new_active_objective(new_objective: Objective):
 
 
 def objective_action(objective_cls, *args):
-    format_args = lambda **kw: [objective_cls(*[kw[a] for a in args])]
+    format_args = lambda **kw: [objective_cls(*[kw.get(a, a) for a in args])]
     return server.AsyncFunction(new_active_objective, format_args=format_args)
 
 def function_objective(async_fn, *args):
-    format_args = lambda **kw: [FunctionObjective(async_fn, *[kw[a] for a in args])]
+    format_args = lambda **kw: [FunctionObjective(async_fn, *[kw.get(a, a) for a in args])]
     return server.AsyncFunction(new_active_objective, format_args=format_args)
 
 def format_args(args, **kw):

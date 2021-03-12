@@ -18,7 +18,6 @@ mapping = {
 @menu_utils.valid_menu_test
 def is_active():
     game.get_context_menu(DIALOGUE_BOX)
-    server.log('DIALOGUE ACTIVE')
 
 def load_grammar():
     grammar = df.Grammar("dialogue_menu")
