@@ -146,6 +146,7 @@ non_repeat_mapping = {
     "refill watering can": objective.function_objective(game.refill_watering_can),
     "gather crafting": objective.function_objective(game.gather_crafted_items),
     "forage": objective.function_objective(game.gather_forage_items),
+    # "gather (objects | items)": objective.function_objective(game.gather_objects),
     "go inside": objective.function_objective(game.go_inside),
     "pet animals": objective.function_objective(objective.pet_animals),
     "milk animals": objective.function_objective(objective.use_tool_on_animals, constants.MILK_PAIL),
@@ -153,4 +154,5 @@ non_repeat_mapping = {
     "[<n>] mouse <mouse_directions>": df_utils.async_action(game.move_mouse_in_direction, 'mouse_directions', 'n'),
     "start fishing": df_utils.async_action(fishing_menu.start_fishing),
     "catch fish": df_utils.async_action(fishing_menu.catch_fish),
+    "write game state": df_utils.async_action(game.write_game_state),
 }

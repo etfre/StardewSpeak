@@ -592,13 +592,25 @@ async def refill_watering_can():
             await equip_item_by_name(constants.WATERING_CAN)
             await swing_tool()
 
+async def write_game_state():
+    objs = await get_location_objects('')
+    log(objs, "location_objects.json")
+    hdt = await get_hoe_dirt('')
+    log(hdt, "hoe_dirt.json")
+
 async def get_ready_crafted(loc):
-    objs = await  get_location_objects(loc)
+    objs = await get_location_objects(loc)
     ready_crafted = [x for x in objs if x['readyForHarvest'] and x['type'] == "Crafting"]
     return ready_crafted
 
 async def get_forage_visible_items(loc):
     objs = await get_location_objects(loc)
+    items = [x for x in objs if x['canBeGrabbed'] and x['type'] == "Basic" and x['isOnScreen'] and x['isForage']]
+    return items
+
+async def get_grabble_visible_objects(loc):
+    objs = await get_location_objects(loc)
+    log(objs, 'objs.json')
     items = [x for x in objs if x['canBeGrabbed'] and x['type'] == "Basic" and x['isOnScreen'] and x['isForage']]
     return items
 
@@ -608,6 +620,10 @@ async def gather_crafted_items():
 
 async def gather_forage_items():
     async for item in modify_tiles(get_forage_visible_items, generic_next_item_key):
+        await do_action()
+
+async def gather_objects():
+    async for item in modify_tiles(get_grabble_visible_objects, generic_next_item_key):
         await do_action()
 
 async def pathfind_to_nearest_water(stream: server.Stream):
