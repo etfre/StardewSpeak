@@ -1,5 +1,5 @@
 import re
-import game, constants
+import game, constants, server
 
 class Location:
 
@@ -62,10 +62,15 @@ def init_locations():
         Location("Woods"),
     )
 
+async def get_bed():
+    return await server.request('BED_POSITION')
+
+
 points = (
     Point(["go to mail box", "(check | read) mail"], (68, 16), "Farm", adjacent=True, on_arrival=game.do_action),
     Point(["buy backpack"], (7, 19), "SeedShop", facing_direction=constants.NORTH, on_arrival=game.do_action),
     Point(["buy seeds"], (4, 19), "SeedShop", facing_direction=constants.NORTH, on_arrival=game.do_action),
+    Point(["go to beed"], get_bed, "FarmHouse", facing_direction=constants.NORTH, on_arrival=game.do_action),
 )
 
 

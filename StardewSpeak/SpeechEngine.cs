@@ -211,6 +211,16 @@ namespace StardewSpeak
                         body = path;
                         break;
                     }
+                case "BED_POSITION":
+                    {
+                        if (Game1.player.currentLocation is StardewValley.Locations.FarmHouse)
+                        {
+                            var fh = Game1.player.currentLocation as StardewValley.Locations.FarmHouse;
+                            var bed = fh.getBedSpot();
+                            body = new List<int> { bed.X, bed.Y };
+                        }
+                        break;
+                    }
                 case "LOCATION_CONNECTION":
                     {
                         GameLocation fromLocation = player.currentLocation;

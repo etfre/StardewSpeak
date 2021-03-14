@@ -1,6 +1,7 @@
 import dragonfly as df
+import functools
 from srabuilder import rules
-import title_menu, menu_utils, server, df_utils, game, container_menu, objective, constants
+import title_menu, menu_utils, server, df_utils, game, container_menu, objective, constants, items
 
 
 
@@ -35,12 +36,24 @@ mouse_directions = {
     "left": "left",
 }
 
+async def get_objects_by_name(name: str, loc: str):
+    objs = await game.get_location_objects('')
+    return [x for x in objs if x['name'] == name] 
+
+async def go_to_object(item: items.Item):
+    server.log(item.name)
+    obj_getter = functools.partial(get_objects_by_name, item.name)
+    async for item in game.modify_tiles(obj_getter, game.closest_item_key):
+        await game.do_action()
+        return
+    raise RuntimeError(f'No {item.name} objects in the current location')
 
 mapping = {
     "<direction_keys>": objective.objective_action(objective.HoldKeyObjective, "direction_keys"),
     "<n> <directions>": objective.objective_action(objective.MoveNTilesObjective, "directions", "n"),
     "item <positive_index>": df_utils.async_action(game.equip_item_by_index, 'positive_index'),
     "equip [melee] weapon": df_utils.async_action(game.equip_item, lambda x: x['type'] == constants.MELEE_WEAPON),
+    "go to [nearest] <items>": df_utils.async_action(go_to_object, 'items'),
 }
 
 @menu_utils.valid_menu_test
@@ -59,6 +72,7 @@ def load_grammar():
             df.Choice("direction_keys", direction_keys),
             df.Choice("direction_nums", direction_nums),
             df.Choice("directions", directions),
+            items.items_choice,
         ],
         context=is_active,
         defaults={'positive_num': 1},

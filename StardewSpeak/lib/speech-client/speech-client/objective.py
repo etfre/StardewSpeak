@@ -167,12 +167,12 @@ async def move_to_point(point):
             tiles = [tiles] 
         for x, y in tiles:
             if point.adjacent:
-                path = game.path_to_adjacent(x, y, stream)
+                path = await game.path_to_adjacent(x, y, stream)
             else:
                 path = await game.path_to_tile(x, y, point.location)
             if path is not None:
                 await game.pathfind_to_tile(path, stream)
-                if point.facing_direction:
+                if point.facing_direction or point.adjacent:
                     await game.facing_direction(point.facing_direction)
                 if point.on_arrival:
                     await point.on_arrival()

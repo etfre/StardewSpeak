@@ -23,12 +23,12 @@ namespace StardewSpeak.Pathfinder
         public bool Preferable = false;
     }
 
-    public class Point
+    public class Point2
     {
         public int X;
         public int Y;
 
-        public Point(int x, int y)
+        public Point2(int x, int y)
         {
             this.X = x;
             this.Y = y;
@@ -37,92 +37,13 @@ namespace StardewSpeak.Pathfinder
 
     public class Pathfinder
     {
-        public static List<Point> FindPath(GameLocation location, int startX, int startY, int targetX, int targetY, int cutoff = -1)
+        public static dynamic FindPath(GameLocation location, int startX, int startY, int targetX, int targetY, int cutoff = -1)
         {
-            if (!IsPassable(location, targetX, targetY)) return null;
-            Location current = null;
-            Location start = new Location { X = startX, Y = startY };
-            Location target = new Location { X = targetX, Y = targetY };
-            var openList = new List<Location>();
-            var closedList = new List<Location>();
-            int g = 0;
-            var passableCache = new Dictionary<Tuple<int, int>, bool>();
-            
-            // start by adding the original position to the open list  
-            openList.Add(start);
-
-            while (openList.Count > 0)
-            {
-                // get the square with the lowest F score  
-                var lowest = openList.Min(l => l.F);
-                current = openList.First(l => l.F == lowest);
-
-                // add to closed, remove from open
-                closedList.Add(current);
-                openList.Remove(current);
-
-                // if closed contains destination, we're done
-                if (closedList.FirstOrDefault(l => l.X == target.X && l.Y == target.Y) != null) break;
-
-                // if closed has exceed cutoff, break out and fail
-                if (cutoff > 0 && closedList.Count > cutoff)
-                {
-                    //Mod.instance.Monitor.Log("Breaking out of pathfinding, cutoff exceeded");
-                    return null;
-                }
-                var adjacentSquares = GetWalkableAdjacentSquares(current.X, current.Y, location, openList, passableCache);
-                g = current.G + 1;
-
-                foreach (var adjacentSquare in adjacentSquares)
-                {
-                    // if closed, ignore 
-                    if (closedList.FirstOrDefault(l => l.X == adjacentSquare.X
-                        && l.Y == adjacentSquare.Y) != null)
-                        continue;
-
-                    // if it's not in open
-                    if (openList.FirstOrDefault(l => l.X == adjacentSquare.X
-                        && l.Y == adjacentSquare.Y) == null)
-                    {
-                        // compute score, set parent  
-                        adjacentSquare.G = g;
-                        adjacentSquare.H = ComputeHScore(adjacentSquare.Preferable, adjacentSquare.X, adjacentSquare.Y, target.X, target.Y);
-                        adjacentSquare.F = adjacentSquare.G + adjacentSquare.H;
-                        adjacentSquare.Parent = current;
-
-                        // and add it to open
-                        openList.Insert(0, adjacentSquare);
-                    }
-                    else
-                    {
-                        // test if using the current G score makes the adjacent square's F score lower
-                        // if yes update the parent because it means it's a better path  
-                        if (g + adjacentSquare.H < adjacentSquare.F)
-                        {
-                            adjacentSquare.G = g;
-                            adjacentSquare.F = adjacentSquare.G + adjacentSquare.H;
-                            adjacentSquare.Parent = current;
-                        }
-                    }
-                }
-            }
-            //make sure path is complete
-            if (current == null) return null;
-            if (current.X != targetX || current.Y != targetY)
-            {
-                //Mod.instance.Monitor.Log("No path available.", StardewModdingAPI.LogLevel.Warn);
-                return null;
-            }
-
-            // if path exists, let's pack it up for return
-            var returnPath = new List<Point>();
-            while (current != null)
-            {
-                returnPath.Add(new Point(current.X, current.Y));
-                current = current.Parent;
-            }
-            returnPath.Reverse();
-            return returnPath;
+            var startPoint = new Point(startX, startY);
+            var endPoint = new Point(targetX, targetY);
+            if (cutoff < 0) cutoff = int.MaxValue;
+            var path = PathFindController.findPath(startPoint, endPoint, PathFindController.isAtEndPoint, location, Game1.player, cutoff);
+            return path?.Select(p => new { X = p.X, Y = p.Y }).ToList();
         }
 
         static List<Location> GetWalkableAdjacentSquares(int x, int y, GameLocation map, List<Location> openList, Dictionary<Tuple<int, int>, bool> passableCache)
