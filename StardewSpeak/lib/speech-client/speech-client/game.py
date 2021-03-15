@@ -101,16 +101,19 @@ async def get_resource_clumps(location: str):
 
 async def get_resource_clump_pieces(location: str):
     clumps = await get_resource_clumps(location)
-    log(clumps, 'clumps.json')
-    clump_pieces = []
+    return break_into_pieces(clumps)
+
+def break_into_pieces(items):
+    pieces = []
     # break up resource clump like a boulder into one object for each tile
-    for c in clumps:
-        start_x, start_y = c['tileX'], c['tileY']
-        for x in range(c['width']):
-            for y in range(c['height']):
-                clump_piece = {**c, 'tileX': start_x + x, 'tileY': start_y + y, 'type': 'resource_clump'}
-                clump_pieces.append(clump_piece)
-    return clump_pieces
+    for item in items:
+        start_x, start_y = item['tileX'], item['tileY']
+        for x in range(item['width']):
+            for y in range(item['height']):
+                piece = {**item, 'tileX': start_x + x, 'tileY': start_y + y}
+                pieces.append(piece)
+    return pieces
+
 
 async def get_diggable_tiles(test_tiles_set, location: str):
     test_tiles = [{'tileX': x, 'tileY': y} for x, y in test_tiles_set]
@@ -177,7 +180,7 @@ async def pathfind_to_resource(tiles, location, stream, cutoff=-1):
     for tile in tiles:
         try:
             path_to_take = await path_to_tile(tile[0], tile[1], location, cutoff=cutoff)
-            path = await pathfind_to_tile(path_to_take, stream)
+            path = await travel_path(path_to_take, stream)
         except NavigationFailed as e:
             invalid.append(tile)
         else:
@@ -245,14 +248,14 @@ async def pathfind_to_next_location(
             raise NavigationFailed(
                 f"Unexpected location {current_location}, pathfinding for {path.location}"
             )
-        is_done = move_along_path(path, player_status)
+        is_done = move_update(path, player_status)
     stop_moving()
     if door_direction is not None:
         await face_direction(door_direction, status_stream, move_cursor=True)
         await do_action()
 
 
-async def pathfind_to_tile(path: Path, status_stream: server.Stream):
+async def travel_path(path: Path, status_stream: server.Stream):
     target_x, target_y = path.tiles[-1]
     is_done = False
     remaining_attempts = 5
@@ -267,7 +270,7 @@ async def pathfind_to_tile(path: Path, status_stream: server.Stream):
                         f"Unexpected location {current_location}, pathfinding for {path.location}"
                     )
                 try:
-                    is_done = move_along_path(path, player_status)
+                    is_done = move_update(path, player_status)
                 except KeyError as e:
                     if remaining_attempts:
                         path = await path_to_tile(target_x, target_y, path.location)
@@ -295,14 +298,14 @@ async def path_to_adjacent(x, y, status_stream: server.Stream, cutoff=-1):
 
 async def pathfind_to_adjacent(x, y, status_stream: server.Stream, cutoff=-1):
     path = await path_to_adjacent(x, y, status_stream, cutoff=cutoff)
-    await pathfind_to_tile(path, status_stream)
+    await travel_path(path, status_stream)
     if path.tiles[-1] != (x, y):
         direction_to_face = direction_from_tiles(path.tiles[-1], (x, y))
         await face_direction(direction_to_face, status_stream)
     return path
     
 
-def move_along_path(path, player_status):
+def move_update(path, player_status):
     """Return False to continue, True when done"""
     current_tile = player_status["tileX"], player_status["tileY"]
     current_tile_index = path.tile_indices[current_tile]
@@ -504,7 +507,7 @@ async def swing_tool():
 async def do_action():
     directinput.send(constants.ACTION_KEY)
 
-async def modify_tiles(get_items, sort_items):
+async def modify_tiles(get_items, sort_items=generic_next_item_key, pathfind_fn=pathfind_to_adjacent):
     async with server.player_status_stream() as stream:
         player_status = await stream.next()
         start_tile = player_status["tileX"], player_status["tileY"]
@@ -521,7 +524,7 @@ async def modify_tiles(get_items, sort_items):
             item_path = None
             for item in sorted(items, key=lambda t: sort_items(start_tile, current_tile, t, player_status)):
                 try:
-                    item_path = await pathfind_to_adjacent(item['tileX'], item['tileY'], stream, cutoff=500)
+                    item_path = await pathfind_fn(item['tileX'], item['tileY'], stream, cutoff=500)
                 except NavigationFailed:
                     pass
                 else:
@@ -614,9 +617,11 @@ async def get_forage_visible_items(loc):
 
 async def get_grabble_visible_objects(loc):
     objs = await get_location_objects(loc)
-    log(objs, 'objs.json')
-    items = [x for x in objs if x['canBeGrabbed'] and x['type'] == "Basic" and x['isOnScreen'] and x['isForage']]
-    return items
+    filtered_objs = []
+    for o in objs:
+        if o['canBeGrabbed'] and o['type'] == "Basic" and o['isOnScreen'] and o['category'] != 0:
+            filtered_objs.append(o)
+    return filtered_objs
 
 async def gather_crafted_items():
     async for item in modify_tiles(get_ready_crafted, generic_next_item_key):
@@ -745,6 +750,13 @@ async def move_directly_to_character(get_character, player_stream, npc_stream):
     while True:
         break
 
+async def pathfind_to_tile(x, y, stream, cutoff=-1):
+    status = await stream.next()
+    loc = status['location']
+    path = await path_to_tile(x, y, loc, cutoff=cutoff)
+    await travel_path(path, stream)
+    return path
+
 async def move_n_tiles(direction: int, n: int, stream):
     status = await stream.next()
     await ensure_not_moving(stream)
@@ -761,4 +773,4 @@ async def move_n_tiles(direction: int, n: int, stream):
     else:
         raise ValueError(f"Unexpected direction {direction}")
     path = await path_to_tile(to_x, to_y, status['location'])
-    await pathfind_to_tile(path, stream)
+    await travel_path(path, stream)

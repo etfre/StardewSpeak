@@ -18,11 +18,13 @@ class Location:
 
 class Point:
 
-    def __init__(self, commands, tile, location, adjacent=False, facing_direction=None, on_arrival=None):
+    def __init__(self, commands, tiles, location, pathfind_fn=game.pathfind_to_tile, facing_direction=None, on_arrival=None):
         self.commands = commands
-        self.tile = tile
+        if not callable(tiles) and not isinstance(tiles[0], (list, tuple)):
+            tiles = [tiles]
+        self.tiles = tiles
         self.location = location
-        self.adjacent = adjacent
+        self.pathfind_fn = pathfind_fn
         self.facing_direction = facing_direction
         self.on_arrival = on_arrival
 
@@ -32,6 +34,10 @@ class Point:
         command = ' '.join(capitals_split).lower()
         return [f"[the] {command}"]
 
+    async def get_tiles(self, item):
+        if callable(self.tiles):
+            return await self.tiles(item)
+        return [{'tileX': x[0], 'tileY': x[1]} for x in self.tiles]
 
 def init_locations():
     return (
@@ -62,15 +68,11 @@ def init_locations():
         Location("Woods"),
     )
 
-async def get_bed():
-    return await server.request('BED_POSITION')
-
 
 points = (
-    Point(["go to mail box", "(check | read) mail"], (68, 16), "Farm", adjacent=True, on_arrival=game.do_action),
+    Point(["go to mail box", "(check | read) mail"], (68, 16), "Farm", pathfind_fn=game.pathfind_to_adjacent, on_arrival=game.do_action),
     Point(["buy backpack"], (7, 19), "SeedShop", facing_direction=constants.NORTH, on_arrival=game.do_action),
     Point(["buy seeds"], (4, 19), "SeedShop", facing_direction=constants.NORTH, on_arrival=game.do_action),
-    Point(["go to beed"], get_bed, "FarmHouse", facing_direction=constants.NORTH, on_arrival=game.do_action),
 )
 
 

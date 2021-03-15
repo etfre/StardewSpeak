@@ -146,7 +146,7 @@ non_repeat_mapping = {
     "refill watering can": objective.function_objective(game.refill_watering_can),
     "gather crafting": objective.function_objective(game.gather_crafted_items),
     "forage": objective.function_objective(game.gather_forage_items),
-    # "gather (objects | items)": objective.function_objective(game.gather_objects),
+    "gather (objects | items)": objective.function_objective(game.gather_objects),
     "go inside": objective.function_objective(game.go_inside),
     "pet animals": objective.function_objective(objective.pet_animals),
     "milk animals": objective.function_objective(objective.use_tool_on_animals, constants.MILK_PAIL),

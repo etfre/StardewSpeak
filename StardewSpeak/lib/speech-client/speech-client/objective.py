@@ -118,19 +118,6 @@ class MoveNTilesObjective(Objective):
         async with server.player_status_stream(ticks=1) as stream:
             await game.move_n_tiles(self.direction, self.n, stream)
 
-class MoveToPointObjective(Objective):
-    def __init__(self):
-        x, y, location = 68, 17, "Farm"
-        self.x = x
-        self.y = y
-        self.location = location
-
-    async def run(self):
-        async with server.player_status_stream() as stream:
-            await game.move_to_location(self.location, stream)
-            path = await game.path_to_tile(self.x, self.y, self.location)
-            await game.pathfind_to_tile(path, stream)
-
 class MoveToLocationObjective(Objective):
     def __init__(self, location):
         self.location = location
@@ -144,24 +131,10 @@ async def move_to_point(point):
         player_status = await stream.next()
         if player_status['location'] != point.location:
             raise game.NavigationFailed(f'Currently in {player_status["location"]} - unable to move to point in location {point.location}')
-        if callable(point.tile):
-            tiles = await point.tile()
-        else:
-            tiles = point.tile
-        if len(tiles) == 2 and isinstance(tiles[0], int):
-            tiles = [tiles] 
-        for x, y in tiles:
-            if point.adjacent:
-                path = await game.path_to_adjacent(x, y, stream)
-            else:
-                path = await game.path_to_tile(x, y, point.location)
-            if path is not None:
-                await game.pathfind_to_tile(path, stream)
-                if point.facing_direction or point.adjacent:
-                    await game.facing_direction(point.facing_direction)
-                if point.on_arrival:
-                    await point.on_arrival()
-                return
+        async for tile in game.modify_tiles(point.get_tiles, pathfind_fn=point.pathfind_fn):
+            if point.on_arrival:
+                await point.on_arrival()
+            break
 
 class ChopTreesObjective(Objective):
 

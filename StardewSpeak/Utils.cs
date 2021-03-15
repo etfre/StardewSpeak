@@ -254,9 +254,8 @@ namespace StardewSpeak
                 menuTypeObj = new
                 {
                     menuType = "titleMenu",
-                    buttons = SerializeComponentList(tm.buttons, mousePosition),
-                    //skipButton = SerializeClickableCmp(tm.skipButton, mousePosition),
                     windowedButton = SerializeClickableCmp(tm.windowedButton, mousePosition),
+                    //skipButton = SerializeClickableCmp(tm.skipButton, mousePosition),
                 };
                 if (TitleMenu.subMenu != null)
                 {
@@ -273,6 +272,7 @@ namespace StardewSpeak
                     menuTypeObj = Merge(menuTypeObj, new
                     {
                         subMenu,
+                        buttons = SerializeComponentList(tm.buttons, mousePosition),
                         languageButton = SerializeClickableCmp(tm.languageButton, mousePosition),
                         aboutButton = SerializeClickableCmp(tm.aboutButton, mousePosition),
                         muteMusicButton = SerializeClickableCmp(tm.muteMusicButton, mousePosition),

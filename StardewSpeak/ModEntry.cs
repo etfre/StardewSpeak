@@ -148,6 +148,10 @@ namespace StardewSpeak
                 var serializedMenu = Utils.SerializeMenu(Game1.activeClickableMenu);
                 Utils.WriteJson("menu.json", serializedMenu);
             }
+            else if (pressed == "K")
+            {
+                speechEngine.Exit();
+            }
             else if (pressed == "L")
             {
                 var player = Game1.player;

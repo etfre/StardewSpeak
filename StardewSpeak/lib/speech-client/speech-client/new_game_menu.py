@@ -52,6 +52,17 @@ arrow_fields = {
     "skin": "Skin",
 }
 
+
+def title_case(words):
+    return " ".join([x.title() for x in words])
+
+def dictation_wrap(fn):
+    return df.Function(lambda dictation: do_dictation(fn(dictation.split())))
+
+def do_dictation(dictation):
+    text = str(dictation)
+    letters.type_letters(text)
+
 mapping = {
     "name": df_utils.async_action(focus_box, 'nameBoxCC'),
     "farm name": df_utils.async_action(focus_box, 'farmnameBoxCC'),
@@ -63,6 +74,7 @@ mapping = {
     "<farm_types> farm": df_utils.async_action(click_farm, 'farm_types'),
     "[<positive_num>] <arrows> <arrow_fields>": df_utils.async_action(click_arrow_field, 'arrow_fields', 'arrows', 'positive_num'),
     "<letters_and_keys>": df.Function(lambda **kw: letters.type_letters(kw['letters_and_keys'])),
+    "say <dictation>": dictation_wrap(title_case),
 }
 
 @menu_utils.valid_menu_test
@@ -79,7 +91,8 @@ def load_grammar():
             df.Choice("arrow_fields", arrow_fields),
             df.Choice("arrows", arrows),
             df_utils.positive_num,
-            letters.letters_and_keys
+            letters.letters_and_keys,
+            df.Dictation("dictation"),
         ],
         defaults={'positive_num': 1},
         context=is_active

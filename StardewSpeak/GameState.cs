@@ -205,7 +205,8 @@ namespace StardewSpeak
                     width = clump.width.Value,
                     objectIndex = clump.parentSheetIndex.Value,
                     health = clump.health.Value,
-                    name
+                    name,
+                    type = "resource_clump"
                 };
                 clumps.Add(serializedClump);
             }

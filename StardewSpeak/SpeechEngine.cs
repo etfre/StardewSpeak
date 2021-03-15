@@ -70,6 +70,11 @@ namespace StardewSpeak
                 return await RunProcessAsync(this.Proc).ConfigureAwait(false);
             }
         }
+
+        public void Exit() 
+        {
+            Proc.Kill();
+        }
         private Task<int> RunProcessAsync(Process process)
         {
             var tcs = new TaskCompletionSource<int>();
@@ -94,7 +99,7 @@ namespace StardewSpeak
         {
             tcs.SetResult(process.ExitCode);
             ModEntry.Log("Kaldi engine exited. Restarting in 10 seconds...");
-            System.Threading.Thread.Sleep(10000);
+            System.Threading.Thread.Sleep(5000);
             LaunchProcess();
         }
 
@@ -211,13 +216,23 @@ namespace StardewSpeak
                         body = path;
                         break;
                     }
-                case "BED_POSITION":
+                case "BED_TILE":
                     {
                         if (Game1.player.currentLocation is StardewValley.Locations.FarmHouse)
                         {
                             var fh = Game1.player.currentLocation as StardewValley.Locations.FarmHouse;
                             var bed = fh.getBedSpot();
-                            body = new List<int> { bed.X, bed.Y };
+                            body = new {tileX = bed.X, tileY = bed.Y };
+                        }
+                        break;
+                    }
+                case "SHIPPING_BIN_TILE":
+                    {
+                        if (Game1.player.currentLocation is StardewValley.Farm)
+                        {
+                            var farm = Game1.player.currentLocation as StardewValley.Farm;
+                            var sb = Game1.getFarm().GetStarterShippingBinLocation();
+                            body = new { tileX = (int)sb.X, tileY = (int)sb.Y, width = 2, height = 1 };
                         }
                         break;
                     }

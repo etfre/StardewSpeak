@@ -54,6 +54,22 @@ async def move_and_face_previous_direction(direction: int, n: int):
         await game.move_n_tiles(direction, n, stream)
         await game.face_direction(ps['facingDirection'], stream, move_cursor=True)
 
+async def get_shipping_bin_tiles(item):
+    tile = await server.request('SHIPPING_BIN_TILE')
+    return game.break_into_pieces([tile])
+
+async def go_to_shipping_bin():
+    async for item in game.modify_tiles(get_shipping_bin_tiles):
+        await game.do_action()
+        break
+
+async def get_bed_tile(item):
+    tile = await server.request('BED_TILE')
+    return [tile]
+
+async def go_to_bed():
+    async for bed in game.modify_tiles(get_bed_tile, pathfind_fn=game.pathfind_to_tile):
+        break
 
 mapping = {
     "<direction_keys>": objective.objective_action(objective.HoldKeyObjective, "direction_keys"),
@@ -62,6 +78,8 @@ mapping = {
     "equip [melee] weapon": df_utils.async_action(game.equip_item, lambda x: x['type'] == constants.MELEE_WEAPON),
     "go to [nearest] <items>": df_utils.async_action(go_to_object, 'items'),
     "jump <direction_nums> [<positive_num>]": df_utils.async_action(move_and_face_previous_direction, 'direction_nums', "positive_num"),
+    "go to bed": df_utils.async_action(go_to_bed),
+    "go to shipping bin": df_utils.async_action(go_to_shipping_bin),
 }
 
 @menu_utils.valid_menu_test
