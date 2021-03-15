@@ -250,20 +250,33 @@ namespace StardewSpeak
             else if (menu is TitleMenu)
             {
                 var tm = menu as TitleMenu;
+
                 menuTypeObj = new
                 {
                     menuType = "titleMenu",
                     buttons = SerializeComponentList(tm.buttons, mousePosition),
-                    languageButton = SerializeClickableCmp(tm.languageButton, mousePosition),
-                    skipButton = SerializeClickableCmp(tm.skipButton, mousePosition),
+                    //skipButton = SerializeClickableCmp(tm.skipButton, mousePosition),
                     windowedButton = SerializeClickableCmp(tm.windowedButton, mousePosition),
-                    subMenu = SerializeMenu(TitleMenu.subMenu),
-                    backButton = SerializeClickableCmp(tm.backButton, mousePosition),
                 };
-                if (menuTypeObj.subMenu != null) 
+                if (TitleMenu.subMenu != null)
                 {
-                 //   var backButton = SerializeClickableCmp(tm.backButton, mousePosition);
-                   // menuTypeObj.submenu = Merge(menuTypeObj.submenu, new { backButton });
+                    var backButton = SerializeClickableCmp(tm.backButton, mousePosition);
+                    var subMenu = Merge(SerializeMenu(TitleMenu.subMenu), new { backButton });
+                    menuTypeObj = Merge(menuTypeObj, new
+                    {
+                        subMenu,
+                    });
+                }
+                else 
+                {
+                    dynamic subMenu = null;
+                    menuTypeObj = Merge(menuTypeObj, new
+                    {
+                        subMenu,
+                        languageButton = SerializeClickableCmp(tm.languageButton, mousePosition),
+                        aboutButton = SerializeClickableCmp(tm.aboutButton, mousePosition),
+                        muteMusicButton = SerializeClickableCmp(tm.muteMusicButton, mousePosition),
+                    });
                 }
             }
             else if (menu is CharacterCustomization)

@@ -43,13 +43,20 @@ async def focus_name_box():
     menu = await get_new_game_menu()
     await menu_utils.click_component(menu['nameBoxCC'])
 
-
+async def buy_item(n: int):
+    five_count, remainder = divmod(n, 5)
+    if five_count:
+        pydirectinput.keyDown('shift')
+        await server.mouse_click(count=five_count)
+        pydirectinput.keyUp('shift')
+    await server.mouse_click(count=remainder)
 
 mapping = {
     "item <positive_index>": df_utils.async_action(focus_item, 'positive_index', 'item'),
     "row <positive_index>": df_utils.async_action(focus_item, 'positive_index', 'row'),
     "(shop | store)": df_utils.async_action(focus_menu_section, 'forSale'),
     "backpack": df_utils.async_action(focus_menu_section, 'inventory'),
+    "buy [<positive_num>]": df_utils.async_action(buy_item, 'positive_num'),
     **menu_utils.scroll_commands(get_shop_menu),
 }
 

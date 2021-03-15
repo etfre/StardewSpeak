@@ -116,22 +116,7 @@ class MoveNTilesObjective(Objective):
 
     async def run(self):
         async with server.player_status_stream(ticks=1) as stream:
-            status = await stream.current()
-            await game.ensure_not_moving(stream)
-            from_x, from_y = status["tileX"], status["tileY"]
-            to_x, to_y = from_x, from_y
-            if self.direction == "north":
-                to_y -= self.n
-            elif self.direction == "east":
-                to_x += self.n
-            elif self.direction == "south":
-                to_y += self.n
-            elif self.direction == "west":
-                to_x -= self.n
-            else:
-                raise ValueError(f"Unexpected direction {self.direction}")
-            path = await game.path_to_tile(to_x, to_y, status['location'])
-            await game.pathfind_to_tile(path, stream)
+            await game.move_n_tiles(self.direction, self.n, stream)
 
 class MoveToPointObjective(Objective):
     def __init__(self):

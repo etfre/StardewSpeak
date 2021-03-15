@@ -48,12 +48,20 @@ async def go_to_object(item: items.Item):
         return
     raise RuntimeError(f'No {item.name} objects in the current location')
 
+async def move_and_face_previous_direction(direction: int, n: int):
+    async with server.player_status_stream() as stream:
+        ps = await stream.next()
+        await game.move_n_tiles(direction, n, stream)
+        await game.face_direction(ps['facingDirection'], stream, move_cursor=True)
+
+
 mapping = {
     "<direction_keys>": objective.objective_action(objective.HoldKeyObjective, "direction_keys"),
-    "<n> <directions>": objective.objective_action(objective.MoveNTilesObjective, "directions", "n"),
+    "<direction_nums> <n>": objective.objective_action(objective.MoveNTilesObjective, "direction_nums", "n"),
     "item <positive_index>": df_utils.async_action(game.equip_item_by_index, 'positive_index'),
     "equip [melee] weapon": df_utils.async_action(game.equip_item, lambda x: x['type'] == constants.MELEE_WEAPON),
     "go to [nearest] <items>": df_utils.async_action(go_to_object, 'items'),
+    "jump <direction_nums> [<positive_num>]": df_utils.async_action(move_and_face_previous_direction, 'direction_nums', "positive_num"),
 }
 
 @menu_utils.valid_menu_test

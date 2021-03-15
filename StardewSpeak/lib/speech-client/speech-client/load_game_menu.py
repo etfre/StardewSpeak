@@ -8,16 +8,6 @@ async def load_game_menu():
     menu = await menu_utils.get_active_menu(title_menu.TITLE_MENU)
     return title_menu.get_submenu(menu, LOAD_GAME_MENU)
 
-async def click_arrow_field(field, cmp_list_name, count):
-    menu = await load_game_menu()
-    cmp = menu_utils.find_component_by_field(menu[cmp_list_name], 'name', field)
-    for i in range(count):
-        await menu_utils.click_component(cmp)
-        if i < count - 1:
-            await asyncio.sleep(0.1)
-
-
-
 async def load_game(game_idx: int):
     menu = await load_game_menu()
     button_index = game_idx - menu['currentItemIndex']

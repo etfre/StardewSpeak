@@ -744,3 +744,21 @@ async def move_to_character(get_npc):
 async def move_directly_to_character(get_character, player_stream, npc_stream):
     while True:
         break
+
+async def move_n_tiles(direction: int, n: int, stream):
+    status = await stream.next()
+    await ensure_not_moving(stream)
+    from_x, from_y = status["tileX"], status["tileY"]
+    to_x, to_y = from_x, from_y
+    if direction == constants.NORTH:
+        to_y -= n
+    elif direction == constants.EAST:
+        to_x += n
+    elif direction == constants.SOUTH:
+        to_y += n
+    elif direction == constants.WEST:
+        to_x -= n
+    else:
+        raise ValueError(f"Unexpected direction {direction}")
+    path = await path_to_tile(to_x, to_y, status['location'])
+    await pathfind_to_tile(path, stream)

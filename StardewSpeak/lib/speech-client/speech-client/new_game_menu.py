@@ -59,6 +59,7 @@ mapping = {
     "(random | [roll] dice)": df_utils.async_action(focus_box, 'randomButton'),
     "(ok [button] | start game)": df_utils.async_action(focus_box, 'okButton'),
     "skip (intro | introduction)": df_utils.async_action(focus_box, 'skipIntroButton'),
+    "go back": df_utils.async_action(focus_box, 'backButton'),
     "<farm_types> farm": df_utils.async_action(click_farm, 'farm_types'),
     "[<positive_num>] <arrows> <arrow_fields>": df_utils.async_action(click_arrow_field, 'arrow_fields', 'arrows', 'positive_num'),
     "<letters_and_keys>": df.Function(lambda **kw: letters.type_letters(kw['letters_and_keys'])),
