@@ -205,19 +205,23 @@ async def request_route(location: str):
 async def path_to_next_location(next_location: str, status_stream):
     player_status = await status_stream.next()
     location = player_status['location']
-    location_connection = await server.request("LOCATION_CONNECTION", {"toLocation": next_location})
-    if location_connection is None:
-        raise NavigationFailed(f"No connection to location {location}")
-    x, y, is_door = location_connection['X'], location_connection['Y'], location_connection['IsDoor']
-    if is_door:
-        path = await path_to_adjacent(x, y, status_stream)
-        door_direction = direction_from_tiles(path.tiles[-1], (x, y))
-    else:
-        path = await path_to_tile(x, y, location)
-        door_direction = None
-    if path is None:
-        raise NavigationFailed(f"Cannot pathfind to connection to location {location}")
-    return path, door_direction
+    connections = await get_location_connections()
+    connection_to_next_loc = [c for c in connections if c['TargetName'] == next_location]
+    current_tile = await get_current_tile(status_stream)
+    connection_to_next_loc.sort(key=lambda cn: distance_between_tiles(current_tile, (cn['X'], cn['Y'])))
+    for lc in connection_to_next_loc:
+        x, y, is_door = lc['X'], lc['Y'], lc['IsDoor']
+        try:
+            if is_door:
+                path = await path_to_adjacent(x, y, status_stream)
+                door_direction = direction_from_tiles(path.tiles[-1], (x, y))
+            else:
+                path = await path_to_tile(x, y, location)
+                door_direction = None
+        except NavigationFailed:
+            continue
+        return path, door_direction
+    raise NavigationFailed(f"Cannot pathfind to connection to location {location}")
 
 
 async def path_to_tile(x, y, location, cutoff=-1):
