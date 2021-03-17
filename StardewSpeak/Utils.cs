@@ -229,6 +229,24 @@ namespace StardewSpeak
                     im.capacity,
                 };
             }
+            else if (menu is CarpenterMenu)
+            {
+                var cm = menu as CarpenterMenu;
+                bool onFarm = (bool)Utils.GetPrivateField(cm, "onFarm");
+                menuTypeObj = new
+                {
+                    menuType = "carpenterMenu",
+                    backButton = SerializeClickableCmp(cm.backButton, mousePosition),
+                    cancelButton = SerializeClickableCmp(cm.cancelButton, mousePosition),
+                    demolishButton = SerializeClickableCmp(cm.demolishButton, mousePosition),
+                    forwardButton = SerializeClickableCmp(cm.forwardButton, mousePosition),
+                    moveButton = SerializeClickableCmp(cm.moveButton, mousePosition),
+                    okButton = SerializeClickableCmp(cm.okButton, mousePosition),
+                    paintButton = SerializeClickableCmp(cm.paintButton, mousePosition),
+                    upgradeIcon = SerializeClickableCmp(cm.upgradeIcon, mousePosition),
+                    onFarm,
+                };
+            }
             else if (menu is ItemGrabMenu)
             {
                 var igm = menu as ItemGrabMenu;

@@ -2,7 +2,7 @@ import asyncio
 import functools
 import dragonfly as df
 from srabuilder import rules
-import title_menu, menu_utils, server, df_utils, game, container_menu, objective, constants
+import title_menu, menu_utils, server, df_utils, game, container_menu, objective, constants, carpenter_menu
 
 
 
@@ -15,6 +15,8 @@ directions = {
 
 async def foobar(direction, n=1):
     menu = await menu_utils.get_active_menu()
+    if menu is None or (menu['menuType'] == carpenter_menu.CARPENTER_MENU and menu['onFarm']):
+        return
     current_position = None
     target_components = []
     clickable = list(menu_utils.yield_clickable_components(menu))

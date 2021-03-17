@@ -254,6 +254,8 @@ def is_same_menu(menu1, menu2):
         return False
     if menu1['menuType'] == 'titleMenu':
         return is_same_menu(menu1['subMenu'], menu2['subMenu'])
+    if menu1.get('onFarm') != menu2.get('onFarm'): # carpenter menu, likely others
+        return False
     return True
 
 async def heartbeat(timeout):

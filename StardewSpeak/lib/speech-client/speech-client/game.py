@@ -650,18 +650,17 @@ async def pathfind_to_nearest_water(stream: server.Stream):
             pass
     raise RuntimeError('Cannot access any water tiles in the current location')
 
-async def move_mouse_in_direction(direction: str, amount: int):
+async def move_mouse_in_direction(direction: int, amount: int):
     dx, dy = 0, 0
-    smallest_unit = 8
-    if direction == 'up':
+    if direction == constants.NORTH:
         dy = -amount
-    elif direction == 'right':
+    elif direction == constants.EAST:
         dx = amount
-    elif direction == 'down':
+    elif direction == constants.SOUTH:
         dy = amount
-    if direction == 'left':
+    if direction == constants.WEST:
         dx = -amount
-    await server.set_mouse_position_relative(dx * smallest_unit, dy * smallest_unit)
+    await server.set_mouse_position_relative(dx, dy)
 
 async def on_menu_changed(new_menu):
     await server.stop_everything()
