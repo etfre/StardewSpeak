@@ -386,17 +386,7 @@ namespace StardewSpeak
                     }
                 case "MOUSE_CLICK":
                     {
-                        var acm = Game1.activeClickableMenu;
-                        if (acm == null)
-                        {
-                            body = false;
-                        }
-                        else
-                        {
-                            string btn = data.btn;
-                            acm.receiveLeftClick(Game1.getMouseX(), Game1.getMouseY());
-                            body = true;
-                        }
+                        Input.LeftClick();
                         body = true;
                         break;
                     }

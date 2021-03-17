@@ -25,6 +25,8 @@ namespace StardewSpeak
         public static Action<string, LogLevel> log { get; private set; }
         public static Dictionary<string, Stream> Streams { get; set; } = new Dictionary<string, Stream>();
 
+        public static IModHelper helper;
+
         /*********
 ** Public methods
 *********/
@@ -32,6 +34,7 @@ namespace StardewSpeak
         /// <param name="helper">Provides simplified APIs for writing mods.</param>
         public override void Entry(IModHelper helper)
         {
+            ModEntry.helper = helper;
             helper.Events.Input.ButtonPressed += this.OnButtonPressed;
             helper.Events.Display.MenuChanged += this.OnMenuChanged;
             helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
@@ -96,7 +99,7 @@ namespace StardewSpeak
         private void MessageStreams(string streamName, dynamic messageValue) 
         {
             var messages = Stream.MessageStreams(ModEntry.Streams, streamName, messageValue);
-            foreach(var message in messages) 
+            foreach (var message in messages) 
             {
                 this.speechEngine.SendMessage("STREAM_MESSAGE", message);
             }

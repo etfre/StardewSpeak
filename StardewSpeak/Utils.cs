@@ -374,7 +374,7 @@ namespace StardewSpeak
                 cmp.visible,
             };
         }
-        public static object GetPrivateField(object obj, string fieldName)
+        public static dynamic GetPrivateField(object obj, string fieldName)
         {
             var value = obj.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(obj);
             return value;
