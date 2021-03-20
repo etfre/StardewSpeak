@@ -28,7 +28,6 @@ namespace StardewSpeak
 
         public SpeechEngine()
         {
-            ModEntry.Log("engine");
             this.StandardInLock = new object();
             this.RequestQueueLock = new object();
             this.RequestQueue = new Queue<dynamic>();
@@ -386,12 +385,34 @@ namespace StardewSpeak
                     }
                 case "MOUSE_CLICK":
                     {
-                        Input.LeftClick();
+                        StardewSpeak.Input.LeftClick();
                         body = true;
                         break;
                     }
                 case "CLOSEST_SHIPPING_BIN":
                     {
+                        break;
+                    }
+                case "UPDATE_HELD_BUTTONS":
+                    {
+                        List<string> toHold = data.toHold.ToObject<List<string>>();
+                        List<string> toRelease = data.toRelease.ToObject<List<string>>();
+                        foreach (string key in toRelease)
+                        {
+                            Input.Release(key);
+                        }
+                        foreach (string key in toHold)
+                        {
+                            Input.Hold(key);
+                        }
+                        body = true;
+                        break;
+                    }
+                case "PRESS_KEY":
+                    {
+                        string key = data.key;
+                        Input.SetDown(key);
+                        body = true;
                         break;
                     }
                 case "CATCH_FISH":

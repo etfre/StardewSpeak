@@ -13,9 +13,6 @@ async def click_button(name):
 
 async def move_cursor_tile(direction, amount):
     await game.move_mouse_in_direction(direction, amount * 64)
-    # if direction == constants.NORTH:
-    #     await server.move_mouse_in_direction
-    # server.log(direction, amount)
 
 mapping = {
     "pan <direction_keys>": objective.objective_action(objective.HoldKeyObjective, "direction_keys"),
@@ -42,7 +39,6 @@ def load_grammar():
         extras=[
             df.Choice("direction_keys", game.direction_keys),
             df.Choice("direction_nums", game.direction_nums),
-            df.Choice("directions", game.directions),
             rules.num,
             df_utils.positive_index,
             df_utils.positive_num

@@ -3,12 +3,14 @@ import dragonfly as df
 import title_menu, menu_utils, server, df_utils, game, letters, items, server
 from game_menu import game_menu
 
-inventory = menu_utils.InventoryMenuWrapper(),
-
 async def get_crafting_page():
     menu = await menu_utils.get_active_menu('gameMenu')
     page = game_menu.get_page_by_name(menu, 'craftingPage')
     return page
+
+async def get_inventory_menu():
+    page = await get_crafting_page()
+    return page['inventory']
 
 async def scroll_up(n):
     page = await get_crafting_page()
@@ -28,8 +30,9 @@ async def focus_item(item):
 
 mapping = {
     "<craftable_items>": df_utils.async_action(focus_item, 'craftable_items'),
-    "[<positive_num>] scroll up": df_utils.async_action(scroll_up, 'positive_num'),
-    "[<positive_num>] scroll down": df_utils.async_action(scroll_down, 'positive_num'),
+    "scroll up [<positive_num>]": df_utils.async_action(scroll_up, 'positive_num'),
+    "scroll down [<positive_num>]": df_utils.async_action(scroll_down, 'positive_num'),
+    **menu_utils.inventory_commands(get_inventory_menu)
 }
 
 @menu_utils.valid_menu_test
@@ -44,6 +47,7 @@ def load_grammar():
         mapping=mapping,
         extras=[
             df_utils.positive_num,
+            df_utils.positive_index,
             items.craftable_items_choice,
         ],
         defaults={'positive_num': 1},

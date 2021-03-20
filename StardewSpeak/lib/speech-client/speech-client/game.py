@@ -13,23 +13,24 @@ last_faced_east_west = constants.WEST
 last_faced_north_south = constants.SOUTH
 
 direction_keys = {
-    "north": "w",
-    "east": "d",
-    "south": "s",
-    "west": "a",
+    "north": [constants.MOVE_UP_BUTTON],
+    "main": [constants.MOVE_UP_BUTTON, constants.MOVE_RIGHT_BUTTON],
+    "east": [constants.MOVE_RIGHT_BUTTON],
+    "floor": [constants.MOVE_RIGHT_BUTTON, constants.MOVE_DOWN_BUTTON],
+    "south": [constants.MOVE_DOWN_BUTTON],
+    "air": [constants.MOVE_DOWN_BUTTON, constants.MOVE_LEFT_BUTTON],
+    "west": [constants.MOVE_LEFT_BUTTON],
+    "wash": [constants.MOVE_LEFT_BUTTON, constants.MOVE_UP_BUTTON], 
 }
 direction_nums = {
-    "north": 0,
-    "east": 1,
-    "south": 2,
-    "west": 3,
+    "north": constants.NORTH,
+    "east": constants.EAST,
+    "south": constants.SOUTH,
+    "west": constants.WEST,
 }
-nums_to_keys = {
-    0: "w",
-    1: "d",
-    2: "s",
-    3: "a",
-}
+nums_to_directions = {v: k for k, v in direction_nums.items()}
+cardinal_directions = (constants.NORTH, constants.EAST, constants.SOUTH, constants.WEST)
+cardinal_buttons = (constants.MOVE_UP_BUTTON, constants.MOVE_RIGHT_BUTTON, constants.MOVE_DOWN_BUTTON, constants.MOVE_LEFT_BUTTON)
 
 tool_for_object = {
     constants.STONE: {'name': constants.PICKAXE, 'level': 0},
@@ -41,14 +42,14 @@ tool_for_object = {
     # constants.METEORITE: {'name': constants.AXE, 'level': 3},
 }
 
-directions = {k: k for k in direction_keys}
-
 DEBRIS = [constants.WEEDS, constants.TWIG, constants.STONE]
 
 context_variables = {
     'ACTIVE_MENU': None
 }
 
+async def update_held_buttons(to_hold=(), to_release=()):
+    await server.request('UPDATE_HELD_BUTTONS', {'toHold': to_hold, 'toRelease': to_release})
 class Path:
     def __init__(self, mod_path, location: str):
         tiles = []
@@ -252,8 +253,8 @@ async def pathfind_to_next_location(
             raise NavigationFailed(
                 f"Unexpected location {current_location}, pathfinding for {path.location}"
             )
-        is_done = move_update(path, player_status)
-    stop_moving()
+        is_done = await move_update(path, player_status)
+    await stop_moving()
     if door_direction is not None:
         await face_direction(door_direction, status_stream, move_cursor=True)
         await do_action()
@@ -274,7 +275,7 @@ async def travel_path(path: Path, status_stream: server.Stream):
                         f"Unexpected location {current_location}, pathfinding for {path.location}"
                     )
                 try:
-                    is_done = move_update(path, player_status)
+                    is_done = await move_update(path, player_status)
                 except KeyError as e:
                     if remaining_attempts:
                         path = await path_to_tile(target_x, target_y, path.location)
@@ -284,7 +285,7 @@ async def travel_path(path: Path, status_stream: server.Stream):
     except (Exception, BaseException) as e:
         raise e
     finally:
-        stop_moving()
+        await stop_moving()
     return path
 
 def get_adjacent_tiles(tile):
@@ -309,7 +310,7 @@ async def pathfind_to_adjacent(x, y, status_stream: server.Stream, cutoff=-1):
     return path
     
 
-def move_update(path, player_status):
+async def move_update(path, player_status):
     """Return False to continue, True when done"""
     current_tile = player_status["tileX"], player_status["tileY"]
     current_tile_index = path.tile_indices[current_tile]
@@ -331,7 +332,7 @@ def move_update(path, player_status):
     )
     if turn_coming and facing_tile_center(player_status):
         return False
-    start_moving(direction_to_move)
+    await start_moving(direction_to_move)
 
 
 def direction_from_tiles(tile, target_tile):
@@ -382,29 +383,37 @@ def facing_tile_center(player_status):
         return x - offset_from_mid >= 0
     return False
 
-def press_key(key: str):
-    directinput.send([key])
+async def press_key(key: str):
+    await server.request('PRESS_KEY', {'key': key})
+    # directinput.send([key])
 
-@contextlib.contextmanager
-def press_and_release(keys):
-    for k in keys:
-        directinput.press(k)
+@contextlib.asynccontextmanager
+async def press_and_release(keys):
+    server.log('keys', keys)
+    keys = keys if isinstance(keys, (list, tuple)) else [keys]
     try:
+        await update_held_buttons(to_hold=keys)
         yield
     except (BaseException, Exception) as e:
         raise e
     finally:
-        for k in reversed(keys):
-            directinput.release(k)
+        await update_held_buttons(to_release=keys)
 
-def start_moving(direction: int):
-    key_to_press = nums_to_keys[direction]
-    to_release = "wasd".replace(key_to_press, "")
-    for key in to_release:
-        if key in directinput.HELD:
-            directinput.release(key)
-    if key_to_press not in directinput.HELD:
-        directinput.press(key_to_press)
+async def start_moving(direction: int):
+    button_to_hold = direction_keys[nums_to_directions[direction]][0]
+    to_release = []
+    for direction in cardinal_directions:
+        name = nums_to_directions[direction]
+        btn = direction_keys[name][0]
+        if btn != button_to_hold:
+            to_release.append(btn)
+    await update_held_buttons(to_hold=[button_to_hold], to_release=to_release)
+    # to_release = "wasd".replace(button_to_hold, "")
+    # for key in to_release:
+    #     if key in directinput.HELD:
+    #         directinput.release(key)
+    # if button_to_hold not in directinput.HELD:
+    #     directinput.press(button_to_hold)
     set_last_faced_direction(direction)
 
 def set_last_faced_direction(direction: int):
@@ -415,15 +424,17 @@ def set_last_faced_direction(direction: int):
     else:
         last_faced_east_west = direction
 
-def stop_moving():
-    to_release = "wasd"
-    for key in to_release:
-        if key in directinput.HELD:
-            directinput.release(key)
+async def stop_moving():
+    to_release = cardinal_buttons
+    await update_held_buttons(to_release=to_release)
+    # to_release = "wasd"
+    # for key in to_release:
+    #     if key in directinput.HELD:
+    #         directinput.release(key)
 
 
 async def ensure_not_moving(stream: server.Stream):
-    stop_moving()
+    await stop_moving()
     await stream.wait(lambda status: not status["isMoving"], timeout=2)
     await stream.next()
 
@@ -504,12 +515,12 @@ async def get_tools():
 
 async def swing_tool():
     with server.tool_status_stream(ticks=1) as tss:
-        with press_and_release(constants.TOOL_KEY):
+        async with press_and_release(constants.USE_TOOL_BUTTON):
             await tss.wait(lambda t: t['inUse'], timeout=10)
         await tss.wait(lambda t: not t['inUse'], timeout=10)
 
 async def do_action():
-    directinput.send(constants.ACTION_KEY)
+    await press_key(constants.ACTION_BUTTON)
 
 async def modify_tiles(get_items, sort_items=generic_next_item_key, pathfind_fn=pathfind_to_adjacent):
     async with server.player_status_stream() as stream:
@@ -559,13 +570,13 @@ def next_tile(current_tile, direction: int):
 
 async def chop_tree_and_gather_resources(tree):
     async with server.on_terrain_feature_list_changed_stream() as terrain_stream:
-        with press_and_release(constants.TOOL_KEY):
+        async with press_and_release(constants.USE_TOOL_BUTTON):
             event = await terrain_stream.next()
     await gather_items_on_ground(10)
 
 async def clear_resource_clump(clump):
     tile_x, tile_y = clump['tileX'], clump['tileY']
-    with press_and_release(constants.TOOL_KEY):
+    async with press_and_release(constants.USE_TOOL_BUTTON):
         while True:
             clumps = await get_resource_clump_pieces('')
             target = None
@@ -619,6 +630,11 @@ async def get_forage_visible_items(loc):
     items = [x for x in objs if x['canBeGrabbed'] and x['type'] == "Basic" and x['isOnScreen'] and x['isForage']]
     return items
 
+async def get_visible_artifact_spots(loc):
+    objs = await get_location_objects(loc)
+    items = [x for x in objs if x['name'] == "Artifact Spot" and x['isOnScreen']]
+    return items
+
 async def get_grabble_visible_objects(loc):
     objs = await get_location_objects(loc)
     filtered_objs = []
@@ -626,6 +642,12 @@ async def get_grabble_visible_objects(loc):
         if o['canBeGrabbed'] and o['type'] == "Basic" and o['isOnScreen'] and o['category'] != 0:
             filtered_objs.append(o)
     return filtered_objs
+
+async def dig_artifacts():
+    await equip_item_by_name(constants.HOE)
+    async for item in modify_tiles(get_visible_artifact_spots, generic_next_item_key):
+        await equip_item_by_name(constants.HOE)
+        await swing_tool()
 
 async def gather_crafted_items():
     async for item in modify_tiles(get_ready_crafted, generic_next_item_key):

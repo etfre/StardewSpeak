@@ -38,6 +38,7 @@ namespace StardewSpeak
             helper.Events.Input.ButtonPressed += this.OnButtonPressed;
             helper.Events.Display.MenuChanged += this.OnMenuChanged;
             helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
+            helper.Events.GameLoop.UpdateTicking += GameLoop_UpdateTicking;
             helper.Events.Player.Warped += this.OnWarped;
             helper.Events.World.TerrainFeatureListChanged += this.OnTerrainFeatureListChanged;
             helper.Events.World.ObjectListChanged += this.OnObjectListChanged;
@@ -178,7 +179,14 @@ namespace StardewSpeak
                 Utils.WriteJson("serializedResourceClumps.json", GameState.ResourceClumps());
             }
         }
-        private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)
+
+        private void GameLoop_UpdateTicking(object sender, UpdateTickingEventArgs e)
+        {
+            foreach (var btn in Input.Held.Values) {
+                Input.SetDown(btn);
+            }
+        }
+            private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)
         {
             lock (speechEngine.RequestQueueLock) 
             {

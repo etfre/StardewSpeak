@@ -3,32 +3,6 @@ import functools
 from srabuilder import rules
 import title_menu, menu_utils, server, df_utils, game, container_menu, objective, constants, items
 
-
-
-direction_keys = {
-    "north": "w",
-    "main": "wd",
-    "east": "d",
-    "floor": "ds",
-    "south": "s",
-    "air": "as",
-    "west": "a",
-    "wash": "aw",
-}
-direction_nums = {
-    "north": 0,
-    "east": 1,
-    "south": 2,
-    "west": 3,
-}
-nums_to_keys = {
-    0: "w",
-    1: "d",
-    2: "s",
-    3: "a",
-}
-directions = {k: k for k in direction_keys}
-
 mouse_directions = {
     "up": "up",
     "right": "right",
@@ -95,9 +69,8 @@ def load_grammar():
             rules.num,
             df_utils.positive_index,
             df_utils.positive_num,
-            df.Choice("direction_keys", direction_keys),
-            df.Choice("direction_nums", direction_nums),
-            df.Choice("directions", directions),
+            df.Choice("direction_keys", game.direction_keys),
+            df.Choice("direction_nums", game.direction_nums),
             items.items_choice,
         ],
         context=is_active,

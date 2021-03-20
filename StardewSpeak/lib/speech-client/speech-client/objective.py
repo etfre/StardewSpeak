@@ -74,7 +74,7 @@ class Objective:
         for task_wrapper in self.tasks:
             await task_wrapper.cancel()
         if err:
-            game.stop_moving()
+            await game.stop_moving()
 
     def fail(self, msg=None):
         if msg is None:
@@ -96,7 +96,7 @@ class HoldKeyObjective(Objective):
         self.keys = keys
 
     async def run(self):
-        with game.press_and_release(self.keys):
+        async with game.press_and_release(self.keys):
             # infinite loop to indicate that the objective isn't done until task is canceled
             await server.sleep_forever()
 

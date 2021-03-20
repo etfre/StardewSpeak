@@ -117,6 +117,7 @@ namespace StardewSpeak
             var menuBarObj = new
             {
                 menu.xPositionOnScreen,
+                menu.yPositionOnScreen,
                 //allClickableComponents = SerializeComponentList(menu.allClickableComponents, mousePosition),
                 upperRightCloseButton = Utils.SerializeClickableCmp(menu.upperRightCloseButton, mousePosition),
                 containsMouse,
@@ -376,7 +377,9 @@ namespace StardewSpeak
         }
         public static dynamic GetPrivateField(object obj, string fieldName)
         {
-            var value = obj.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(obj);
+            var flags = BindingFlags.Public | BindingFlags.NonPublic |
+                         BindingFlags.Static | BindingFlags.Instance;
+            var value = obj.GetType().GetField(fieldName, flags)?.GetValue(obj);
             return value;
         }
 

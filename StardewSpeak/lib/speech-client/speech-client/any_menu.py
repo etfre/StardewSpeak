@@ -5,14 +5,6 @@ from srabuilder import rules
 import title_menu, menu_utils, server, df_utils, game, container_menu, objective, constants, carpenter_menu
 
 
-
-directions = {
-    "north": "north",
-    "east": "east",
-    "south": "south",
-    "west": "west",
-}
-
 async def foobar(direction, n=1):
     menu = await menu_utils.get_active_menu()
     if menu is None or (menu['menuType'] == carpenter_menu.CARPENTER_MENU and menu['onFarm']):
@@ -30,13 +22,13 @@ async def foobar(direction, n=1):
         return
     if current_position is None:
         current_position = await server.get_mouse_position()
-    if direction == 'north':
+    if direction == constants.NORTH:
         direction_index, multiplier = 1, -1
-    elif direction == 'east':
+    elif direction == constants.EAST:
         direction_index, multiplier = 0, 1
-    elif direction == 'south':
+    elif direction == constants.SOUTH:
         direction_index, multiplier = 1, 1
-    elif direction == 'west':
+    elif direction == constants.WEST:
         direction_index, multiplier = 0, -1
     for i in range(n):
         sort_key = functools.partial(sort_fn, current_position, direction_index, multiplier)
@@ -58,7 +50,7 @@ def sort_fn(current_position, direction_index, multiplier, x):
 
 
 mapping = {
-    "[<positive_num>] <directions>": df_utils.async_action(foobar, "directions", "positive_num"),
+    "<direction_nums> [<positive_num>]": df_utils.async_action(foobar, "direction_nums", "positive_num"),
 }
 
 @menu_utils.valid_menu_test
@@ -74,7 +66,7 @@ def load_grammar():
             rules.num,
             df_utils.positive_index,
             df_utils.positive_num,
-            df.Choice("directions", directions),
+            df.Choice("direction_nums", game.direction_nums),
         ],
         context=is_active,
         defaults={'positive_num': 1},

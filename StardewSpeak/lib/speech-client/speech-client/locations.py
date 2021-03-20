@@ -61,7 +61,7 @@ def init_locations():
         Location("Mountain"),
         Location("SamHouse", ["sam's house"]),
         Location("Saloon", ["[stardrop] saloon"]),
-        Location("ScienceHouse"),
+        Location("ScienceHouse", ["[the] science house", "[the] carpenter's house"]),
         Location("SeedShop", ["[the] seed (shop | store)", "pierre's [general] (shop | store)", "[pierre's] general (shop | store)", "[the] general (shop | store)"]),
         Location("Town"),
         Location("Trailer"),

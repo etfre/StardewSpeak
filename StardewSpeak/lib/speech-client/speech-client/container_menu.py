@@ -3,12 +3,14 @@ from srabuilder import rules
 import functools
 import dragonfly as df
 
-# item_grab_submenu_rule = df.Choice("direction_keys", direction_keys) 
-
 item_grab = {
     'inventoryMenu': menu_utils.InventoryMenuWrapper(),
     'itemsToGrabMenu': menu_utils.InventoryMenuWrapper(),
 }
+
+async def click_button(name):
+    menu = await get_container_menu()
+    await menu_utils.click_component(menu[name])
 
 async def get_container_menu():
     menu = await menu_utils.get_active_menu(menu_type='itemsToGrabMenu')
@@ -40,6 +42,7 @@ mapping = {
     "row <positive_index>": df_utils.async_action(focus_item, 'positive_index', None),
     "backpack": df_utils.async_action(set_item_grab_submenu, 'inventoryMenu'),
     "container": df_utils.async_action(set_item_grab_submenu, 'itemsToGrabMenu'),
+    "ok": df_utils.async_action(click_button, 'okButton'),
 }
 
 @menu_utils.valid_menu_test

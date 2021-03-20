@@ -146,3 +146,16 @@ def yield_clickable_components(item):
     if isinstance(item, (list, tuple)):
         for child in item:
             yield from yield_clickable_components(child)
+
+def inventory_commands(menu_getter):
+    import df_utils
+    inventory_wrapper = InventoryMenuWrapper()
+    async def inventory_focus(new_row, new_col):
+        menu = await menu_getter() 
+        await inventory_wrapper.focus_box(menu, new_row, new_col)
+
+    commands = {
+        "item <positive_index>": df_utils.async_action(inventory_focus, None, 'positive_index'),
+        "row <positive_index>": df_utils.async_action(inventory_focus, 'positive_index', None),
+    }
+    return commands

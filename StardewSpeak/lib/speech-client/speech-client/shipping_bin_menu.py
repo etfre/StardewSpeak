@@ -3,8 +3,6 @@ from srabuilder import rules
 import functools
 import dragonfly as df
 
-# item_grab_submenu_rule = df.Choice("direction_keys", direction_keys) 
-
 wrapper = menu_utils.InventoryMenuWrapper()
 
 async def get_shipping_menu():
