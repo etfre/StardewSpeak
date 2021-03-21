@@ -152,10 +152,17 @@ def inventory_commands(menu_getter):
     inventory_wrapper = InventoryMenuWrapper()
     async def inventory_focus(new_row, new_col):
         menu = await menu_getter() 
-        await inventory_wrapper.focus_box(menu, new_row, new_col)
+        inventory = menu['inventory']
+        await inventory_wrapper.focus_box(inventory, new_row, new_col)
+
+    async def click_button(name):
+        menu = await menu_getter()
+        await click_component(menu[name])
 
     commands = {
         "item <positive_index>": df_utils.async_action(inventory_focus, None, 'positive_index'),
         "row <positive_index>": df_utils.async_action(inventory_focus, 'positive_index', None),
+        "ok": df_utils.async_action(click_button, "okButton"),
+        "trash can": df_utils.async_action(click_button, "trashCan"),
     }
     return commands

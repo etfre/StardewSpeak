@@ -32,7 +32,7 @@ mapping = {
     "<craftable_items>": df_utils.async_action(focus_item, 'craftable_items'),
     "scroll up [<positive_num>]": df_utils.async_action(scroll_up, 'positive_num'),
     "scroll down [<positive_num>]": df_utils.async_action(scroll_down, 'positive_num'),
-    **menu_utils.inventory_commands(get_inventory_menu)
+    **menu_utils.inventory_commands(get_crafting_page)
 }
 
 @menu_utils.valid_menu_test

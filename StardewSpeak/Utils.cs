@@ -334,7 +334,50 @@ namespace StardewSpeak
                     lgm.deleteConfirmationScreen,
                 };
             }
-
+            else if (menu is Billboard)
+            {
+                var bb = menu as Billboard;
+                bool dailyQuestBoard = Utils.GetPrivateField(bb, "dailyQuestBoard");
+                menuTypeObj = new { menuType = "billboard" };
+                if (dailyQuestBoard)
+                {
+                    menuTypeObj = Merge(menuTypeObj, new { 
+                        acceptQuestButton = SerializeClickableCmp(bb.acceptQuestButton, mousePosition) 
+                    });
+                }
+                else
+                {
+                    menuTypeObj = Merge(menuTypeObj, new
+                    {
+                        calendarDays = SerializeComponentList(bb.calendarDays, mousePosition)
+                    });
+                }
+            }
+            else if (menu is LevelUpMenu)
+            {
+                var lum = menu as LevelUpMenu;
+                
+                menuTypeObj = new
+                {
+                    menuType = "levelUpMenu",
+                    okButton = SerializeClickableCmp(lum.okButton, mousePosition),
+                    rightProfession = SerializeClickableCmp(lum.rightProfession, mousePosition),
+                    leftProfession = SerializeClickableCmp(lum.leftProfession, mousePosition),
+                    lum.isProfessionChooser
+                };
+            }
+            else if (menu is GeodeMenu)
+            {
+                var gm = menu as GeodeMenu;
+                menuTypeObj = new
+                {
+                    menuType = "geodeMenu",
+                    okButton = SerializeClickableCmp(gm.okButton, mousePosition),
+                    geodeSpot = SerializeClickableCmp(gm.geodeSpot, mousePosition),
+                    inventory = SerializeMenu(gm.inventory),
+                    trashCan = SerializeClickableCmp(gm.trashCan, mousePosition),
+                };
+            }
             return Utils.Merge(menuBarObj, menuTypeObj);
         }
 

@@ -3,11 +3,12 @@ EAST = 1
 SOUTH = 2
 WEST = 3
 
+ACTION_BUTTON = 'actionButton'
 MOVE_UP_BUTTON = 'moveUpButton'
 MOVE_RIGHT_BUTTON = 'moveRightButton'
 MOVE_DOWN_BUTTON = 'moveDownButton'
 MOVE_LEFT_BUTTON = 'moveLeftButton'
-ACTION_BUTTON = 'actionButton'
+USE_TOOL_BUTTON = 'useToolButton'
 
 AXE = 'Axe'
 FISHING_ROD = 'Fishing Rod'
@@ -28,8 +29,6 @@ STUMP = 'stump'
 BOULDER = 'boulder'
 METEORITE = 'meteorite'
 
-ACTION_KEY = 'x'
-USE_TOOL_BUTTON = 'useToolButton'
 
 GET_LOCATION_OBJECTS = 'GET_LOCATION_OBJECTS'
 GET_RESOURCE_CLUMPS = 'GET_RESOURCE_CLUMPS'

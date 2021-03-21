@@ -123,8 +123,8 @@ def rule_builder():
 non_repeat_mapping = {
     "face <direction_nums>": objective.objective_action(objective.FaceDirectionObjective, "direction_nums"),
     "stop": df_utils.async_action(server.stop_everything),
-    "swing": Function(lambda: directinput.send("c")),
-    "(action|check)": Function(lambda: directinput.send("x")),
+    "swing": df_utils.async_action(game.press_key, constants.USE_TOOL_BUTTON),
+    "(action|check)": df_utils.async_action(game.press_key, constants.ACTION_BUTTON),
     "(escape | menu)": Function(lambda: pydirectinput.press(["esc"])),
     "next toolbar": Function(lambda: pydirectinput.press(["tab"])),
     # "go to mailbox": objective.objective_action(objective.MoveToPointObjective),

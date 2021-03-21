@@ -56,6 +56,7 @@ def init_locations():
         Location("Hospital"),
         Location("JoshHouse", ["josh's house"]),
         Location("LeahHouse", ["leah's house"]),
+        Location("LibraryMuseum", ["library museum", "library", "museum"]),
         Location("ManorHouse", ["manor house", "[mayor] lewis' house"]),
         Location("Mine", ["mine", "mines"]),
         Location("Mountain"),
@@ -73,6 +74,8 @@ points = (
     Point(["go to mail box", "(check | read) mail"], (68, 16), "Farm", pathfind_fn=game.pathfind_to_adjacent, on_arrival=game.do_action),
     Point(["buy backpack"], (7, 19), "SeedShop", facing_direction=constants.NORTH, on_arrival=game.do_action),
     Point(["buy seeds"], (4, 19), "SeedShop", facing_direction=constants.NORTH, on_arrival=game.do_action),
+    Point(["go to calendar"], (41, 57), "Town", facing_direction=constants.NORTH, on_arrival=game.do_action),
+    Point(["go to (billboard | bulletin board)"], (42, 57), "Town", facing_direction=constants.NORTH, on_arrival=game.do_action),
 )
 
 

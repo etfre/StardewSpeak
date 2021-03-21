@@ -14,7 +14,6 @@ import json
 from dragonfly import *
 from srabuilder import rules
 
-from srabuilder.actions import directinput
 import constants, server, game, df_utils
 
 active_objective = None

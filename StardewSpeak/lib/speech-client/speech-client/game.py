@@ -408,12 +408,6 @@ async def start_moving(direction: int):
         if btn != button_to_hold:
             to_release.append(btn)
     await update_held_buttons(to_hold=[button_to_hold], to_release=to_release)
-    # to_release = "wasd".replace(button_to_hold, "")
-    # for key in to_release:
-    #     if key in directinput.HELD:
-    #         directinput.release(key)
-    # if button_to_hold not in directinput.HELD:
-    #     directinput.press(button_to_hold)
     set_last_faced_direction(direction)
 
 def set_last_faced_direction(direction: int):
