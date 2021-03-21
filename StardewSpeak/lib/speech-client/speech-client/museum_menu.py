@@ -36,7 +36,7 @@ def load_grammar():
             df_utils.positive_num,
             df.Choice("direction_keys", game.direction_keys),
             df.Choice("direction_nums", game.direction_nums),
-            ],
+        ],
         context=is_active
     )
     grammar.add_rule(main_rule)

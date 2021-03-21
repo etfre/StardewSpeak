@@ -378,7 +378,18 @@ namespace StardewSpeak
                     trashCan = SerializeClickableCmp(mm.trashCan, mousePosition),
                 };
             }
-            
+            else if (menu is GeodeMenu)
+            {
+                var gm = menu as GeodeMenu;
+                menuTypeObj = new
+                {
+                    menuType = "geodeMenu",
+                    okButton = SerializeClickableCmp(gm.okButton, mousePosition),
+                    geodeSpot = SerializeClickableCmp(gm.geodeSpot, mousePosition),
+                    inventory = SerializeMenu(gm.inventory),
+                    trashCan = SerializeClickableCmp(gm.trashCan, mousePosition),
+                };
+            }
             return Utils.Merge(menuBarObj, menuTypeObj);
         }
 
