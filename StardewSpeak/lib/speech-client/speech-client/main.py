@@ -25,7 +25,7 @@ from dragonfly.log import setup_log
 from srabuilder import sleep, environment
 import srabuilder
 
-import stardew, new_game_menu, shop_menu, container_menu, title_menu, load_game_menu, dialogue_menu, no_menu, any_menu, shipping_bin_menu, carpenter_menu, billboard_menu, geode_menu
+import stardew, new_game_menu, shop_menu, container_menu, title_menu, load_game_menu, dialogue_menu, no_menu, any_menu, shipping_bin_menu, carpenter_menu, billboard_menu, geode_menu, museum_menu
 from game_menu import game_menu, crafting_page, inventory_page, exit_page
 
 
@@ -89,6 +89,7 @@ def main(args):
     carpenter_menu.load_grammar()
     billboard_menu.load_grammar()
     geode_menu.load_grammar()
+    museum_menu.load_grammar()
 
     # threading.Thread(target=command_line_loop, args=(engine,), daemon=True).start()
     srabuilder.run_engine()

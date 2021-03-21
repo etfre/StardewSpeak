@@ -366,18 +366,19 @@ namespace StardewSpeak
                     lum.isProfessionChooser
                 };
             }
-            else if (menu is GeodeMenu)
+            else if (menu is MuseumMenu)
             {
-                var gm = menu as GeodeMenu;
+                var mm = menu as MuseumMenu;
                 menuTypeObj = new
                 {
-                    menuType = "geodeMenu",
-                    okButton = SerializeClickableCmp(gm.okButton, mousePosition),
-                    geodeSpot = SerializeClickableCmp(gm.geodeSpot, mousePosition),
-                    inventory = SerializeMenu(gm.inventory),
-                    trashCan = SerializeClickableCmp(gm.trashCan, mousePosition),
+                    menuType = "museumMenu",
+                    okButton = SerializeClickableCmp(mm.okButton, mousePosition),
+                    dropItemInvisibleButton = SerializeClickableCmp(mm.dropItemInvisibleButton, mousePosition),
+                    inventory = SerializeMenu(mm.inventory),
+                    trashCan = SerializeClickableCmp(mm.trashCan, mousePosition),
                 };
             }
+            
             return Utils.Merge(menuBarObj, menuTypeObj);
         }
 
