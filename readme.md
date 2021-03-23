@@ -72,12 +72,12 @@ Play Stardew Valley by voice.
         <th>Example</th>
     </tr>
     <tr>
-        <td>Scroll (up \| down)</td>
+        <td>Scroll (up  &#124; down)</td>
         <td>Scroll up or down in the list of for sale items.</td>
         <td>"scroll up"</td>
     </tr>
     <tr>
-        <td>Scroll (up \| down)</td>
+        <td>Page (up  &#124; down)</td>
         <td>Scroll an entire page up or down in the list of for sale items.</td>
         <td>"page down"</td>
     </tr>

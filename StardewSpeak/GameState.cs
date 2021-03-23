@@ -252,8 +252,6 @@ namespace StardewSpeak
             }
             return objs;
         }
-
-            
         public static Position PlayerPosition { get; set; }
     }
     public class Position {

@@ -38,6 +38,7 @@ async def foobar(direction, n=1):
             break
         current_position = res
     x, y = current_position
+    server.log(x, y)
     await server.set_mouse_position(x, y)
 
 def sort_fn(current_position, direction_index, multiplier, x):

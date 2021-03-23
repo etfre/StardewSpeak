@@ -166,8 +166,10 @@ namespace StardewSpeak
                 var tileX = (int)point.X;
                 var tileY = (int)point.Y;
                 var vec = new Vector2(tileX, tileY);
+                var viewport = Game1.viewport;
                 Log($"Current tiles: x: {tileX}, y: {tileY}");
                 Log($"Current mouse position: x: {mouseX}, y: {mouseY}");
+                var tiles = Utils.VisibleTiles();
 
                 var isOccupied = location.isTileOccupiedIgnoreFloors(vec);
                 var rec = new xTile.Dimensions.Location(tileX, tileY);

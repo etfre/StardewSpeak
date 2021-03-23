@@ -41,6 +41,23 @@ namespace StardewSpeak
             return false;
         }
 
+        public static dynamic TileToClickableComponent(int x, int y, Point mousePosition)
+        {
+            int posX = x * 64 - Game1.viewport.X;
+            int posY = y * 64 - Game1.viewport.Y;
+            Rectangle bounds = new Rectangle(posX, posY, 64, 64);
+            bool containsMouse = bounds.Contains(mousePosition.X, mousePosition.Y);
+            return new
+            {
+                type = "clickableComponent",
+                bounds = new { x = bounds.X, y = bounds.Y, width = bounds.Width, height = bounds.Height },
+                center = new List<int> { bounds.Center.X, bounds.Center.Y },
+                name = "",
+                containsMouse,
+                visible = true,
+                rect = bounds,
+            };
+        }
         public static bool GetClosestAnimal(Vector2 positionTile, int acceptableDistanceFromScreenNonTile, GameLocation location = null)
         {
             if (location != null && !location.Equals(Game1.currentLocation))
@@ -113,6 +130,7 @@ namespace StardewSpeak
         public static object SerializeMenu(IClickableMenu menu, Point mousePosition)
         {
             if (menu == null) return null;
+            Rectangle menuRect = new Rectangle(menu.xPositionOnScreen, menu.yPositionOnScreen, menu.width, menu.height);
             bool containsMouse = menu.isWithinBounds(mousePosition.X, mousePosition.Y);
             var menuBarObj = new
             {
@@ -369,11 +387,20 @@ namespace StardewSpeak
             else if (menu is MuseumMenu)
             {
                 var mm = menu as MuseumMenu;
+                var location = Game1.currentLocation as StardewValley.Locations.LibraryMuseum;
+                var museumPieceTileComponents =
+                    from t in VisibleTiles()
+                    where
+                        location.museumPieces.ContainsKey(new Vector2(t[0], t[1])) || 
+                        location.isTileSuitableForMuseumPiece(t[0], t[1])
+                    select TileToClickableComponent(t[0], t[1], mousePosition);
+                var inventoryRect = new Rectangle(mm.inventory.xPositionOnScreen, mm.inventory.yPositionOnScreen, mm.inventory.width, mm.inventory.height);
+                var clickableTileComponents = museumPieceTileComponents.Where(x => !x.rect.Intersects(inventoryRect)).ToList();
                 menuTypeObj = new
                 {
                     menuType = "museumMenu",
                     okButton = SerializeClickableCmp(mm.okButton, mousePosition),
-                    dropItemInvisibleButton = SerializeClickableCmp(mm.dropItemInvisibleButton, mousePosition),
+                    clickableTileComponents,
                     inventory = SerializeMenu(mm.inventory),
                     trashCan = SerializeClickableCmp(mm.trashCan, mousePosition),
                 };
@@ -391,6 +418,27 @@ namespace StardewSpeak
                 };
             }
             return Utils.Merge(menuBarObj, menuTypeObj);
+        }
+
+        public static List<List<int>> VisibleTiles()
+        {
+            xTile.Map map = Game1.player.currentLocation.Map;
+            int mapWidth = map.Layers[0].LayerWidth;
+            int mapHeight = map.Layers[0].LayerWidth;
+            int startX = (Math.Max(Game1.viewport.X, 0) + 63) / 64;
+            int startY = (Math.Max(Game1.viewport.Y, 0) + 63) / 64;
+            int endX = Math.Min(Game1.viewport.MaxCorner.X / 64, mapWidth);
+            int endY = Math.Min(Game1.viewport.MaxCorner.X / 64, mapHeight);
+            var tiles = new List<List<int>>();
+            for (int x = startX; x < endX; x++)
+            {
+                for (int y = startY; y < endY; y++)
+                {
+                    var tile = new List<int> { x, y };
+                    tiles.Add(tile);
+                }
+            }
+            return tiles;
         }
 
         public static List<object> SerializeComponentList(List<ClickableComponent> components, Point mousePosition)

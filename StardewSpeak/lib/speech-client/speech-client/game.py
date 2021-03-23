@@ -609,10 +609,13 @@ async def refill_watering_can():
             await swing_tool()
 
 async def write_game_state():
+    import menu_utils
     objs = await get_location_objects('')
     log(objs, "location_objects.json")
     hdt = await get_hoe_dirt('')
     log(hdt, "hoe_dirt.json")
+    menu = await menu_utils.get_active_menu()
+    log(menu, "menu.json")
 
 async def get_ready_crafted(loc):
     objs = await get_location_objects(loc)

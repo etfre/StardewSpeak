@@ -19,7 +19,7 @@ async def move_cursor_tile(direction, amount):
 mapping = {
     **menu_utils.inventory_commands(menu_getter=get_museum_menu),
     "pan <direction_keys>": objective.objective_action(objective.HoldKeyObjective, "direction_keys"),
-    "<direction_nums> <positive_num>": df_utils.async_action(move_cursor_tile, "direction_nums", "positive_num"),
+    #"<direction_nums> <positive_num>": df_utils.async_action(move_cursor_tile, "direction_nums", "positive_num"),
 }
 
 @menu_utils.valid_menu_test
