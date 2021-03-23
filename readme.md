@@ -5,6 +5,7 @@ Play Stardew Valley by voice.
 ## Getting Started
 
 ## Commands
+### General
 <table>
     <tr>
         <th>Command</th>
@@ -37,8 +38,8 @@ Play Stardew Valley by voice.
         <td>"go to mines"</td>
     </tr>
     <tr>
-        <td>Dig &lt;n&gt; by &lt;n&gt;</td>
-        <td>Hoe a grid based on the last two directions faced.</td>
+        <td>Dig &lt;m&gt; by &lt;n&gt;</td>
+        <td>Use hoe to dig an <i>m</i> by <i>n</i> grid based on the last two directions faced.</td>
         <td>"dig three by four"</td>
     </tr>
     <tr>
@@ -60,5 +61,24 @@ Play Stardew Valley by voice.
         <td>swing</td>
         <td>Press c</td>
         <td>"swing"</td>
+    </tr>
+</table>
+
+### Shop Menu
+<table>
+    <tr>
+        <th>Command</th>
+        <th>Description</th>
+        <th>Example</th>
+    </tr>
+    <tr>
+        <td>Scroll (up \| down)</td>
+        <td>Scroll up or down in the list of for sale items.</td>
+        <td>"scroll up"</td>
+    </tr>
+    <tr>
+        <td>Scroll (up \| down)</td>
+        <td>Scroll an entire page up or down in the list of for sale items.</td>
+        <td>"page down"</td>
     </tr>
 </table>

@@ -185,10 +185,10 @@ class ClearDebrisObjective(Objective):
         needed_tool = game.tool_for_object[obj['name']]
         await game.equip_item_by_name(needed_tool['name'])
         if obj['type'] == 'object':
-            await game.swing_tool()
+            await game.clear_object(obj, self.get_debris_objects)
         else:
             assert obj['type'] == 'resource_clump'
-            await game.clear_resource_clump(obj)
+            await game.clear_object(obj, game.get_resource_clump_pieces)
         if obj['type'] == 'resource_clump':
             await game.gather_items_on_ground(6)
 

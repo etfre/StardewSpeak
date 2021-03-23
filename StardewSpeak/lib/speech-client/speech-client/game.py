@@ -568,11 +568,11 @@ async def chop_tree_and_gather_resources(tree):
             event = await terrain_stream.next()
     await gather_items_on_ground(10)
 
-async def clear_resource_clump(clump):
-    tile_x, tile_y = clump['tileX'], clump['tileY']
+async def clear_object(obj, obj_getter):
+    tile_x, tile_y = obj['tileX'], obj['tileY']
     async with press_and_release(constants.USE_TOOL_BUTTON):
         while True:
-            clumps = await get_resource_clump_pieces('')
+            clumps = await obj_getter('')
             target = None
             for c in clumps:
                 if (tile_x, tile_y) == (c['tileX'], c['tileY']):

@@ -321,6 +321,10 @@ namespace StardewSpeak
                         body = true;
                         break;
                     }
+                case "GET_VISIBLE_TILES": 
+                    {
+                        break;
+                    }
                 case "GET_WATER_TILES":
                     {
                         bool[,] allTiles = Game1.player.currentLocation.waterTiles;
