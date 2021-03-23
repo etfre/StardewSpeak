@@ -151,13 +151,24 @@ class WaterCropsObjective(Objective):
 
     async def get_unwatered_crops(self, location: str):
         hoe_dirt_tiles = await game.get_hoe_dirt('')
-        tiles_to_water = [hdt for hdt in hoe_dirt_tiles if hdt['crop'] and not hdt['isWatered']]
+        tiles_to_water = [hdt for hdt in hoe_dirt_tiles if hdt['crop'] and not hdt['isWatered'] and hdt['needsWatering']]
         return tiles_to_water
 
     async def run(self):
         await game.equip_item_by_name(constants.WATERING_CAN)
         async for crop in game.modify_tiles(self.get_unwatered_crops, game.generic_next_item_key):
             await game.swing_tool()
+
+class HarvestCropsObjective(Objective):
+
+    async def get_harvestable_crops(self, location: str):
+        hoe_dirt_tiles = await game.get_hoe_dirt('')
+        harvestable_crop_tiles = [hdt for hdt in hoe_dirt_tiles if hdt['crop'] and hdt['readyForHarvest']]
+        return harvestable_crop_tiles
+
+    async def run(self):
+        async for crop in game.modify_tiles(self.get_harvestable_crops, game.generic_next_item_key):
+            await game.do_action()
 
 
 class ClearDebrisObjective(Objective):

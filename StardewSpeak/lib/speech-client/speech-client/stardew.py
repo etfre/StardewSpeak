@@ -132,7 +132,6 @@ non_repeat_mapping = {
     "<points>": objective.function_objective(objective.move_to_point, "points"),
     "chop trees": objective.objective_action(objective.ChopTreesObjective),
     "start planting": objective.objective_action(objective.PlantSeedsOrFertilizerObjective),
-    "water crops": objective.objective_action(objective.WaterCropsObjective),
     "clear debris": objective.objective_action(objective.ClearDebrisObjective),
     "defend": objective.objective_action(objective.DefendObjective),
     "hoe <n> by <n2>": objective.objective_action(objective.HoePlotObjective, "n", "n2"),

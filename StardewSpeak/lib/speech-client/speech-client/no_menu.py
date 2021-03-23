@@ -54,6 +54,8 @@ mapping = {
     "jump <direction_nums> [<positive_num>]": df_utils.async_action(move_and_face_previous_direction, 'direction_nums', "positive_num"),
     "go to bed": df_utils.async_action(go_to_bed),
     "go to shipping bin": df_utils.async_action(go_to_shipping_bin),
+    "water crops": objective.objective_action(objective.WaterCropsObjective),
+    "harvest crops": objective.objective_action(objective.HarvestCropsObjective),
 }
 
 @menu_utils.valid_menu_test
