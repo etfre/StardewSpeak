@@ -55,6 +55,8 @@ namespace StardewSpeak
         private void OnSpeechEngineExited(Process process, TaskCompletionSource<int> tcs) 
         {
             tcs.SetResult(process.ExitCode);
+            ModEntry.Streams = new Dictionary<string, Stream>();
+            Input.ClearHeld();
             ModEntry.log("Kaldi engine exited. Restarting in 5 seconds...", LogLevel.Debug);
             System.Threading.Thread.Sleep(5000);
             this.speechEngine.LaunchProcess();

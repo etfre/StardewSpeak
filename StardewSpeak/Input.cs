@@ -36,6 +36,11 @@ namespace StardewSpeak
 			InputEvent(button, false);
 		}
 
+		public static void ClearHeld() 
+		{
+			Held = new Dictionary<string, SButton>();
+		}
+
 		public static void SetDown(string option)
 		{
 			var button = OptionToSButton(option);
