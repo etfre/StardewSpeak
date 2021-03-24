@@ -25,9 +25,11 @@ namespace StardewSpeak
         private readonly object StandardInLock;
         public readonly object RequestQueueLock;
         public Queue<dynamic> RequestQueue;
+        public readonly Action<Process, TaskCompletionSource<int>> OnExit;
 
-        public SpeechEngine()
+        public SpeechEngine(Action<Process, TaskCompletionSource<int>> onExit)
         {
+            this.OnExit = onExit;
             this.StandardInLock = new object();
             this.RequestQueueLock = new object();
             this.RequestQueue = new Queue<dynamic>();
@@ -93,13 +95,6 @@ namespace StardewSpeak
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
             return tcs.Task;
-        }
-        void OnExit(Process process, TaskCompletionSource<int> tcs)
-        {
-            tcs.SetResult(process.ExitCode);
-            ModEntry.Log("Kaldi engine exited. Restarting in 10 seconds...");
-            System.Threading.Thread.Sleep(5000);
-            LaunchProcess();
         }
 
         void OnMessage(string messageText)

@@ -21,10 +21,9 @@ mapping = {
     "demolish [buildings]": df_utils.async_action(click_button, "demolishButton"),
     "next": df_utils.async_action(click_button, "forwardButton"),
     "move [buildings]": df_utils.async_action(click_button, "moveButton"),
-    "ok": df_utils.async_action(click_button, "okButton"),
+    "build": df_utils.async_action(click_button, "okButton"),
     "paint": df_utils.async_action(click_button, "paintButton"),
     "upgrade": df_utils.async_action(click_button, "upgradeIcon"),
-    "<direction_nums> <positive_num>": df_utils.async_action(move_cursor_tile, "direction_nums", "positive_num"),
 }
 
 @menu_utils.valid_menu_test

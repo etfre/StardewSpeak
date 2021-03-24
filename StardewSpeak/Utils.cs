@@ -255,16 +255,28 @@ namespace StardewSpeak
                 menuTypeObj = new
                 {
                     menuType = "carpenterMenu",
-                    backButton = SerializeClickableCmp(cm.backButton, mousePosition),
                     cancelButton = SerializeClickableCmp(cm.cancelButton, mousePosition),
-                    demolishButton = SerializeClickableCmp(cm.demolishButton, mousePosition),
-                    forwardButton = SerializeClickableCmp(cm.forwardButton, mousePosition),
-                    moveButton = SerializeClickableCmp(cm.moveButton, mousePosition),
-                    okButton = SerializeClickableCmp(cm.okButton, mousePosition),
-                    paintButton = SerializeClickableCmp(cm.paintButton, mousePosition),
-                    upgradeIcon = SerializeClickableCmp(cm.upgradeIcon, mousePosition),
                     onFarm,
                 };
+                if (onFarm)
+                {
+                    var vt = VisibleTiles(Game1.getFarm());
+                    var tileComponents = vt.Select(t => TileToClickableComponent(t[0], t[1], mousePosition)).ToList();
+                    menuTypeObj = Merge(menuTypeObj, new { tileComponents });
+                }
+                else 
+                {
+                    menuTypeObj = Merge(menuTypeObj, new
+                    {
+                        backButton = SerializeClickableCmp(cm.backButton, mousePosition),
+                        demolishButton = SerializeClickableCmp(cm.demolishButton, mousePosition),
+                        forwardButton = SerializeClickableCmp(cm.forwardButton, mousePosition),
+                        moveButton = SerializeClickableCmp(cm.moveButton, mousePosition),
+                        okButton = SerializeClickableCmp(cm.okButton, mousePosition),
+                        paintButton = SerializeClickableCmp(cm.paintButton, mousePosition),
+                        upgradeIcon = SerializeClickableCmp(cm.upgradeIcon, mousePosition),
+                    });
+                }
             }
             else if (menu is ItemGrabMenu)
             {
@@ -389,7 +401,7 @@ namespace StardewSpeak
                 var mm = menu as MuseumMenu;
                 var location = Game1.currentLocation as StardewValley.Locations.LibraryMuseum;
                 var museumPieceTileComponents =
-                    from t in VisibleTiles()
+                    from t in VisibleTiles(location)
                     where
                         location.museumPieces.ContainsKey(new Vector2(t[0], t[1])) || 
                         location.isTileSuitableForMuseumPiece(t[0], t[1])
@@ -420,9 +432,9 @@ namespace StardewSpeak
             return Utils.Merge(menuBarObj, menuTypeObj);
         }
 
-        public static List<List<int>> VisibleTiles()
+        public static List<List<int>> VisibleTiles(GameLocation location)
         {
-            xTile.Map map = Game1.player.currentLocation.Map;
+            xTile.Map map = location.Map;
             int mapWidth = map.Layers[0].LayerWidth;
             int mapHeight = map.Layers[0].LayerWidth;
             int startX = (Math.Max(Game1.viewport.X, 0) + 63) / 64;

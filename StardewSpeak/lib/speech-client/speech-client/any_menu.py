@@ -5,9 +5,9 @@ from srabuilder import rules
 import title_menu, menu_utils, server, df_utils, game, container_menu, objective, constants, carpenter_menu
 
 
-async def foobar(direction, n=1):
+async def move_cursor_to_next_component(direction, n=1):
     menu = await menu_utils.get_active_menu()
-    if menu is None or (menu['menuType'] == carpenter_menu.CARPENTER_MENU and menu['onFarm']):
+    if menu is None:
         return
     current_position = None
     target_components = []
@@ -38,7 +38,6 @@ async def foobar(direction, n=1):
             break
         current_position = res
     x, y = current_position
-    server.log(x, y)
     await server.set_mouse_position(x, y)
 
 def sort_fn(current_position, direction_index, multiplier, x):
@@ -51,7 +50,7 @@ def sort_fn(current_position, direction_index, multiplier, x):
 
 
 mapping = {
-    "<direction_nums> [<positive_num>]": df_utils.async_action(foobar, "direction_nums", "positive_num"),
+    "<direction_nums> [<positive_num>]": df_utils.async_action(move_cursor_to_next_component, "direction_nums", "positive_num"),
 }
 
 @menu_utils.valid_menu_test

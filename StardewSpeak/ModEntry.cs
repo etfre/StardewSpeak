@@ -14,6 +14,8 @@ using StardewValley.Buildings;
 using StardewValley.Tools;
 using StardewValley.Menus;
 using System.Reflection;
+using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace StardewSpeak
 {
@@ -46,9 +48,16 @@ namespace StardewSpeak
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.World.LocationListChanged += this.OnLocationListChanged;
             ModEntry.log = this.Monitor.Log;
-            this.speechEngine = new SpeechEngine();
+            this.speechEngine = new SpeechEngine(OnSpeechEngineExited);
             this.speechEngine.LaunchProcess();
+        }
 
+        private void OnSpeechEngineExited(Process process, TaskCompletionSource<int> tcs) 
+        {
+            tcs.SetResult(process.ExitCode);
+            ModEntry.log("Kaldi engine exited. Restarting in 5 seconds...", LogLevel.Debug);
+            System.Threading.Thread.Sleep(5000);
+            this.speechEngine.LaunchProcess();
         }
 
         public static void Log(string msg) {
@@ -169,7 +178,7 @@ namespace StardewSpeak
                 var viewport = Game1.viewport;
                 Log($"Current tiles: x: {tileX}, y: {tileY}");
                 Log($"Current mouse position: x: {mouseX}, y: {mouseY}");
-                var tiles = Utils.VisibleTiles();
+                var tiles = Utils.VisibleTiles(Game1.player.currentLocation);
 
                 var isOccupied = location.isTileOccupiedIgnoreFloors(vec);
                 var rec = new xTile.Dimensions.Location(tileX, tileY);
@@ -188,7 +197,8 @@ namespace StardewSpeak
                 Input.SetDown(btn);
             }
         }
-            private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)
+
+        private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)
         {
             lock (speechEngine.RequestQueueLock) 
             {
