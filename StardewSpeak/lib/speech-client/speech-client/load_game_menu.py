@@ -8,6 +8,10 @@ async def load_game_menu():
     menu = await menu_utils.get_active_menu(title_menu.TITLE_MENU)
     return title_menu.get_submenu(menu, LOAD_GAME_MENU)
 
+async def go_back():
+    menu = await load_game_menu()
+    await menu_utils.click_component(menu['backButton'])
+
 async def load_game(game_idx: int):
     menu = await load_game_menu()
     button_index = game_idx - menu['currentItemIndex']
@@ -18,6 +22,7 @@ async def load_game(game_idx: int):
     await menu_utils.click_component(btn)
 
 mapping = {
+    "[go] back": df_utils.async_action(go_back),
     "load game <positive_index>": df_utils.async_action(load_game, "positive_index"),
     **menu_utils.scroll_commands(load_game_menu)
 }

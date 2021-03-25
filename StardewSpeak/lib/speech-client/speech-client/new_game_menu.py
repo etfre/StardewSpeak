@@ -11,9 +11,9 @@ async def get_new_game_menu():
 async def focus_box(cmp_name):
     await menu_utils.click_menu_button(cmp_name, menu_getter=get_new_game_menu)
 
-async def focus_name_box():
+async def click_box(name):
     menu = await get_new_game_menu()
-    await menu_utils.click_component(menu['nameBoxCC'])
+    await menu_utils.click_component(menu[name])
 
 async def click_farm(farm):
     menu = await get_new_game_menu()
@@ -72,9 +72,10 @@ mapping = {
     "skip (intro | introduction)": df_utils.async_action(focus_box, 'skipIntroButton'),
     "go back": df_utils.async_action(focus_box, 'backButton'),
     "<farm_types> farm": df_utils.async_action(click_farm, 'farm_types'),
-    "[<positive_num>] <arrows> <arrow_fields>": df_utils.async_action(click_arrow_field, 'arrow_fields', 'arrows', 'positive_num'),
+    "<arrows> <arrow_fields> [<positive_num>]": df_utils.async_action(click_arrow_field, 'arrow_fields', 'arrows', 'positive_num'),
     "<letters_and_keys>": df.Function(lambda **kw: letters.type_letters(kw['letters_and_keys'])),
     "say <dictation>": dictation_wrap(title_case),
+    "[go] back": df_utils.async_action(click_box, "backButton"),
 }
 
 @menu_utils.valid_menu_test

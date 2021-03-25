@@ -3,6 +3,8 @@ import server, constants
 import asyncio
 
 async def focus_component(cmp):
+    if not cmp['visible']:
+        raise InvalidMenuOption('Cannot focus non-visible component')   
     x, y = cmp['center']
     await server.set_mouse_position(x, y)
 

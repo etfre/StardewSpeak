@@ -54,6 +54,7 @@
     <Compile Include="Actions.cs" />
     <Compile Include="GameState.cs" />
     <Compile Include="Input.cs" />
+    <Compile Include="Menus.cs" />
     <Compile Include="ModEntry.cs" />
     <Compile Include="Objective.cs" />
     <Compile Include="Objectives\ObjectiveForage.cs" />

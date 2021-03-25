@@ -15,10 +15,8 @@ async def get_objects_by_name(name: str, loc: str):
     return [x for x in objs if x['name'] == name] 
 
 async def go_to_object(item: items.Item):
-    server.log(item.name)
     obj_getter = functools.partial(get_objects_by_name, item.name)
     async for item in game.modify_tiles(obj_getter, game.closest_item_key):
-        await game.do_action()
         return
     raise RuntimeError(f'No {item.name} objects in the current location')
 
@@ -50,10 +48,10 @@ mapping = {
     "<direction_nums> <n>": objective.objective_action(objective.MoveNTilesObjective, "direction_nums", "n"),
     "item <positive_index>": df_utils.async_action(game.equip_item_by_index, 'positive_index'),
     "equip [melee] weapon": df_utils.async_action(game.equip_item, lambda x: x['type'] == constants.MELEE_WEAPON),
-    "go to [nearest] <items>": df_utils.async_action(go_to_object, 'items'),
+    "nearest <items>": objective.function_objective(go_to_object, 'items'),
     "jump <direction_nums> [<positive_num>]": df_utils.async_action(move_and_face_previous_direction, 'direction_nums', "positive_num"),
-    "go to bed": df_utils.async_action(go_to_bed),
-    "go to shipping bin": df_utils.async_action(go_to_shipping_bin),
+    "go to bed": objective.function_objective(go_to_bed),
+    "go to shipping bin": objective.function_objective(go_to_shipping_bin),
     "water crops": objective.objective_action(objective.WaterCropsObjective),
     "harvest crops": objective.objective_action(objective.HarvestCropsObjective),
 }

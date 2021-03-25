@@ -136,7 +136,6 @@ namespace StardewSpeak
             {
                 menu.xPositionOnScreen,
                 menu.yPositionOnScreen,
-                //allClickableComponents = SerializeComponentList(menu.allClickableComponents, mousePosition),
                 upperRightCloseButton = Utils.SerializeClickableCmp(menu.upperRightCloseButton, mousePosition),
                 containsMouse,
                 menuType = "unknown",
@@ -304,7 +303,6 @@ namespace StardewSpeak
                 {
                     menuType = "titleMenu",
                     windowedButton = SerializeClickableCmp(tm.windowedButton, mousePosition),
-                    //skipButton = SerializeClickableCmp(tm.skipButton, mousePosition),
                 };
                 if (TitleMenu.subMenu != null)
                 {
@@ -347,6 +345,15 @@ namespace StardewSpeak
                     randomButton = SerializeClickableCmp(ccm.randomButton, mousePosition),
                     rightSelectionButtons = SerializeComponentList(ccm.rightSelectionButtons, mousePosition),
                     skipIntroButton = SerializeClickableCmp(ccm.skipIntroButton, mousePosition),
+                };
+            }
+            else if (menu is LanguageSelectionMenu)
+            {
+                var lsm = menu as LanguageSelectionMenu;
+                menuTypeObj = new
+                {
+                    menuType = "languageSelectionMenu",
+                    languages = SerializeComponentList(lsm.languages, mousePosition),
                 };
             }
             else if (menu is LoadGameMenu)
