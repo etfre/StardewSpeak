@@ -1,6 +1,7 @@
 import dragonfly as df
 import server, constants
 import asyncio
+import inspect
 
 async def focus_component(cmp):
     if not cmp['visible']:
@@ -168,3 +169,87 @@ def inventory_commands(menu_getter):
         "trash can": df_utils.async_action(click_button, "trashCan"),
     }
     return commands
+
+def simple_focus(name: str):
+    import df_utils
+
+    async def to_call(menu, n):
+        await focus_component(menu[n])
+
+    return df_utils.async_action(to_call, name)
+
+def simple_click(name: str):
+    import df_utils
+
+    async def to_call(menu, n):
+        await click_component(menu[n])
+
+    return df_utils.async_action(to_call, name)
+
+
+def build_menu_grammar(name: str, mapping, menu_validator, extras=(), defaults=None):
+    import df_utils, game, server
+    mgb = MenuGrammarBuilder(mapping, menu_validator)
+    defaults = {'positive_num': 1} if defaults is None else defaults
+    grammar = df.Grammar(f"{name}_menu")
+    new_mapping = {}
+    for cmd, v in mapping.items():
+        if isinstance(v, df_utils.AsyncFunction) and v.format_args: # insert active menu as first arg
+            old_format_args = v.format_args
+            async def new_format_args(**kw):
+                nonlocal old_format_args
+                menu = await mgb.get_menu()
+                old_args = old_format_args(**kw)
+                if inspect.isawaitable(old_args):
+                    old_args = await old_args
+                return [menu] + old_args
+            v.format_args = new_format_args
+        new_mapping[cmd] = v
+    main_rule = df.MappingRule(
+        name=f"{name}_menu_rule",
+        mapping=new_mapping,
+        extras=extras,
+        defaults=defaults,
+        context=df.FuncContext(mgb.is_active)
+    )
+    grammar.add_rule(main_rule)
+    return grammar
+
+class MenuGrammarBuilder:
+
+    def __init__(self, mapping, menu_validator):
+        self.mapping = mapping
+        self.menu_validator = menu_validator
+
+    def is_active(self):
+        import game
+        menu = game.get_context_menu()
+        return self.run_menu_validator(menu)
+    
+    async def get_menu(self):
+        menu = await get_active_menu()
+        res = self.test_validator(menu)()
+        if res is False:
+            raise InvalidMenuOption()
+        return res or menu
+
+    def test_validator(self, menu):
+        if isinstance(self.menu_validator, str):
+            return lambda: validate_menu_type(menu, self.menu_validator)
+        return self.menu_validator
+
+    def run_menu_validator(self, menu):
+        validator_fn = self.test_validator(menu)
+        try:
+            res = validator_fn()
+        except InvalidMenuOption:
+            return False
+        else:
+            return res is not False
+
+def validate_menu_type(menu, menu_type):
+    if menu_type is not None:
+        if menu is None:
+            raise InvalidMenuOption(f'Expecting {menu_type}, got None')
+        if menu['menuType'] != menu_type:
+            raise InvalidMenuOption(f"Expecting {menu_type}, got {menu['menuType']}")

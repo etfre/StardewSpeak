@@ -1,4 +1,5 @@
 import functools
+import inspect
 import asyncio
 import traceback
 import dragonfly as df
@@ -10,20 +11,28 @@ class AsyncFunction(df.ActionBase):
         self.async_fn = async_fn
         self.format_args = format_args
 
-    async def to_call(self, *a, **kw):
+    async def to_call(self, kwargs):
         import server
+        if self.format_args:
+            args = await self.get_formatted_args(kwargs)
+            kwargs = {}
+        else:
+            args = []
         try:
-            await self.async_fn(*a, **kw)
+            await self.async_fn(*args, **kwargs)
         except (Exception, asyncio.CancelledError, asyncio.TimeoutError) as e:
             server.log(traceback.format_exc())
 
     def execute(self, data=None):
         assert isinstance(data, dict)
         kwargs = {k: v for k, v in data.items() if not k.startswith("_")}
-        if self.format_args:
-            args = self.format_args(**kwargs)
-            return server.call_soon(self.to_call, *args)
-        return server.call_soon(self.to_call, **kwargs)
+        return server.call_soon(self.to_call, kwargs)
+
+    async def get_formatted_args(self, kwargs):
+        args = self.format_args(**kwargs)
+        if inspect.isawaitable(args):
+            args = await args
+        return args
 
 class SyncFunction(df.ActionBase):
     def __init__(self, fn, format_args=None):

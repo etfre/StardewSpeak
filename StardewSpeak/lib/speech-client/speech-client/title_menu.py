@@ -6,7 +6,7 @@ main_button_choice = df.Choice("main_buttons", {"new": "New", "load": "Load", "c
 TITLE_MENU = 'titleMenu'
 
 async def get_title_menu():
-    menu = await menu_utils.get_active_menu('titleMenu')
+    menu = await menu_utils.get_active_menu(TITLE_MENU)
     if menu['subMenu']:
         raise menu_utils.InvalidMenuOption()
     return menu
@@ -34,7 +34,7 @@ async def click_submenu_button(button_name):
 mapping = {
     "<main_buttons> [game]": df_utils.async_action(click_main_button, 'main_buttons'),
     "[change | select] (language | languages)": df_utils.async_action(click_menu_button, 'languageButton'),
-    "about": df_utils.async_action(click_menu_button, 'aboutButton'),
+    "about": df_utils.async_action(menu_utils.click_menu_button, 'aboutButton', get_title_menu),
 }
 
 @menu_utils.valid_menu_test
