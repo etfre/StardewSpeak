@@ -18,10 +18,17 @@ namespace StardewSpeak
             var player = Game1.player;
             string location = player.currentLocation?.Name;
             var playerPosition = player.Position;
-            var position = new List<float>{ playerPosition.X, playerPosition.Y };
+            var position = new List<float> { playerPosition.X, playerPosition.Y };
             var facingDirection = player.FacingDirection;
             var isMoving = player.isMoving();
             var center = new List<int> { player.getStandingX(), player.getStandingY() };
+            var evt = Game1.CurrentEvent;
+            dynamic currentEvent = null;
+            if (evt != null)
+            {
+                currentEvent = new { evt.skippable, evt.skipped };
+            }
+
             var status = new
             {
                 location,
@@ -33,6 +40,7 @@ namespace StardewSpeak
                 facingDirection,
                 isMoving,
                 lastWarp = LastWarp,
+                currentEvent,
             };
             return status;
         }

@@ -321,8 +321,8 @@ async def move_update(path, player_status):
         if player_status["isMoving"] and facing_tile_center(player_status):
             return False
         return True
-    # if not player_status['canMove']:
-    #     raise RuntimeError("Player unable to move")
+    if not player_status['canMove'] and player_status['currentEvent']:
+        raise NavigationFailed("Cannot move during cutscene")
     direction_to_move = direction_from_tiles(current_tile, target_tile)
     # Rule out not moving, moving in the same direction as next tile, and moving in the opposite direction
     current_direction = player_status["facingDirection"]
