@@ -1,6 +1,7 @@
 import dragonfly as df
 import server, constants
 import asyncio
+import functools
 import inspect
 
 async def focus_component(cmp):
@@ -186,6 +187,10 @@ def simple_click(name: str):
 
     return df_utils.async_action(to_call, name)
 
+async def ensure_awaited(obj):
+    if inspect.isawaitable(obj):
+        return await obj
+    return obj
 
 def build_menu_grammar(name: str, mapping, menu_validator, extras=(), defaults=None):
     import df_utils, game, server
@@ -195,15 +200,7 @@ def build_menu_grammar(name: str, mapping, menu_validator, extras=(), defaults=N
     new_mapping = {}
     for cmd, v in mapping.items():
         if isinstance(v, df_utils.AsyncFunction) and v.format_args: # insert active menu as first arg
-            old_format_args = v.format_args
-            async def new_format_args(**kw):
-                nonlocal old_format_args
-                menu = await mgb.get_menu()
-                old_args = old_format_args(**kw)
-                if inspect.isawaitable(old_args):
-                    old_args = await old_args
-                return [menu] + old_args
-            v.format_args = new_format_args
+            v.format_args = mgb.format_args_menu_provider(v.format_args)
         new_mapping[cmd] = v
     main_rule = df.MappingRule(
         name=f"{name}_menu_rule",
@@ -221,6 +218,13 @@ class MenuGrammarBuilder:
         self.mapping = mapping
         self.menu_validator = menu_validator
 
+    def format_args_menu_provider(self, old_format_args):
+        async def format_args_with_menu(**kw):
+            menu = await self.get_menu()
+            old_args = await ensure_awaited(old_format_args(**kw))
+            return [menu] + old_args
+        return format_args_with_menu
+
     def is_active(self):
         import game
         menu = game.get_context_menu()
@@ -228,26 +232,27 @@ class MenuGrammarBuilder:
     
     async def get_menu(self):
         menu = await get_active_menu()
-        res = self.test_validator(menu)()
+        res = self.test_validator(menu)
         if res is False:
             raise InvalidMenuOption()
         return res or menu
 
-    def test_validator(self, menu):
+    @property
+    def test_validator(self):
         if isinstance(self.menu_validator, str):
-            return lambda: validate_menu_type(menu, self.menu_validator)
+            menu_type = self.menu_validator
+            return functools.partial(validate_menu_type, menu_type)
         return self.menu_validator
 
     def run_menu_validator(self, menu):
-        validator_fn = self.test_validator(menu)
         try:
-            res = validator_fn()
-        except InvalidMenuOption:
+            res = self.test_validator(menu)
+        except (InvalidMenuOption, KeyError, TypeError):
             return False
         else:
             return res is not False
 
-def validate_menu_type(menu, menu_type):
+def validate_menu_type(menu_type, menu):
     if menu_type is not None:
         if menu is None:
             raise InvalidMenuOption(f'Expecting {menu_type}, got None')
