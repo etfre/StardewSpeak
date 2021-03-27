@@ -46,7 +46,7 @@ def sort_fn(current_position, direction_index, multiplier, x):
     side_index = 0 if direction_index == 1 else 1
     side_diff = abs(current_position[side_index] - x[side_index])
     right_direction = 0 if direction_diff > 0 else 1
-    return (right_direction, 0.1 * direction_diff + 0.9 * side_diff)
+    return (right_direction, 0.01 * direction_diff + 0.99 * side_diff)
 
 
 mapping = {

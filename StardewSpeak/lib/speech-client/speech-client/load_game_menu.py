@@ -23,7 +23,7 @@ async def load_game(game_idx: int):
 
 mapping = {
     "[go] back": df_utils.async_action(go_back),
-    "load game <positive_index>": df_utils.async_action(load_game, "positive_index"),
+    "(load [game] | [load] game) <positive_index>": df_utils.async_action(load_game, "positive_index"),
     **menu_utils.scroll_commands(load_game_menu)
 }
 

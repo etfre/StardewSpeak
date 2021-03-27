@@ -347,6 +347,55 @@ namespace StardewSpeak
                     skipIntroButton = SerializeClickableCmp(ccm.skipIntroButton, mousePosition),
                 };
             }
+            else if (menu is QuestLog)
+            {
+                var qlm = menu as QuestLog;
+                StardewValley.Quests.IQuest shownQuest = GetPrivateField(qlm, "_shownQuest");
+                int currentPage = GetPrivateField(qlm, "currentPage");
+                int questPage = GetPrivateField(qlm, "questPage");
+                float contentHeight = GetPrivateField(qlm, "_contentHeight");
+                float scissorRectHeight = GetPrivateField(qlm, "_scissorRectHeight");
+                float scrollAmount = GetPrivateField(qlm, "scrollAmount");
+
+                List<List<StardewValley.Quests.IQuest>> pages = GetPrivateField(qlm, "pages");
+                menuTypeObj = new { menuType = "questLogMenu" };
+                if (questPage == -1)
+                {
+                    if (pages.Count > 0 && pages[currentPage].Count > 0)
+                        menuTypeObj = Merge(menuTypeObj, new { questLogButtons = SerializeComponentList(qlm.questLogButtons, mousePosition) });
+                    if (currentPage < pages.Count - 1)
+                        menuTypeObj = Merge(menuTypeObj, new { forwardButton = SerializeClickableCmp(qlm.forwardButton, mousePosition) });
+                    if (currentPage > 0)
+                        menuTypeObj = Merge(menuTypeObj, new { backButton = SerializeClickableCmp(qlm.backButton, mousePosition) });
+                }
+                else
+                {
+                    var quest = shownQuest as StardewValley.Quests.Quest;
+                    bool needsScroll = qlm.NeedsScroll();
+                    if (questPage != -1 && shownQuest.ShouldDisplayAsComplete() && shownQuest.HasMoneyReward())
+                        menuTypeObj = Merge(menuTypeObj, new { rewardBox = SerializeClickableCmp(qlm.rewardBox, mousePosition) });
+                    if (questPage != -1 && quest != null && !quest.completed && (bool)quest.canBeCancelled)
+                        menuTypeObj = Merge(menuTypeObj, new { cancelQuestButton = SerializeClickableCmp(qlm.cancelQuestButton, mousePosition) });
+                    if (needsScroll) 
+                    {
+                        if (scrollAmount < contentHeight - scissorRectHeight)
+                            menuTypeObj = Merge(menuTypeObj, new { downArrow = SerializeClickableCmp(qlm.downArrow, mousePosition) });
+                        else if (scrollAmount > 0f)
+                            menuTypeObj = Merge(menuTypeObj, new { upArrow = SerializeClickableCmp(qlm.upArrow, mousePosition) });
+                    }
+                    else 
+                    {
+                        menuTypeObj = Merge(menuTypeObj, new { backButton = SerializeClickableCmp(qlm.backButton, mousePosition) });
+                    }
+                }
+                //backButton = SerializeClickableCmp(qlm.backButton, mousePosition),
+                //downArrow = SerializeClickableCmp(qlm.downArrow, mousePosition),
+                //forwardButton = SerializeClickableCmp(qlm.forwardButton, mousePosition),
+                //questLogButtons = SerializeComponentList(qlm.questLogButtons, mousePosition),
+                //upArrow = SerializeClickableCmp(qlm.upArrow, mousePosition),
+                //rewardBox = SerializeClickableCmp(qlm.rewardBox, mousePosition),
+
+            }
             else if (menu is LanguageSelectionMenu)
             {
                 var lsm = menu as LanguageSelectionMenu;

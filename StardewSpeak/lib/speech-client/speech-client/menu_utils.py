@@ -114,22 +114,14 @@ class InventoryMenuWrapper:
     async def focus_box_by_item_name(self, name: str):
         pass
 
-def scroll_commands(menu_getter, page_size=4):
+def scroll_commands(menu_getter="foo", page_size=4):
     import df_utils
 
-    async def scroll_up_wrapper(n):
-        menu = await menu_getter()
-        await scroll_up(menu, n)
-
-    async def scroll_down_wrapper(n):
-        menu = await menu_getter()
-        await scroll_down(menu, n)
-
     return {
-        "[<positive_num>] scroll up": df_utils.async_action(scroll_up_wrapper, 'positive_num'),
-        "[<positive_num>] scroll down": df_utils.async_action(scroll_down_wrapper, 'positive_num'),
-        "[<positive_num>] page up": df_utils.AsyncFunction(scroll_up_wrapper, format_args=lambda **kw: [kw['positive_num'] * page_size]),
-        "[<positive_num>] page down": df_utils.AsyncFunction(scroll_down_wrapper, format_args=lambda **kw: [kw['positive_num'] * page_size]),
+        "scroll up [<positive_num>]": df_utils.async_action(scroll_up, 'positive_num'),
+        "scroll down [<positive_num>]": df_utils.async_action(scroll_down, 'positive_num'),
+        "page up [<positive_num>]": df_utils.AsyncFunction(scroll_up, format_args=lambda **kw: [kw['positive_num'] * page_size]),
+        "page down [<positive_num>]": df_utils.AsyncFunction(scroll_down, format_args=lambda **kw: [kw['positive_num'] * page_size]),
     }
 
 class InvalidMenuOption(Exception):
@@ -142,25 +134,20 @@ def yield_clickable_components(item):
                 yield item
         else:
             menu_type = item.get('menuType')
-            # if menu_type == 'gameMenu':
-            #     item = item.copy()
-            #     item['pages'] = [item['pages'][item['currentTab']]]
             for child in item.values():
                 yield from yield_clickable_components(child)
     if isinstance(item, (list, tuple)):
         for child in item:
             yield from yield_clickable_components(child)
 
-def inventory_commands(menu_getter):
+def inventory_commands():
     import df_utils
     inventory_wrapper = InventoryMenuWrapper()
-    async def inventory_focus(new_row, new_col):
-        menu = await menu_getter() 
+    async def inventory_focus(menu, new_row, new_col):
         inventory = menu['inventory']
         await inventory_wrapper.focus_box(inventory, new_row, new_col)
 
-    async def click_button(name):
-        menu = await menu_getter()
+    async def click_button(menu, name):
         await click_component(menu[name])
 
     commands = {

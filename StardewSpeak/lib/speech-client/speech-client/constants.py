@@ -4,6 +4,7 @@ SOUTH = 2
 WEST = 3
 
 ACTION_BUTTON = 'actionButton'
+JOURNAL_BUTTON = 'journalButton'
 MOVE_UP_BUTTON = 'moveUpButton'
 MOVE_RIGHT_BUTTON = 'moveRightButton'
 MOVE_DOWN_BUTTON = 'moveDownButton'

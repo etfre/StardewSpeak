@@ -54,6 +54,8 @@ mapping = {
     "go to shipping bin": objective.function_objective(go_to_shipping_bin),
     "water crops": objective.objective_action(objective.WaterCropsObjective),
     "harvest crops": objective.objective_action(objective.HarvestCropsObjective),
+    "[open | read] (journal | quest log)": df_utils.async_action(game.press_key, constants.JOURNAL_BUTTON),
+
 }
 
 @menu_utils.valid_menu_test

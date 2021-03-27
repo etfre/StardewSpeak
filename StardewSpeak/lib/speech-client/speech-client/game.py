@@ -580,7 +580,7 @@ async def clear_object(obj, obj_getter):
                     break
             if not target:
                 return
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.1)
 
 async def find_npc_by_name(name: str, characters_stream):
     characters = await characters_stream.next()

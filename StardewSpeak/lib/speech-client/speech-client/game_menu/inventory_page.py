@@ -1,4 +1,3 @@
-import asyncio
 import dragonfly as df
 import title_menu, menu_utils, server, df_utils, game, letters, items, server
 from game_menu import game_menu
@@ -39,11 +38,6 @@ equipment_icons = {
     "shirt": {"name": "Shirt", "field": "shirt"},
 }
 
-@menu_utils.valid_menu_test
-def is_active():
-    menu = game.get_context_menu('gameMenu')
-    game_menu.get_page_by_name(menu, 'inventoryPage')
-
 def load_grammar():
     extras = [
         df_utils.positive_index,
@@ -51,17 +45,4 @@ def load_grammar():
         df.Choice('equipment_icons', equipment_icons)
     ]
     grammar = menu_utils.build_menu_grammar('inventory_page', mapping, get_inventory_page, extras=extras)
-    # grammar = df.Grammar("inventory_page")
-    # main_rule = df.MappingRule(
-    #     name="inventory_page_rule",
-    #     mapping=mapping,
-    #     extras=[
-    #         df_utils.positive_index,
-    #         items.craftable_items_choice,
-    #         df.Choice('equipment_icons', equipment_icons)
-    #     ],
-    #     defaults={'positive_num': 1},
-    #     context=is_active,
-    # )
-    # grammar.add_rule(main_rule)
     grammar.load()
