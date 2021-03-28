@@ -516,7 +516,7 @@ async def swing_tool():
 async def do_action():
     await press_key(constants.ACTION_BUTTON)
 
-async def modify_tiles(get_items, sort_items=generic_next_item_key, pathfind_fn=pathfind_to_adjacent):
+async def navigate_tiles(get_items, sort_items=generic_next_item_key, pathfind_fn=pathfind_to_adjacent):
     async with server.player_status_stream() as stream:
         player_status = await stream.next()
         start_tile = player_status["tileX"], player_status["tileY"]
@@ -543,6 +543,11 @@ async def modify_tiles(get_items, sort_items=generic_next_item_key, pathfind_fn=
                     break
             if not item_path:
                 return
+
+async def navigate_nearest_tile(get_items, pathfind_fn=pathfind_to_adjacent):
+    async for item in navigate_tiles(get_items, sort_items=closest_item_key, pathfind_fn=pathfind_fn):
+        return item
+    raise NavigationFailed
 
 async def set_mouse_position_on_tile(tile):
     x, y = tile
@@ -603,10 +608,9 @@ async def get_current_tile(stream: server.Stream):
 
 async def refill_watering_can():
     await equip_item_by_name(constants.WATERING_CAN)
-    async for item in modify_tiles(get_water_tiles, generic_next_item_key):
-        await equip_item_by_name(constants.WATERING_CAN)
-        await swing_tool()
-        break
+    await navigate_nearest_tile(get_water_tiles)
+    await equip_item_by_name(constants.WATERING_CAN)
+    await swing_tool()
 
 async def write_game_state():
     import menu_utils
@@ -642,36 +646,25 @@ async def get_grabble_visible_objects(loc):
 
 async def dig_artifacts():
     await equip_item_by_name(constants.HOE)
-    async for item in modify_tiles(get_visible_artifact_spots, generic_next_item_key):
+    async for item in navigate_tiles(get_visible_artifact_spots, generic_next_item_key):
         await equip_item_by_name(constants.HOE)
         await swing_tool()
 
 async def gather_crafted_items():
-    async for item in modify_tiles(get_ready_crafted, generic_next_item_key):
+    async for item in navigate_tiles(get_ready_crafted, generic_next_item_key):
         await do_action()
 
 async def gather_forage_items():
-    async for item in modify_tiles(get_forage_visible_items, generic_next_item_key):
+    async for item in navigate_tiles(get_forage_visible_items, generic_next_item_key):
         await do_action()
 
 async def gather_objects():
-    async for item in modify_tiles(get_grabble_visible_objects, generic_next_item_key):
+    async for item in navigate_tiles(get_grabble_visible_objects, generic_next_item_key):
         await do_action()
 
 async def get_water_tiles(loc):
     tiles = await server.request('GET_WATER_TILES')
     return [{'tileX': x, 'tileY': y} for (x, y) in tiles] 
-
-async def pathfind_to_nearest_water(stream: server.Stream):
-    water_tiles = await server.request('GET_WATER_TILES')
-    current_tile = await get_current_tile(stream)
-    water_tiles.sort(key=lambda t: distance_between_tiles(current_tile, t))
-    for wt in water_tiles:
-        try:
-            return await pathfind_to_adjacent(wt[0], wt[1], stream)
-        except NavigationFailed:
-            pass
-    raise RuntimeError('Cannot access any water tiles in the current location')
 
 async def move_mouse_in_direction(direction: int, amount: int):
     dx, dy = 0, 0

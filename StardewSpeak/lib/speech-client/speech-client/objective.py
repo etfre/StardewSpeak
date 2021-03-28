@@ -130,10 +130,9 @@ async def move_to_point(point):
         player_status = await stream.next()
         if player_status['location'] != point.location:
             raise game.NavigationFailed(f'Currently in {player_status["location"]} - unable to move to point in location {point.location}')
-        async for tile in game.modify_tiles(point.get_tiles, pathfind_fn=point.pathfind_fn):
-            if point.on_arrival:
-                await point.on_arrival()
-            break
+        await game.navigate_nearest_tile(point.get_tiles, pathfind_fn=point.pathfind_fn)
+        if point.on_arrival:
+            await point.on_arrival()
 
 class ChopTreesObjective(Objective):
 
@@ -142,7 +141,7 @@ class ChopTreesObjective(Objective):
 
     async def run(self):
         await game.equip_item_by_name(constants.AXE)
-        async for tree in game.modify_tiles(game.get_fully_grown_trees_and_stumps, game.generic_next_item_key):
+        async for tree in game.navigate_tiles(game.get_fully_grown_trees_and_stumps, game.generic_next_item_key):
             await game.chop_tree_and_gather_resources(tree)
 class WaterCropsObjective(Objective):
 
@@ -156,7 +155,7 @@ class WaterCropsObjective(Objective):
 
     async def run(self):
         await game.equip_item_by_name(constants.WATERING_CAN)
-        async for crop in game.modify_tiles(self.get_unwatered_crops, game.generic_next_item_key):
+        async for crop in game.navigate_tiles(self.get_unwatered_crops, game.generic_next_item_key):
             await game.swing_tool()
 
 class HarvestCropsObjective(Objective):
@@ -167,7 +166,7 @@ class HarvestCropsObjective(Objective):
         return harvestable_crop_tiles
 
     async def run(self):
-        async for crop in game.modify_tiles(self.get_harvestable_crops, game.generic_next_item_key):
+        async for crop in game.navigate_tiles(self.get_harvestable_crops, game.generic_next_item_key):
             await game.do_action()
 
 
@@ -204,7 +203,7 @@ class ClearDebrisObjective(Objective):
             await game.gather_items_on_ground(6)
 
     async def run(self):
-        async for debris in game.modify_tiles(self.get_debris, game.next_debris_key):
+        async for debris in game.navigate_tiles(self.get_debris, game.next_debris_key):
             await self.at_tile(debris)
 
 class PlantSeedsOrFertilizerObjective(Objective):
@@ -217,7 +216,7 @@ class PlantSeedsOrFertilizerObjective(Objective):
         return [x for x in hoe_dirt_tiles if x['canPlantThisSeedHere']]
 
     async def run(self):
-        async for hdt in game.modify_tiles(self.get_hoe_dirt, game.generic_next_item_key):
+        async for hdt in game.navigate_tiles(self.get_hoe_dirt, game.generic_next_item_key):
             await game.do_action()
 class HoePlotObjective(Objective):
 
@@ -241,7 +240,7 @@ class HoePlotObjective(Objective):
                 y = start_tile[1] + j * y_increment
                 plot_tiles.add((x, y))
         get_next_diggable = functools.partial(game.get_diggable_tiles, plot_tiles)
-        async for hdt in game.modify_tiles(get_next_diggable, game.generic_next_item_key):
+        async for hdt in game.navigate_tiles(get_next_diggable, game.generic_next_item_key):
             await game.swing_tool()
 
 

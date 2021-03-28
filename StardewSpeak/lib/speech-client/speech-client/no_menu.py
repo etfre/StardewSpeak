@@ -16,9 +16,7 @@ async def get_objects_by_name(name: str, loc: str):
 
 async def go_to_object(item: items.Item):
     obj_getter = functools.partial(get_objects_by_name, item.name)
-    async for item in game.modify_tiles(obj_getter, game.closest_item_key):
-        return
-    raise RuntimeError(f'No {item.name} objects in the current location')
+    await game.navigate_nearest_tile(obj_getter)
 
 async def move_and_face_previous_direction(direction: int, n: int):
     async with server.player_status_stream() as stream:
@@ -31,7 +29,7 @@ async def get_shipping_bin_tiles(item):
     return game.break_into_pieces([tile])
 
 async def go_to_shipping_bin():
-    async for item in game.modify_tiles(get_shipping_bin_tiles):
+    async for item in game.navigate_tiles(get_shipping_bin_tiles):
         await game.do_action()
         break
 
@@ -40,8 +38,7 @@ async def get_bed_tile(item):
     return [tile]
 
 async def go_to_bed():
-    async for bed in game.modify_tiles(get_bed_tile, pathfind_fn=game.pathfind_to_tile):
-        break
+    await game.navigate_nearest_tile(get_bed_tile)
 
 mapping = {
     "<direction_keys>": objective.objective_action(objective.HoldKeyObjective, "direction_keys"),
