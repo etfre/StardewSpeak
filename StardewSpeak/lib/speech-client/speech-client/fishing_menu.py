@@ -18,7 +18,7 @@ async def cast_fishing_rod():
 async def wait_for_nibble():
     with server.tool_status_stream() as tss:
         await tss.wait(lambda t: t['isNibbling'])
-        game.press_key(constants.USE_TOOL_BUTTON)
+        await game.press_key(constants.USE_TOOL_BUTTON)
         await tss.wait(lambda t: t['isReeling'])
 
 

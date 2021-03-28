@@ -602,11 +602,11 @@ async def get_current_tile(stream: server.Stream):
     return current_tile
 
 async def refill_watering_can():
-    async with server.player_status_stream() as stream:
-        path = await pathfind_to_nearest_water(stream)
-        if path is not None:
-            await equip_item_by_name(constants.WATERING_CAN)
-            await swing_tool()
+    await equip_item_by_name(constants.WATERING_CAN)
+    async for item in modify_tiles(get_water_tiles, generic_next_item_key):
+        await equip_item_by_name(constants.WATERING_CAN)
+        await swing_tool()
+        break
 
 async def write_game_state():
     import menu_utils
@@ -657,6 +657,10 @@ async def gather_forage_items():
 async def gather_objects():
     async for item in modify_tiles(get_grabble_visible_objects, generic_next_item_key):
         await do_action()
+
+async def get_water_tiles(loc):
+    tiles = await server.request('GET_WATER_TILES')
+    return [{'tileX': x, 'tileY': y} for (x, y) in tiles] 
 
 async def pathfind_to_nearest_water(stream: server.Stream):
     water_tiles = await server.request('GET_WATER_TILES')
