@@ -146,6 +146,7 @@ non_repeat_mapping = {
     "pet animals": objective.function_objective(objective.pet_animals),
     "milk animals": objective.function_objective(objective.use_tool_on_animals, constants.MILK_PAIL),
     "click [<positive_num>]": df_utils.async_action(server.mouse_click, "left", "positive_num"),
+    "right click [<positive_num>]": df_utils.async_action(server.mouse_click, "right", "positive_num"),
     "mouse <mouse_directions> [<positive_num>]": df_utils.async_action(move_mouse, 'mouse_directions', 'positive_num'),
     "start fishing": df_utils.async_action(fishing_menu.start_fishing),
     "catch fish": df_utils.async_action(fishing_menu.catch_fish),

@@ -388,7 +388,9 @@ namespace StardewSpeak
                     }
                 case "MOUSE_CLICK":
                     {
-                        StardewSpeak.Input.LeftClick();
+                        string btn = data.btn;
+                        if (btn == "left") StardewSpeak.Input.LeftClick();
+                        else if (btn == "right") StardewSpeak.Input.RightClick();
                         body = true;
                         break;
                     }

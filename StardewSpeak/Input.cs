@@ -78,6 +78,12 @@ namespace StardewSpeak
 			newHeld.Remove(optionName);
 			Held = newHeld;
 		}
+
+		public static void RightClick()
+		{
+			SetDown(SButton.MouseRight);
+		}
+
 		public static void LeftClick()
 		{
 			SButtonExtensions.ToSButton(Game1.options.inventorySlot8[0]);
