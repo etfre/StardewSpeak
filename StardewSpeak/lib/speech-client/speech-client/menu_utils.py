@@ -111,6 +111,18 @@ class InventoryMenuWrapper:
         self.row = row
         self.col = col
 
+    async def click_range(self, inventory_menu, start, end):
+        end = start if end is None else end
+        if not (start <= end < 12):
+            raise ValueError
+        rows = list_of_rows(inventory_menu['inventory'])
+        row, _ = find_component_containing_mouse(rows) or (self.row, self.col)
+        for col in range(start, end + 1):
+            cmp = rows[row][col]
+            await click_component(cmp)
+        self.row = row
+        self.col = end
+
     async def focus_box_by_item_name(self, name: str):
         pass
 

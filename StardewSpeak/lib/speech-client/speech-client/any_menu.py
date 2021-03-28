@@ -4,11 +4,11 @@ import dragonfly as df
 from srabuilder import rules
 import title_menu, menu_utils, server, df_utils, game, container_menu, objective, constants, carpenter_menu
 
-
-async def move_cursor_to_next_component(direction, n=1):
-    menu = await menu_utils.get_active_menu()
+def validate_any_menu(menu):
     if menu is None:
-        return
+        return False
+
+async def move_cursor_to_next_component(menu, direction, n=1):
     current_position = None
     target_components = []
     clickable = list(menu_utils.yield_clickable_components(menu))
@@ -53,24 +53,13 @@ mapping = {
     "<direction_nums> [<positive_num>]": df_utils.async_action(move_cursor_to_next_component, "direction_nums", "positive_num"),
 }
 
-@menu_utils.valid_menu_test
-def is_active():
-    return game.get_context_menu() is not None
-
 def load_grammar():
-    grammar = df.Grammar("any_menu")
-    main_rule = df.MappingRule(
-        name="any_menu_rule",
-        mapping=mapping,
-        extras=[
-            rules.num,
-            df_utils.positive_index,
-            df_utils.positive_num,
-            df.Choice("direction_nums", game.direction_nums),
-        ],
-        context=is_active,
-        defaults={'positive_num': 1},
-    )
-    grammar.add_rule(main_rule)
+    extras = [
+        rules.num,
+        df_utils.positive_index,
+        df_utils.positive_num,
+        df.Choice("direction_nums", game.direction_nums),
+    ]
+    grammar = menu_utils.build_menu_grammar("any", mapping, validate_any_menu, extras=extras)
     grammar.load()
     

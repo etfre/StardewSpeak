@@ -74,7 +74,11 @@ namespace StardewSpeak
 
         public void Exit() 
         {
-            Proc.Kill();
+            try
+            {
+                Proc.Kill();
+            }
+            catch (SystemException e) { }
         }
         private Task<int> RunProcessAsync(Process process)
         {

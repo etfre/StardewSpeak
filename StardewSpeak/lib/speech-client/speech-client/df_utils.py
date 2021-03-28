@@ -111,3 +111,4 @@ positive_digits = df.Sequence(
 )
 positive_num = df.Alternative([df.Modifier(positive_digits, parse_numrep), df.Choice(None, ten_through_twelve)], name="positive_num")
 positive_index = df.RuleWrap("positive_index", df.Modifier(positive_num, lambda x: x - 1))
+positive_index2 = df.RuleWrap("positive_index2", df.Modifier(positive_num, lambda x: x - 1))

@@ -5,20 +5,15 @@ import title_menu, menu_utils, server, df_utils, game, container_menu
 prev_for_sale_index = 0
 inventory_wrapper = menu_utils.InventoryMenuWrapper()
 
-async def get_shop_menu():
-    return await menu_utils.get_active_menu('shopMenu')
-
-async def focus_menu_section(submenu_name: str):
+async def focus_menu_section(menu, submenu_name: str):
     assert submenu_name in ('inventory', 'forSale')
-    menu = await get_shop_menu()
     for_sale_focused = any(x['containsMouse'] for x in menu['forSaleButtons'])
     if submenu_name == 'forSale' and not for_sale_focused:
         await focus_for_sale_index(prev_for_sale_index)
     elif submenu_name == 'inventory':
         await inventory_wrapper.focus_previous(menu['inventory'])
 
-async def focus_item(idx, key):
-    menu = await get_shop_menu()
+async def focus_item(menu, idx, key):
     inventory = menu['inventory']
     if not inventory['containsMouse'] and key == 'item':
         await focus_for_sale_index(idx)
@@ -26,24 +21,18 @@ async def focus_item(idx, key):
     row, col = (idx, None) if key == 'row' else (None, idx)
     await inventory_wrapper.focus_box(inventory, row, col)
 
-async def focus_for_sale_index(idx: int):
+async def focus_for_sale_index(menu, idx: int):
     global prev_for_sale_index
-    menu = await get_shop_menu()
     buttons = menu["forSaleButtons"]
     await menu_utils.focus_component(buttons[idx])
     prev_for_sale_index = 0
 
 
-async def buy_item_index(idx: int):
-    menu = await get_shop_menu()
+async def buy_item_index(menu, idx: int):
     buttons = menu["forSaleButtons"]
     await menu_utils.focus_component(buttons[idx])
 
-async def focus_name_box():
-    menu = await get_new_game_menu()
-    await menu_utils.click_component(menu['nameBoxCC'])
-
-async def buy_item(n: int):
+async def buy_item(menu, n: int):
     five_count, remainder = divmod(n, 5)
     if five_count:
         pydirectinput.keyDown('shift')
@@ -51,28 +40,23 @@ async def buy_item(n: int):
         pydirectinput.keyUp('shift')
     await server.mouse_click(count=remainder)
 
+
+async def click_range(menu, start, end):
+    await inventory_wrapper.click_range(menu['inventory'], start, end)
+
 mapping = {
+    "sell <positive_index> [through <positive_index2>]": df_utils.async_action(click_range, "positive_index", 'positive_index2'),
     "item <positive_index>": df_utils.async_action(focus_item, 'positive_index', 'item'),
     "row <positive_index>": df_utils.async_action(focus_item, 'positive_index', 'row'),
     "(shop | store)": df_utils.async_action(focus_menu_section, 'forSale'),
     "backpack": df_utils.async_action(focus_menu_section, 'inventory'),
     "buy [<positive_num>]": df_utils.async_action(buy_item, 'positive_num'),
-    **menu_utils.scroll_commands(get_shop_menu),
+    **menu_utils.scroll_commands(),
 }
 
-@menu_utils.valid_menu_test
-def is_active():
-    game.get_context_menu('shopMenu')
-
 def load_grammar():
-    grammar = df.Grammar("shop_menu")
-    main_rule = df.MappingRule(
-        name="shop_menu_rule",
-        mapping=mapping,
-        extras=[rules.num, df_utils.positive_index, df_utils.positive_num],
-        context=is_active,
-        defaults={'positive_num': 1},
-    )
-    grammar.add_rule(main_rule)
+    extras = [rules.num, df_utils.positive_index, df_utils.positive_num, df_utils.positive_index2]
+    defaults = {'positive_num': 1, "positive_index2": None}
+    grammar = menu_utils.build_menu_grammar("shop", mapping, "shopMenu", extras=extras, defaults=defaults) 
     grammar.load()
     
