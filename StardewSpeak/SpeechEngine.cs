@@ -157,11 +157,6 @@ namespace StardewSpeak
                 case "PLAYER_POSITION":
                     body = GameState.PlayerPosition;
                     break;
-                case "FACE_DIRECTION":
-                    int direction = msg.data;
-                    Game1.player.faceDirection(direction);
-                    body = true;
-                    break;
                 case "NEW_STREAM":
                     {
                         streamId = data.stream_id;

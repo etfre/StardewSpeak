@@ -30,6 +30,7 @@ direction_nums = {
 }
 nums_to_directions = {v: k for k, v in direction_nums.items()}
 cardinal_directions = (constants.NORTH, constants.EAST, constants.SOUTH, constants.WEST)
+directions_to_buttons = {d: direction_keys[nums_to_directions[d]][0] for d in cardinal_directions}
 cardinal_buttons = (constants.MOVE_UP_BUTTON, constants.MOVE_RIGHT_BUTTON, constants.MOVE_DOWN_BUTTON, constants.MOVE_LEFT_BUTTON)
 
 tool_for_object = {
@@ -371,8 +372,8 @@ def facing_tile_center(player_status):
     assert -0.5 <= x <= 0.5
     assert -0.5 <= y <= 0.5
     current_direction = player_status["facingDirection"]
-    # start turning when at least 45% into the tile
-    offset_from_mid = 0.05
+    # start turning when at least 40% into the tile
+    offset_from_mid = 0.10
     if current_direction == constants.NORTH:
         return y + offset_from_mid <= 0
     if current_direction == constants.EAST:
@@ -430,19 +431,26 @@ async def stop_moving():
 async def ensure_not_moving(stream: server.Stream):
     await stop_moving()
     await stream.wait(lambda status: not status["isMoving"], timeout=2)
-    await stream.next()
+    return await stream.next()
 
 
 async def face_direction(direction: int, stream: server.Stream, move_cursor=False):
-    await ensure_not_moving(stream)
-    await server.request("FACE_DIRECTION", direction)
+    status = await ensure_not_moving(stream)
+    if status['facingDirection'] != direction:
+        btn = directions_to_buttons[direction]
+        await press_key(btn)
+        try:
+            await stream.wait(lambda s: s["facingDirection"] == direction, timeout=0.1)
+        except asyncio.TimeoutError:
+            async with press_and_release(btn):
+                await stream.wait(lambda s: s["facingDirection"] == direction, timeout=5)
     set_last_faced_direction(direction)
     if move_cursor:
         player_status = await stream.next()
         current_tile = player_status['tileX'], player_status['tileY']
         target_tile = next_tile(current_tile, direction)
         await set_mouse_position_on_tile(target_tile)
-    await stream.wait(lambda s: s["facingDirection"] == direction, timeout=1)
+    
 
 async def equip_item(predicate):
     matched_index = None
