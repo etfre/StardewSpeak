@@ -67,7 +67,8 @@ namespace StardewSpeak
         public static object CharactersAtLocation(GameLocation location)
         {
             var chars = new List<dynamic>();
-            foreach (var character in location.characters) 
+            var charList = Game1.CurrentEvent != null ? Game1.CurrentEvent.actors : location.characters.ToList();
+            foreach (var character in charList) 
             {
                 var position = new List<float> { character.Position.X, character.Position.Y };
                 var center = new List<int> { character.getStandingX(), character.getStandingY() };

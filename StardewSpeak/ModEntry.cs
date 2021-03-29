@@ -57,6 +57,7 @@ namespace StardewSpeak
             tcs.SetResult(process.ExitCode);
             ModEntry.Streams = new Dictionary<string, Stream>();
             Input.ClearHeld();
+            Game1.addHUDMessage(new HUDMessage("Speech engine errored. Attempting to restart...", HUDMessage.error_type));
             ModEntry.log("Kaldi engine exited. Restarting in 5 seconds...", LogLevel.Debug);
             System.Threading.Thread.Sleep(5000);
             this.speechEngine.LaunchProcess();
