@@ -244,6 +244,24 @@ namespace StardewSpeak
                         body = Routing.MapConnections[fromLocation.NameOrUniqueName];
                         break;
                     }
+                case "GET_ElEVATOR_TILE":
+                    {
+                        if (player.currentLocation is StardewValley.Locations.MineShaft) 
+                        {
+                            Vector2 elevator = Utils.GetPrivateField(player.currentLocation, "tileBeneathElevator");
+                            body = new { tileX = (int)elevator.X, tileY = (int)elevator.Y };
+                        }
+                        break;
+                    }
+                case "GET_LADDER_UP_TILE":
+                    {
+                        if (player.currentLocation is StardewValley.Locations.MineShaft)
+                        {
+                            Vector2 elevator = Utils.GetPrivateField(player.currentLocation, "tileBeneathLadder");
+                            body = new { tileX = (int)elevator.X, tileY = (int)elevator.Y };
+                        }
+                        break;
+                    }
                 case "PET_ANIMAL_BY_NAME":
                     {
                         string name = data.name;

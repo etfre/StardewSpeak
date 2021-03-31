@@ -133,6 +133,7 @@ non_repeat_mapping = {
     "chop trees": objective.objective_action(objective.ChopTreesObjective),
     "start planting": objective.objective_action(objective.PlantSeedsOrFertilizerObjective),
     "clear debris": objective.objective_action(objective.ClearDebrisObjective),
+    "attack": objective.objective_action(objective.AttackObjective),
     "defend": objective.objective_action(objective.DefendObjective),
     "hoe <n> by <n2>": objective.objective_action(objective.HoePlotObjective, "n", "n2"),
     "equip <tools>": df_utils.async_action(game.equip_item_by_name, 'tools'),

@@ -70,6 +70,13 @@ def init_locations():
         Location("Woods"),
     )
 
+async def get_elevator_tiles(item):
+    tile = await server.request('GET_ElEVATOR_TILE')
+    return [tile]
+
+async def get_ladder_up_tiles(item):
+    tile = await server.request('GET_LADDER_UP_TILE')
+    return [tile]
 
 points = (
     Point(["go to mail box", "(check | read) mail"], (68, 16), "Farm", pathfind_fn=game.pathfind_to_adjacent, on_arrival=game.do_action),
@@ -77,6 +84,8 @@ points = (
     Point(["buy seeds"], (4, 19), "SeedShop", facing_direction=constants.NORTH, on_arrival=game.do_action),
     Point(["go to calendar"], (41, 57), "Town", facing_direction=constants.NORTH, on_arrival=game.do_action),
     Point(["go to (billboard | bulletin board)"], (42, 57), "Town", facing_direction=constants.NORTH, on_arrival=game.do_action),
+    Point(["go to elevator"], get_elevator_tiles, re.compile(r"UndergroundMine\d+"), facing_direction=constants.NORTH, on_arrival=game.do_action),
+    Point(["[go to] ladder up"], get_ladder_up_tiles, re.compile(r"UndergroundMine\d+"), facing_direction=constants.NORTH, on_arrival=game.do_action),
 )
 
 

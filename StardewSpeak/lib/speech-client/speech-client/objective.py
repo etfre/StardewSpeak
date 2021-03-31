@@ -1,4 +1,5 @@
 # import time
+import re
 import functools
 import async_timeout
 import contextlib
@@ -128,7 +129,9 @@ class MoveToLocationObjective(Objective):
 async def move_to_point(point):
     async with server.player_status_stream() as stream:
         player_status = await stream.next()
-        if player_status['location'] != point.location:
+        regex_mismatch = isinstance(point.location, re.Pattern) and not point.location.match(player_status['location'])
+        str_mismatch = isinstance(point.location, str) and point.location != player_status['location']
+        if regex_mismatch or str_mismatch:
             raise game.NavigationFailed(f'Currently in {player_status["location"]} - unable to move to point in location {point.location}')
         await game.navigate_nearest_tile(point.get_tiles, pathfind_fn=point.pathfind_fn)
         if point.on_arrival:
@@ -319,6 +322,50 @@ class DefendObjective(Objective):
                     await game.face_direction(direction_to_face, player_stream)
                 if distance_from_monster < 110:
                     await game.swing_tool()
+
+class AttackObjective(Objective):
+
+    def __init__(self):
+        self.player_position = None
+        self.invisible_monsters = []
+
+    async def run(self):
+        async with server.characters_at_location_stream() as char_stream, server.player_status_stream() as player_stream:
+            get_monster = functools.partial(self.get_closest_monster, char_stream, player_stream)
+            self.player_position = (await player_stream.next())['position']
+            while True:
+                target = await game.move_to_character(get_monster)
+                if target is None and not self.invisible_monsters:
+                    return
+                distance_from_monster = 0
+                while target and distance_from_monster < 90:
+                    closest_monster_position = target['position']
+                    distance_from_monster = game.distance_between_tiles_diagonal(self.player_position, closest_monster_position)
+                    if distance_from_monster > 0:
+                        direction_to_face = game.direction_from_positions(self.player_position, closest_monster_position)
+                        await game.face_direction(direction_to_face, player_stream)
+                    await game.swing_tool()
+                    await asyncio.sleep(0.1)
+                    target = await get_monster()
+
+    async def get_closest_monster(self, char_stream, player_stream):
+        chars = await char_stream.next()
+        self.invisible_monsters = []
+        visible_monsters = []
+        for c in chars:
+            if c['isMonster']:
+                monster_list = self.invisible_monsters if c['isInvisible'] else visible_monsters
+                monster_list.append(c)
+        if not visible_monsters:
+            if not self.invisible_monsters:
+                raise RuntimeError('No monsters in current location')
+            return
+        if player_stream.has_value:
+            self.player_position = player_stream.latest_value['position']
+        server.log(visible_monsters)
+        visible_monsters.sort(key=lambda x: game.distance_between_tiles_diagonal(self.player_position, (x['tileX'], x['tileY'])))
+        closest_monster = visible_monsters[0]
+        return closest_monster
 
 
 

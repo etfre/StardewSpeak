@@ -550,8 +550,9 @@ namespace StardewSpeak
         {
             var flags = BindingFlags.Public | BindingFlags.NonPublic |
                          BindingFlags.Static | BindingFlags.Instance;
-            var value = obj.GetType().GetField(fieldName, flags)?.GetValue(obj);
-            return value;
+            var fi = obj.GetType().GetField(fieldName, flags);
+            if (fi != null) return fi.GetValue(obj);
+            return obj.GetType().GetProperty(fieldName, flags)?.GetValue(obj);
         }
 
         public static void SetPrivateField(object obj, string fieldName, dynamic value)
