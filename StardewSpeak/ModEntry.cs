@@ -185,7 +185,7 @@ namespace StardewSpeak
 
                 var isOccupied = location.isTileOccupiedIgnoreFloors(vec);
                 var rec = new xTile.Dimensions.Location(tileX, tileY);
-                var t = player.CurrentTool;
+                var t = player.CurrentTool; 
                 Utils.WriteJson("debris.json", location.debris.ToList());
                 Utils.WriteJson("objects.json", location.Objects.Values.ToList());
                 Utils.WriteJson("resourceClumps.json", location.resourceClumps.ToList());

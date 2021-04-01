@@ -244,24 +244,13 @@ async def pathfind_to_next_location(
     status_stream: server.Stream,
 ):
     path, door_direction = await path_to_next_location(next_location, status_stream)
-    is_done = False
-    while not is_done:
-        player_status = await status_stream.next()
-        current_location = player_status["location"]
-        if current_location != path.location:
-            if current_location == next_location:
-                break
-            raise NavigationFailed(
-                f"Unexpected location {current_location}, pathfinding for {path.location}"
-            )
-        is_done = await move_update(path, player_status)
-    await stop_moving()
+    await travel_path(path, status_stream, next_location)
     if door_direction is not None:
         await face_direction(door_direction, status_stream, move_cursor=True)
         await do_action()
 
 
-async def travel_path(path: Path, status_stream: server.Stream):
+async def travel_path(path: Path, status_stream: server.Stream, next_location=None):
     target_x, target_y = path.tiles[-1]
     is_done = False
     remaining_attempts = 5
@@ -272,6 +261,8 @@ async def travel_path(path: Path, status_stream: server.Stream):
                 player_status = await status_stream.next()
                 current_location = player_status["location"]
                 if current_location != path.location:
+                    if next_location == current_location:
+                        break
                     raise NavigationFailed(
                         f"Unexpected location {current_location}, pathfinding for {path.location}"
                     )
