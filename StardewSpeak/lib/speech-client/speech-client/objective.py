@@ -12,6 +12,7 @@ import asyncio
 import threading
 import uuid
 import json
+import server
 from dragonfly import *
 from srabuilder import rules
 
@@ -52,29 +53,20 @@ class Objective:
         raise NotImplementedError
 
     async def wrap_run(self):
-        self.full_task = asyncio.create_task(self.run_and_cancel())
-        await self.full_task
-
-    async def run_and_cancel(self):
         name = self.__class__.__name__
         server.log(f"Starting objective {name}")
-        self.run_task = asyncio.create_task(self.run())
-        try:
-            await self.run_task
-        except (Exception, ObjectiveFailedError) as e:
-            err = e
-            tb = traceback.format_exc()
-            server.log(f"Objective {name} errored: \n{tb}")
-        except asyncio.CancelledError as e:
-            err = e
-            server.log(f"Canceling objective {name}")
+        self.run_task = server.TaskWrapper(self.run())
+        await self.run_task.task
+        if self.run_task.exception:
+            if isinstance(self.run_task.exception, (Exception, ObjectiveFailedError)):
+                server.log(f"Objective {name} errored: \n{self.run_task.exception_trace}")
+            elif isinstance(self.run_task.exception, asyncio.CancelledError):
+                server.log(f"Canceling objective {name}")
+            await game.release_all_keys()
         else:
-            err = None
             server.log(f"Successfully completed objective {name}")
         for task_wrapper in self.tasks:
             await task_wrapper.cancel()
-        if err:
-            await game.stop_moving()
 
     def fail(self, msg=None):
         if msg is None:
@@ -372,8 +364,7 @@ class AttackObjective(Objective):
 async def cancel_active_objective():
     global active_objective
     if active_objective:
-        active_objective.run_task.cancel()
-        await active_objective.full_task
+        await active_objective.run_task.cancel()
     active_objective = None
 
 

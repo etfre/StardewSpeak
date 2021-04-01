@@ -400,6 +400,9 @@ async def press_and_release(keys):
     finally:
         await update_held_buttons(to_release=keys)
 
+async def release_all_keys():
+    return await server.request('RELEASE_ALL_KEYS')
+
 async def start_moving(direction: int):
     button_to_hold = direction_keys[nums_to_directions[direction]][0]
     to_release = []

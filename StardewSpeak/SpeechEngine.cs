@@ -426,6 +426,12 @@ namespace StardewSpeak
                         body = true;
                         break;
                     }
+                case "RELEASE_ALL_KEYS":
+                    {
+                        Input.ClearHeld();
+                        body = true;
+                        break;
+                    }
                 case "PRESS_KEY":
                     {
                         string key = data.key;

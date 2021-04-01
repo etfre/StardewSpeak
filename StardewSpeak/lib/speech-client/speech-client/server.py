@@ -387,6 +387,7 @@ class TaskWrapper:
     def __init__(self, coro):
         self.result = None
         self.exception = None
+        self.exception_trace = None
         self.done = False
         self.task = loop.create_task(self.wrap_coro(coro))
 
@@ -397,6 +398,7 @@ class TaskWrapper:
             self.result = await coro
         except (asyncio.CancelledError, Exception) as e:
             self.exception = e
+            self.exception_trace = traceback.format_exc()
         self.done = True
 
     async def cancel(self):
