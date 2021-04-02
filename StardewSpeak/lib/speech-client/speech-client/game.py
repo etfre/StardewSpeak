@@ -65,6 +65,11 @@ class Path:
     def pop(self):
         self.tiles = self.tiles[:-1]
 
+    def retarget(self, p):
+        self.tiles = p.tiles
+        self.tile_indices = p.tile_indices
+        self.location = p.location
+
 def distance_between_tiles(t1, t2):
     # pathfinding doesn't move diagonally for simplicity so just sum differences between x and y
     return abs(t1[0] - t2[0]) + abs(t1[1] - t2[1]) 
@@ -251,10 +256,9 @@ async def pathfind_to_next_location(
 
 
 async def travel_path(path: Path, status_stream: server.Stream, next_location=None):
-    target_x, target_y = path.tiles[-1]
     is_done = False
     remaining_attempts = 5
-    timeout = len(path.tiles * 3)
+    timeout = len(path.tiles) * 3
     try:
         async with async_timeout.timeout(timeout):
             while not is_done:
@@ -270,12 +274,11 @@ async def travel_path(path: Path, status_stream: server.Stream, next_location=No
                     is_done = await move_update(path, player_status)
                 except KeyError as e:
                     if remaining_attempts:
+                        target_x, target_y = path.tiles[-1] # target can change so check whenever we need a new path
                         path = await path_to_tile(target_x, target_y, path.location)
                         remaining_attempts -= 1
                     else:
                         raise e
-    except (Exception, BaseException) as e:
-        raise e
     finally:
         await stop_moving()
     return path
@@ -733,39 +736,34 @@ class NavigationFailed(Exception):
 
 async def move_to_character(get_npc):
     import objective
-    npc_tile = None
-    pathfind_task_wrapper = None
-    tile_error_count = 0
+    npc = await get_npc()
+    npc_tile = npc['tileX'], npc['tileY']
     async with server.player_status_stream() as player_stream:
-        while True:
-            if pathfind_task_wrapper and pathfind_task_wrapper.done:
-                if pathfind_task_wrapper.exception:
-                    if tile_error_count < 2:
-                        pathfind_coro = pathfind_to_adjacent(npc_tile[0], npc_tile[1], player_stream)
-                        pathfind_task_wrapper = objective.active_objective.add_task(pathfind_coro)
-                        tile_error_count += 1
-                        continue
-                    else:
-                        raise pathfind_task_wrapper.exception
-                break
+        path = await path_to_adjacent(npc_tile[0], npc_tile[1], player_stream)
+        pathfind_coro = travel_path(path, player_stream)
+        pathfind_task_wrapper = objective.active_objective.add_task(pathfind_coro)
+        while not pathfind_task_wrapper.done:
             npc = await get_npc()
             if npc is None:
                 raise NavigationFailed
             next_npc_tile = npc['tileX'], npc['tileY']
             if npc_tile != next_npc_tile:
-                tile_error_count = 0
-                if pathfind_task_wrapper:
-                    await pathfind_task_wrapper.cancel()
+                new_path = await path_to_adjacent(npc['tileX'], npc['tileY'], player_stream)
+                path.retarget(new_path)
                 npc_tile = next_npc_tile
-                pathfind_coro = pathfind_to_adjacent(npc_tile[0], npc_tile[1], player_stream)
-                pathfind_task_wrapper = objective.active_objective.add_task(pathfind_coro)
-        npc = await get_npc()
-        if npc is None:
-            raise NavigationFailed
+        if pathfind_task_wrapper.exception:
+            raise pathfind_task_wrapper.exception
+        await face_tile(player_stream, npc_tile)
         npx_x, npc_y = npc['center']
         await server.set_mouse_position(npx_x, npc_y, from_viewport=True)
         return npc
         # await move_directly_to_character(get_character, player_stream, npc_stream)
+
+async def face_tile(stream, tile):
+    player_status = await stream.next()
+    player_tile = player_status['tileX'], player_status['tileY']
+    direction_to_face = direction_from_tiles(player_tile, tile)
+    await face_direction(direction_to_face, stream)
 
 async def move_directly_to_character(get_character, player_stream, npc_stream):
     while True:
