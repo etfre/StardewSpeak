@@ -354,7 +354,6 @@ class AttackObjective(Objective):
             return
         if player_stream.has_value:
             self.player_position = player_stream.latest_value['position']
-        server.log(visible_monsters)
         visible_monsters.sort(key=lambda x: game.distance_between_tiles_diagonal(self.player_position, (x['tileX'], x['tileY'])))
         closest_monster = visible_monsters[0]
         return closest_monster

@@ -112,9 +112,18 @@ namespace StardewSpeak
             {
                 return;
             }
-            lock (RequestQueueLock)
+            string msgType = msg.type;
+            if (msgType == "LOG")
             {
-                RequestQueue.Enqueue(msg);
+                dynamic toLog = msg.data;
+                ModEntry.Log($"Speech engine message: {toLog}");
+            }
+            else
+            {
+                lock (RequestQueueLock)
+                {
+                    RequestQueue.Enqueue(msg);
+                }
             }
             //RespondToMessage(msg);
         }
@@ -148,10 +157,6 @@ namespace StardewSpeak
             dynamic error = null;
             switch (msgType)
             {
-                case "LOG":
-                    string toLog = data;
-                    ModEntry.Log($"Speech engine message: {toLog}");
-                    break;
                 case "HEARTBEAT": // engine will shutdown if heartbeat not received after 10 seconds
                     break;
                 case "PLAYER_POSITION":
@@ -205,8 +210,8 @@ namespace StardewSpeak
                         int fromX = data.x;
                         int fromY = data.y;
                         int cutoff = data.cutoff;
-                        var path = Pathfinder.Pathfinder.FindPath(player.currentLocation, fromX, fromY, playerX, playerY, cutoff);
-                        body = path;
+                        var tiles = Pathfinder.Pathfinder.FindPath(player.currentLocation, fromX, fromY, playerX, playerY, cutoff);
+                        body = new { tiles, location = player.currentLocation.NameOrUniqueName };
                         break;
                     }
                 case "BED_TILE":

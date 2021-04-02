@@ -51,6 +51,9 @@ context_variables = {
 
 async def update_held_buttons(to_hold=(), to_release=()):
     await server.request('UPDATE_HELD_BUTTONS', {'toHold': to_hold, 'toRelease': to_release})
+
+def update_held_buttons_nowait(to_hold=(), to_release=()):
+    server.send_message('UPDATE_HELD_BUTTONS', {'toHold': to_hold, 'toRelease': to_release})
 class Path:
     def __init__(self, mod_path, location: str):
         tiles = []
@@ -220,7 +223,7 @@ async def path_to_next_location(next_location: str, status_stream):
         x, y, is_door = lc['X'], lc['Y'], lc['IsDoor']
         try:
             if is_door:
-                path = await path_to_adjacent(x, y, status_stream)
+                path = await path_to_adjacent(x, y)
                 door_direction = direction_from_tiles(path.tiles[-1], (x, y))
             else:
                 path = await path_to_tile(x, y, location)
@@ -271,7 +274,7 @@ async def travel_path(path: Path, status_stream: server.Stream, next_location=No
                         f"Unexpected location {current_location}, pathfinding for {path.location}"
                     )
                 try:
-                    is_done = await move_update(path, player_status)
+                    is_done = move_update(path, player_status)
                 except KeyError as e:
                     if remaining_attempts:
                         target_x, target_y = path.tiles[-1] # target can change so check whenever we need a new path
@@ -287,17 +290,16 @@ def get_adjacent_tiles(tile):
     x, y = tile
     return [(x, y - 1), (x + 1, y), (x, y + 1), (x - 1, y)]
 
-async def path_to_adjacent(x, y, status_stream: server.Stream, cutoff=-1):
-    player_status = await status_stream.next()
-    location = player_status['location']
-    tiles = await server.request("PATH_TO_PLAYER", {"x": x, "y": y, "location": location, "cutoff": cutoff})
+async def path_to_adjacent(x, y, cutoff=-1):
+    resp = await server.request("PATH_TO_PLAYER", {"x": x, "y": y, "cutoff": cutoff})
+    tiles, location = resp['tiles'], resp['location']
     if tiles is None:
         raise NavigationFailed(f"Cannot pathfind to player from {x}, {y} at location {location}")
     tiles =  tiles if len(tiles) == 1 else reversed(tiles[1:])
     return Path(tiles, location)
 
 async def pathfind_to_adjacent(x, y, status_stream: server.Stream, cutoff=-1):
-    path = await path_to_adjacent(x, y, status_stream, cutoff=cutoff)
+    path = await path_to_adjacent(x, y, cutoff=cutoff)
     await travel_path(path, status_stream)
     if path.tiles[-1] != (x, y):
         direction_to_face = direction_from_tiles(path.tiles[-1], (x, y))
@@ -305,7 +307,7 @@ async def pathfind_to_adjacent(x, y, status_stream: server.Stream, cutoff=-1):
     return path
     
 
-async def move_update(path, player_status):
+def move_update(path, player_status):
     """Return False to continue, True when done"""
     current_tile = player_status["tileX"], player_status["tileY"]
     current_tile_index = path.tile_indices[current_tile]
@@ -321,13 +323,10 @@ async def move_update(path, player_status):
     direction_to_move = direction_from_tiles(current_tile, target_tile)
     # Rule out not moving, moving in the same direction as next tile, and moving in the opposite direction
     current_direction = player_status["facingDirection"]
-    turn_coming = (
-        player_status["isMoving"]
-        and abs(current_direction - direction_to_move) % 2 == 1
-    )
+    turn_coming = player_status["isMoving"] and abs(current_direction - direction_to_move) % 2 == 1
     if turn_coming and facing_tile_center(player_status):
         return False
-    await start_moving(direction_to_move)
+    start_moving([direction_to_move])
 
 
 def direction_from_tiles(tile, target_tile):
@@ -384,7 +383,6 @@ async def press_key(key: str):
 
 @contextlib.asynccontextmanager
 async def press_and_release(keys):
-    server.log('keys', keys)
     keys = keys if isinstance(keys, (list, tuple)) else [keys]
     try:
         await update_held_buttons(to_hold=keys)
@@ -397,16 +395,17 @@ async def press_and_release(keys):
 async def release_all_keys():
     return await server.request('RELEASE_ALL_KEYS')
 
-async def start_moving(direction: int):
-    button_to_hold = direction_keys[nums_to_directions[direction]][0]
+def start_moving(directions):
+    buttons_to_hold = []
+    for d in directions:
+        buttons_to_hold.append(direction_keys[nums_to_directions[d]][0])
     to_release = []
     for direction in cardinal_directions:
         name = nums_to_directions[direction]
         btn = direction_keys[name][0]
-        if btn != button_to_hold:
+        if btn not in buttons_to_hold:
             to_release.append(btn)
-    await update_held_buttons(to_hold=[button_to_hold], to_release=to_release)
-    set_last_faced_direction(direction)
+    update_held_buttons_nowait(to_hold=buttons_to_hold, to_release=to_release)
 
 def set_last_faced_direction(direction: int):
     global last_faced_east_west
@@ -739,7 +738,7 @@ async def move_to_character(get_npc):
     npc = await get_npc()
     npc_tile = npc['tileX'], npc['tileY']
     async with server.player_status_stream() as player_stream:
-        path = await path_to_adjacent(npc_tile[0], npc_tile[1], player_stream)
+        path = await path_to_adjacent(npc_tile[0], npc_tile[1])
         pathfind_coro = travel_path(path, player_stream)
         pathfind_task_wrapper = objective.active_objective.add_task(pathfind_coro)
         while not pathfind_task_wrapper.done:
@@ -748,7 +747,7 @@ async def move_to_character(get_npc):
                 raise NavigationFailed
             next_npc_tile = npc['tileX'], npc['tileY']
             if npc_tile != next_npc_tile:
-                new_path = await path_to_adjacent(npc['tileX'], npc['tileY'], player_stream)
+                new_path = await path_to_adjacent(npc['tileX'], npc['tileY'])
                 path.retarget(new_path)
                 npc_tile = next_npc_tile
         if pathfind_task_wrapper.exception:
@@ -757,7 +756,11 @@ async def move_to_character(get_npc):
         npx_x, npc_y = npc['center']
         await server.set_mouse_position(npx_x, npc_y, from_viewport=True)
         return npc
-        # await move_directly_to_character(get_character, player_stream, npc_stream)
+        # await move_directly_to_character(get_character, player_stream)
+
+async def move_directly_to_character(get_npc, stream):
+
+    pass
 
 async def face_tile(stream, tile):
     player_status = await stream.next()
