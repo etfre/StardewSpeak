@@ -285,6 +285,9 @@ async def async_readline():
         line = await fut
         on_message(line)
 
+def request_batch(messages):
+    msg_type = 'REQUEST_BATCH'
+    return request(msg_type, messages)
 
 def request(msg_type, msg=None):
     sent_msg = send_message(msg_type, msg)
