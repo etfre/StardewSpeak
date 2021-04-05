@@ -135,7 +135,7 @@ namespace StardewSpeak
             {
                 string msgType = msg.type;
                 dynamic msgData = msg.data;
-                resp = Requests.HandleRequest(msgType, msgData);
+                resp = Requests.HandleRequest(msg);
             }
             catch (Exception e)
             {

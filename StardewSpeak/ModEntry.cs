@@ -221,7 +221,7 @@ namespace StardewSpeak
                 dynamic value;
                 try
                 {
-                    value = Requests.HandleRequest(state);
+                    value = Requests.HandleRequestMessage(state);
                 }
                 catch (Exception exception)
                 {

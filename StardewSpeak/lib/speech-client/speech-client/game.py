@@ -780,7 +780,8 @@ async def pathfind_to_tile(x, y, stream, cutoff=-1):
     return path
 
 async def move_n_tiles(direction: int, n: int, stream):
-    status = await stream.next()
+    # status = await stream.next()
+    status = await get_player_status()
     await ensure_not_moving(stream)
     from_x, from_y = status["tileX"], status["tileY"]
     to_x, to_y = from_x, from_y
@@ -796,3 +797,8 @@ async def move_n_tiles(direction: int, n: int, stream):
         raise ValueError(f"Unexpected direction {direction}")
     path = await path_to_tile(to_x, to_y, status['location'])
     await travel_path(path, stream)
+
+async def get_player_status():
+    req = server.Request('PLAYER_STATUS')
+    status = await req
+    return status

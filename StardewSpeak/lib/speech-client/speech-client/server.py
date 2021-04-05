@@ -285,6 +285,39 @@ async def async_readline():
         line = await fut
         on_message(line)
 
+class Request:
+
+    def __init__(self, request_type: str, data=None):
+        self.request_type = request_type
+        self.data = data
+        self._fut = None
+
+    def send(self):
+        if not self.sent:
+            self._fut = loop.create_future()
+            sent_msg = send_message(self.request_type, self.data)
+            mod_requests[sent_msg["id"]] = self._fut
+            return self._fut
+
+    def __await__(self):
+        if not self.sent:
+            self.send()
+        return iter(self._fut)
+
+    @property
+    def sent(self):
+        return self._fut is not None
+
+    @classmethod
+    def batch(cls, *reqs):
+        batched = []
+        for r in reqs:
+            assert not r.sent
+            msg = {"type": r.request_type, "data": r.data}
+            batched.append(msg)
+        return cls('REQUEST_BATCH', batched)
+
+
 def request_batch(messages):
     msg_type = 'REQUEST_BATCH'
     return request(msg_type, messages)

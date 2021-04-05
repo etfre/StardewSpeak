@@ -55,17 +55,17 @@ namespace StardewSpeak
                     {
                         string batchedMsgType = batchedRequest.type;
                         dynamic batchedMsgData = batchedRequest.data;
-                        body.Add(HandleRequest(batchedRequest));
+                        body.Add(HandleRequestMessage(batchedMsgType, batchedMsgData));
                     }
                     return body;
                 case "PLAYER_STATUS":
-                    return  GameState.PlayerStatus();
+                    return GameState.PlayerStatus();
                 case "TOOL_STATUS":
-                    return  GameState.ToolStatus();
+                    return GameState.ToolStatus();
                 case "CHARACTERS_AT_LOCATION":
-                    return  GameState.CharactersAtLocation(Game1.currentLocation);
+                    return GameState.CharactersAtLocation(Game1.currentLocation);
                 case "PLAYER_POSITION":
-                    return  GameState.PlayerPosition;
+                    return GameState.PlayerPosition;
                 case "NEW_STREAM":
                     {
                         string streamId = data.stream_id;
