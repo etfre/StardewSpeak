@@ -1,0 +1,344 @@
+﻿using Newtonsoft.Json;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
+using Newtonsoft.Json.Linq;
+using StardewSpeak.Pathfinder;
+using StardewModdingAPI;
+using StardewValley;
+using StardewValley.Objects;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using StardewValley.Menus;
+using System.Reflection;
+
+namespace StardewSpeak
+{
+    class Requests
+    {
+
+        public static dynamic HandleRequest(dynamic request)
+        {
+            dynamic error = null;
+            try
+            {
+                string msgType = request.type;
+                dynamic msgData = request.data;
+                dynamic body = Requests.HandleRequestMessage(msgType, msgData);
+                return new { body, error };
+            }
+            catch (Exception e)
+            {
+                string body = e.ToString();
+                error = "STACK_TRACE";
+                return new { body, error };
+            }
+        }
+
+        public static dynamic HandleRequestMessage(string msgType, dynamic data = null)
+        {
+            var player = Game1.player;
+            int playerX = player.getTileX();
+            int playerY = player.getTileY();
+            switch (msgType)
+            {
+                case "HEARTBEAT": // engine will shutdown if heartbeat not received after 10 seconds
+                    return null;
+                case "REQUEST_BATCH":
+                    var body = new List<dynamic>();
+                    foreach (dynamic batchedRequest in data) 
+                    {
+                        string batchedMsgType = batchedRequest.type;
+                        dynamic batchedMsgData = batchedRequest.data;
+                        body.Add(HandleRequest(batchedRequest));
+                    }
+                    return body;
+                case "PLAYER_STATUS":
+                    return  GameState.PlayerStatus();
+                case "TOOL_STATUS":
+                    return  GameState.ToolStatus();
+                case "CHARACTERS_AT_LOCATION":
+                    return  GameState.CharactersAtLocation(Game1.currentLocation);
+                case "PLAYER_POSITION":
+                    return  GameState.PlayerPosition;
+                case "NEW_STREAM":
+                    {
+                        string streamId = data.stream_id;
+                        string streamName = data.name;
+                        object streamData = data.data;
+                        var stream = new Stream(streamName, streamId, streamData);
+                        // shallow copy as naive but simple way to avoid multithreading issues
+                        var newStreams = new Dictionary<string, Stream>(ModEntry.Streams);
+                        newStreams.Add(streamId, stream);
+                        ModEntry.Streams = newStreams;
+                        return true;
+                    }
+                case "STOP_STREAM":
+                    {
+                        string streamId = data;
+                        // shallow copy as naive but simple way to avoid multithreading issues
+                        var newStreams = new Dictionary<string, Stream>(ModEntry.Streams);
+                        newStreams.Remove(streamId);
+                        ModEntry.Streams = newStreams;
+                        return true;
+                    }
+                case "ROUTE":
+                    {
+                        GameLocation fromLocation = player.currentLocation;
+                        string toLocationStr = data.toLocation;
+                        GameLocation toLocation = Routing.FindLocationByName(toLocationStr);
+                        return Routing.GetRoute(fromLocation.NameOrUniqueName, toLocation.NameOrUniqueName);
+                    }
+                case "ROUTE_INDOORS":
+                    {
+                        GameLocation fromLocation = player.currentLocation;
+                        return true;
+                    }
+                case "path_to_tile":
+                    {
+                        int targetX = data.x;
+                        int targetY = data.y;
+                        int cutoff = data.cutoff;
+                        var path = Pathfinder.Pathfinder.FindPath(player.currentLocation, playerX, playerY, targetX, targetY, cutoff);
+                        return path;
+                    }
+                case "PATH_TO_PLAYER":
+                    {
+                        int fromX = data.x;
+                        int fromY = data.y;
+                        int cutoff = data.cutoff;
+                        var tiles = Pathfinder.Pathfinder.FindPath(player.currentLocation, fromX, fromY, playerX, playerY, cutoff);
+                        return  new { tiles, location = player.currentLocation.NameOrUniqueName };
+                    }
+                case "BED_TILE":
+                    {
+                        if (Game1.player.currentLocation is StardewValley.Locations.FarmHouse)
+                        {
+                            var fh = Game1.player.currentLocation as StardewValley.Locations.FarmHouse;
+                            var bed = fh.getBedSpot();
+                            return  new { tileX = bed.X, tileY = bed.Y };
+                        }
+                        return null;
+                    }
+                case "SHIPPING_BIN_TILE":
+                    {
+                        if (Game1.player.currentLocation is StardewValley.Farm)
+                        {
+                            var farm = Game1.player.currentLocation as StardewValley.Farm;
+                            var sb = Game1.getFarm().GetStarterShippingBinLocation();
+                            return  new { tileX = (int)sb.X, tileY = (int)sb.Y, width = 2, height = 1 };
+                        }
+                        return null;
+                    }
+                case "LOCATION_CONNECTION":
+                    {
+                        GameLocation fromLocation = player.currentLocation;
+                        string toLocationStr = data.toLocation;
+                        GameLocation toLocation = Routing.FindLocationByName(toLocationStr);
+                        var locationConnection = Routing.FindLocationConnection(fromLocation, toLocation);
+                        return locationConnection;
+                    }
+                case "GET_LOCATION_CONNECTIONS":
+                    {
+                        GameLocation fromLocation = player.currentLocation;
+                        return Routing.MapConnections[fromLocation.NameOrUniqueName];
+                    }
+                case "GET_ElEVATOR_TILE":
+                    {
+                        if (player.currentLocation is StardewValley.Locations.MineShaft)
+                        {
+                            Vector2 elevator = Utils.GetPrivateField(player.currentLocation, "tileBeneathElevator");
+                            return new { tileX = (int)elevator.X, tileY = (int)elevator.Y };
+                        }
+                        return null;
+                    }
+                case "GET_LADDER_UP_TILE":
+                    {
+                        if (player.currentLocation is StardewValley.Locations.MineShaft)
+                        {
+                            Vector2 elevator = Utils.GetPrivateField(player.currentLocation, "tileBeneathLadder");
+                            return new { tileX = (int)elevator.X, tileY = (int)elevator.Y };
+                        }
+                        return null;
+                    }
+                case "PET_ANIMAL_BY_NAME":
+                    {
+                        string name = data.name;
+                        FarmAnimal animal = Utils.FindAnimalByName(name);
+                        bool didPet = false;
+                        if (animal != null && !animal.wasPet)
+                        {
+                            animal.pet(player);
+                            didPet = true;
+                        }
+                        return didPet;
+                    }
+                case "USE_TOOL_ON_ANIMAL_BY_NAME":
+                    {
+                        string name = data.name;
+                        FarmAnimal animal = Utils.FindAnimalByName(name);
+                        bool didUseTool = false;
+                        if (animal != null && player.CurrentTool?.BaseName == animal.toolUsedForHarvest.Value)
+                        {
+                            Rectangle rect = animal.GetHarvestBoundingBox();
+                            int x = rect.Center.X - Game1.viewport.X;
+                            int y = rect.Center.Y - Game1.viewport.Y;
+
+                            Game1.setMousePosition(x, y);
+                            Game1.pressUseToolButton();
+                            //player.CurrentTool.beginUsing(player.currentLocation, (int)animal.Position.X, (int)animal.Position.Y, player);
+                            didUseTool = true;
+                        }
+                        return didUseTool;
+                    }
+                case "GET_TREES":
+                    {
+                        return GameState.Trees();
+                    }
+                case "GET_DEBRIS":
+                    {
+                        return GameState.Debris();
+                    }
+                case "GET_HOE_DIRT":
+                    {
+                        return GameState.HoeDirtTiles();
+                    }
+                case "GET_LOCATION_OBJECTS":
+                    {
+                        return GameState.LocationObjects();
+                    }
+                case "GET_DIGGABLE_TILES":
+                    {
+                        List<dynamic> testTiles = data.tiles.ToObject<List<dynamic>>();
+                        return testTiles.Where(tile => Utils.IsTileHoeable(Game1.player.currentLocation, (int)tile.tileX, (int)tile.tileY));
+                    }
+                case "EQUIP_ITEM":
+                    {
+                        string item = data.item;
+                        return Actions.EquipToolIfOnHotbar(item);
+                    }
+                case "EQUIP_ITEM_INDEX":
+                    {
+                        int index = data.index;
+                        Game1.player.CurrentToolIndex = index;
+                        return true;
+                    }
+                case "GET_WATER_TILES":
+                    {
+                        bool[,] allTiles = Game1.player.currentLocation.waterTiles;
+                        var wt = new List<List<int>>();
+                        if (allTiles != null)
+                        {
+                            int width = allTiles.GetLength(0);
+                            int height = allTiles.GetLength(1);
+                            for (int x = 0; x < width; x++)
+                            {
+                                for (int y = 0; y < height; y++)
+                                {
+                                    bool isWaterTile = allTiles[x, y];
+                                    if (isWaterTile)
+                                    {
+                                        var tile = new List<int> { x, y };
+                                        wt.Add(tile);
+                                    }
+                                }
+                            }
+                        }
+                        return wt;
+                    }
+                case "GET_ACTIVE_MENU":
+                    return Utils.SerializeMenu(Game1.activeClickableMenu);
+                case "GET_MOUSE_POSITION":
+                    {
+                        return new List<int> { Game1.getMouseX(), Game1.getMouseY() };
+                    }
+                case "SET_MOUSE_POSITION":
+                    {
+                        int x = data.x;
+                        int y = data.y;
+                        bool fromViewport = data.from_viewport;
+                        if (fromViewport)
+                        {
+                            x -= Game1.viewport.X;
+                            y -= Game1.viewport.Y;
+                        }
+                        Game1.setMousePosition(x, y);
+                        return true;
+                    }
+                case "SET_MOUSE_POSITION_ON_TILE":
+                    {
+                        int x = data.x * 64 + 32 - Game1.viewport.X;
+                        int y = data.y * 64 + 32 - Game1.viewport.Y;
+                        Game1.setMousePosition(x, y);
+                        return true;
+                    }
+                case "SET_MOUSE_POSITION_RELATIVE":
+                    {
+                        int x = data.x;
+                        int y = data.y;
+                        Game1.setMousePosition(Game1.getMouseX() + x, Game1.getMouseY() + y);
+                        return true;
+                    }
+                case "MOUSE_CLICK":
+                    {
+                        string btn = data.btn;
+                        if (btn == "left") StardewSpeak.Input.LeftClick();
+                        else if (btn == "right") StardewSpeak.Input.RightClick();
+                        return true;
+                    }
+                case "UPDATE_HELD_BUTTONS":
+                    {
+                        List<string> toHold = data.toHold.ToObject<List<string>>();
+                        List<string> toRelease = data.toRelease.ToObject<List<string>>();
+                        foreach (string key in toRelease)
+                        {
+                            Input.Release(key);
+                        }
+                        foreach (string key in toHold)
+                        {
+                            Input.Hold(key);
+                        }
+                        return true;
+                    }
+                case "RELEASE_ALL_KEYS":
+                    {
+                        Input.ClearHeld();
+                        return true;
+                    }
+                case "PRESS_KEY":
+                    {
+                        string key = data.key;
+                        Input.SetDown(key);
+                        return true;
+                    }
+                case "CATCH_FISH":
+                    {
+                        var am = Game1.activeClickableMenu;
+                        if (am is BobberBar)
+                        {
+                            var bb = am as BobberBar;
+                            var distanceFromCatching = (float)Utils.GetPrivateField(bb, "distanceFromCatching");
+                            bool treasure = (bool)Utils.GetPrivateField(bb, "treasure");
+                            if (treasure)
+                            {
+                                Utils.SetPrivateField(bb, "treasureCaught", true);
+                            }
+                            Utils.SetPrivateField(bb, "distanceFromCatching", distanceFromCatching + 100);
+
+                        }
+                        return true;
+                    }
+                case "GET_RESOURCE_CLUMPS":
+                    {
+                        return GameState.ResourceClumps();
+                    }
+            }
+            throw new InvalidDataException($"Unhandled request {msgType}");
+        }
+    }
+}

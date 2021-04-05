@@ -737,9 +737,9 @@ async def move_to_character(get_npc):
     import objective
     npc = await get_npc()
     npc_tile = npc['tileX'], npc['tileY']
-    async with server.player_status_stream() as player_stream:
+    async with server.player_status_stream() as player_stream, server.player_status_stream() as travel_path_stream:
         path = await path_to_adjacent(npc_tile[0], npc_tile[1])
-        pathfind_coro = travel_path(path, player_stream)
+        pathfind_coro = travel_path(path, travel_path_stream) # don't share streams between tasks
         pathfind_task_wrapper = objective.active_objective.add_task(pathfind_coro)
         while not pathfind_task_wrapper.done:
             npc = await get_npc()
@@ -759,8 +759,8 @@ async def move_to_character(get_npc):
         # await move_directly_to_character(get_character, player_stream)
 
 async def move_directly_to_character(get_npc, stream):
-
-    pass
+    async with async_timeout(5):
+        pass
 
 async def face_tile(stream, tile):
     player_status = await stream.next()
