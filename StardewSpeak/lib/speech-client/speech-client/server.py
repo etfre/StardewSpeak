@@ -285,28 +285,20 @@ async def async_readline():
         line = await fut
         on_message(line)
 
-class Request:
+class RequestBuilder:
 
     def __init__(self, request_type: str, data=None):
         self.request_type = request_type
         self.data = data
-        self._fut = None
 
-    def send(self):
-        if not self.sent:
-            self._fut = loop.create_future()
-            sent_msg = send_message(self.request_type, self.data)
-            mod_requests[sent_msg["id"]] = self._fut
-            return self._fut
+    def request(self):
+        self._fut = loop.create_future()
+        sent_msg = send_message(self.request_type, self.data)
+        mod_requests[sent_msg["id"]] = self._fut
+        return self._fut
 
-    def __await__(self):
-        if not self.sent:
-            self.send()
-        return iter(self._fut)
-
-    @property
-    def sent(self):
-        return self._fut is not None
+    def stream(self):
+        raise NotImplementedError
 
     @classmethod
     def batch(cls, *reqs):
@@ -323,11 +315,7 @@ def request_batch(messages):
     return request(msg_type, messages)
 
 def request(msg_type, msg=None):
-    sent_msg = send_message(msg_type, msg)
-    fut = loop.create_future()
-    mod_requests[sent_msg["id"]] = fut
-    return fut
-
+    return RequestBuilder(msg_type, msg).request()
 
 def send_message(msg_type, msg=None):
     msg_id = str(uuid.uuid4())

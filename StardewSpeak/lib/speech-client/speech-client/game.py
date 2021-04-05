@@ -799,6 +799,6 @@ async def move_n_tiles(direction: int, n: int, stream):
     await travel_path(path, stream)
 
 async def get_player_status():
-    req = server.Request('PLAYER_STATUS')
-    status = await req
+    req_builder = server.RequestBuilder('PLAYER_STATUS')
+    status = await req_builder.request()
     return status
