@@ -733,7 +733,7 @@ async def move_to_character(fetch_character_builder: server.RequestBuilder, filt
     npc_tile = npc['tileX'], npc['tileY']
     async with server.player_status_stream() as player_stream, server.player_status_stream() as travel_path_stream:
         path = await path_to_adjacent(npc_tile[0], npc_tile[1])
-        pathfind_coro = travel_path(path, travel_path_stream) # don't share streams between tasks
+        pathfind_coro = travel_path(path, travel_path_stream) # don't share streams between tasks, otherwise they steal .next() from each other
         pathfind_task_wrapper = objective.active_objective.add_task(pathfind_coro)
         while not pathfind_task_wrapper.done:
             npc = await get_npc(fetch_character_builder, filter_for_npc)
@@ -754,10 +754,10 @@ async def get_npc(fetch_character_builder: server.RequestBuilder, filter_for_npc
     resp = await fetch_character_builder.request()
     return filter_for_npc(resp)
 
-async def move_directly_to_character(fetch_character_builder: server.RequestBuilder, filter_for_npc, threshold=100):
+async def move_directly_to_character(fetch_character_builder: server.RequestBuilder, filter_for_npc, threshold=100, timeout=4):
     batched_builder = server.RequestBuilder.batch(server.RequestBuilder('PLAYER_STATUS'), fetch_character_builder)
     is_moving = False
-    async with async_timeout.timeout(20):
+    async with async_timeout.timeout(timeout):
         try:
             while True:
                 directions = []
@@ -798,7 +798,6 @@ async def pathfind_to_tile(x, y, stream, cutoff=-1):
     return path
 
 async def move_n_tiles(direction: int, n: int, stream):
-    # status = await stream.next()
     status = await get_player_status()
     await ensure_not_moving(stream)
     from_x, from_y = status["tileX"], status["tileY"]

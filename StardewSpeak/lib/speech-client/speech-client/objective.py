@@ -255,7 +255,7 @@ async def use_tool_on_animals(tool: str, animal_type=None):
     async with server.animals_at_location_stream() as animals_stream, server.player_status_stream() as player_stream:
         await game.equip_item_by_name(tool)
         consecutive_errors = 0
-        consecutive_error_threshold = 5
+        consecutive_error_threshold = 10
         while True:
             animals = await game.get_animals(animals_stream, player_stream)
             animal = next((x for x in animals if x["isMature"] and x['currentProduce'] > 0 and x['toolUsedForHarvest'] == tool), None)
@@ -266,7 +266,6 @@ async def use_tool_on_animals(tool: str, animal_type=None):
             try:
                 await game.move_to_character(req_builder, fn)
             except (game.NavigationFailed, RuntimeError) as e:
-                raise e
                 consecutive_errors += 1
             else:
                 did_use = await game.use_tool_on_animal_by_name(animal['name'])
