@@ -73,19 +73,19 @@ class Path:
         self.tile_indices = p.tile_indices
         self.location = p.location
 
-def distance_between_tiles(t1, t2):
+def distance_between_points(t1, t2):
     # pathfinding doesn't move diagonally for simplicity so just sum differences between x and y
     return abs(t1[0] - t2[0]) + abs(t1[1] - t2[1]) 
     
-def distance_between_tiles_diagonal(t1, t2):
-    x_score = abs(t1[0] - t2[0]) ** 2
-    y_score = abs(t1[1] - t2[1]) ** 2
+def distance_between_points_diagonal(p1, p2):
+    x_score = abs(p1[0] - p2[0]) ** 2
+    y_score = abs(p1[1] - p2[1]) ** 2
     return math.sqrt(x_score + y_score) 
 
 def score_objects_by_distance(start_tile, current_tile, obj_tile, start_weight=0.25, current_weight=0.75):
     assert start_weight + current_weight == 1
-    distance_from_start = distance_between_tiles(start_tile, obj_tile)
-    distance_from_current = distance_between_tiles(current_tile, obj_tile)
+    distance_from_start = distance_between_points(start_tile, obj_tile)
+    distance_from_current = distance_between_points(current_tile, obj_tile)
     return start_weight * distance_from_start  + current_weight * distance_from_current
 
 async def get_trees(location: str):
@@ -144,7 +144,7 @@ async def gather_items_on_ground(radius):
             debris = await server.request('GET_DEBRIS', {"location": "location"})
             test_tiles_set = set()
             for item in debris:
-                within_radius = distance_between_tiles(start_tile, (item['tileX'], item['tileY'])) < radius
+                within_radius = distance_between_points(start_tile, (item['tileX'], item['tileY'])) < radius
                 if within_radius:
                     debris_tile = item['tileX'], item['tileY']
                     for tile in get_adjacent_tiles(debris_tile) + [debris_tile]:
@@ -172,13 +172,13 @@ def sort_test_tiles(tiles, start_tile, current_tile, items_to_gather):
     max_current_distance = -1
     max_resources_on_tile = -1
     for tile in tiles:
-        max_start_distance = max(max_start_distance, distance_between_tiles(start_tile, tile))
-        max_current_distance = max(max_current_distance, distance_between_tiles(current_tile, tile))
+        max_start_distance = max(max_start_distance, distance_between_points(start_tile, tile))
+        max_current_distance = max(max_current_distance, distance_between_points(current_tile, tile))
         max_resources_on_tile = max(max_resources_on_tile, items_to_gather[tile])
 
     def score_tile(t):
-        start_score = distance_between_tiles(start_tile, t) / max_start_distance
-        current_score = distance_between_tiles(current_tile, t) / max_current_distance
+        start_score = distance_between_points(start_tile, t) / max_start_distance
+        current_score = distance_between_points(current_tile, t) / max_current_distance
         resources_score = items_to_gather[t] / max_resources_on_tile
         return 0.05*start_score + 0.25*current_score + 0.7*resources_score
 
@@ -218,7 +218,7 @@ async def path_to_next_location(next_location: str, status_stream):
     connections = await get_location_connections()
     connection_to_next_loc = [c for c in connections if c['TargetName'] == next_location]
     current_tile = await get_current_tile(status_stream)
-    connection_to_next_loc.sort(key=lambda cn: distance_between_tiles(current_tile, (cn['X'], cn['Y'])))
+    connection_to_next_loc.sort(key=lambda cn: distance_between_points(current_tile, (cn['X'], cn['Y'])))
     for lc in connection_to_next_loc:
         x, y, is_door = lc['X'], lc['Y'], lc['IsDoor']
         try:
@@ -260,7 +260,7 @@ async def pathfind_to_next_location(
 
 async def travel_path(path: Path, status_stream: server.Stream, next_location=None):
     is_done = False
-    remaining_attempts = 5
+    remaining_attempts = 50
     timeout = len(path.tiles) * 3
     try:
         async with async_timeout.timeout(timeout):
@@ -343,6 +343,8 @@ def direction_from_tiles(tile, target_tile):
     raise ValueError(f'Could not extract direction from {tile} to {target_tile}')
 
 def direction_from_positions(xy, target_xy):
+    if xy == target_xy:
+        return
     x, y = xy
     target_x, target_y = target_xy
     xdiff = target_x - x
@@ -478,7 +480,7 @@ async def equip_item_by_index(idx: int):
 
 def closest_item_key(start_tile, current_tile, item, player_status):
     target_tile = item['tileX'], item['tileY']
-    return distance_between_tiles(current_tile, target_tile)
+    return distance_between_points(current_tile, target_tile)
 
 def generic_next_item_key(start_tile, current_tile, item, player_status):
     target_tile = item['tileX'], item['tileY']
@@ -591,18 +593,10 @@ async def clear_object(obj, obj_getter):
                 return
             await asyncio.sleep(0.1)
 
-async def find_npc_by_name(name: str, characters_stream):
-    characters = await characters_stream.next()
+def find_character_by_name(name: str, characters):
     for char in characters:
         if char['name'] == name:
             return char
-    raise NavigationFailed(f'{name} is not in the current location')
-
-async def find_animal_by_name(name: str, animals_stream):
-    animals = await animals_stream.next()
-    for animal in animals:
-        if animal['name'] == name:
-            return animal
     raise NavigationFailed(f'{name} is not in the current location')
 
 async def get_current_tile(stream: server.Stream):
@@ -703,13 +697,13 @@ async def go_inside():
     if indoors_connections:
         with server.player_status_stream() as pss:
             current_tile = await get_current_tile(pss)
-            indoors_connections.sort(key=lambda t: distance_between_tiles(current_tile, (t['X'], t['Y'])))
+            indoors_connections.sort(key=lambda t: distance_between_points(current_tile, (t['X'], t['Y'])))
             await pathfind_to_next_location(indoors_connections[0]['TargetName'], pss)
 
 async def get_animals(animals_stream, player_stream):
     animals, player_status = await asyncio.gather(animals_stream.next(), player_stream.next())
     player_tile = player_status['tileX'], player_status['tileY']
-    animals.sort(key=lambda x: distance_between_tiles(player_tile, (x['tileX'], x['tileY'])))
+    animals.sort(key=lambda x: distance_between_points(player_tile, (x['tileX'], x['tileY'])))
     return animals
 
 async def use_tool_on_animal_by_name(name: str):
@@ -733,18 +727,16 @@ async def pet_animal_by_name(name: str):
 class NavigationFailed(Exception):
     pass
 
-async def move_to_character(get_npc):
+async def move_to_character(fetch_character_builder: server.RequestBuilder, filter_for_npc):
     import objective
-    npc = await get_npc()
+    npc = await get_npc(fetch_character_builder, filter_for_npc)
     npc_tile = npc['tileX'], npc['tileY']
     async with server.player_status_stream() as player_stream, server.player_status_stream() as travel_path_stream:
         path = await path_to_adjacent(npc_tile[0], npc_tile[1])
         pathfind_coro = travel_path(path, travel_path_stream) # don't share streams between tasks
         pathfind_task_wrapper = objective.active_objective.add_task(pathfind_coro)
         while not pathfind_task_wrapper.done:
-            npc = await get_npc()
-            if npc is None:
-                raise NavigationFailed
+            npc = await get_npc(fetch_character_builder, filter_for_npc)
             next_npc_tile = npc['tileX'], npc['tileY']
             if npc_tile != next_npc_tile:
                 new_path = await path_to_adjacent(npc['tileX'], npc['tileY'])
@@ -752,25 +744,51 @@ async def move_to_character(get_npc):
                 npc_tile = next_npc_tile
         if pathfind_task_wrapper.exception:
             raise pathfind_task_wrapper.exception
-        await face_tile(player_stream, npc_tile)
+        await move_directly_to_character(fetch_character_builder, filter_for_npc)
+        npc = await get_npc(fetch_character_builder, filter_for_npc)
         npx_x, npc_y = npc['center']
         await server.set_mouse_position(npx_x, npc_y, from_viewport=True)
         return npc
-        # await move_directly_to_character(get_character, player_stream)
 
-async def move_directly_to_character(get_npc, stream):
-    async with async_timeout(5):
-        pass
+async def get_npc(fetch_character_builder: server.RequestBuilder, filter_for_npc):
+    resp = await fetch_character_builder.request()
+    return filter_for_npc(resp)
+
+async def move_directly_to_character(fetch_character_builder: server.RequestBuilder, filter_for_npc, threshold=100):
+    batched_builder = server.RequestBuilder.batch(server.RequestBuilder('PLAYER_STATUS'), fetch_character_builder)
+    is_moving = False
+    async with async_timeout.timeout(20):
+        try:
+            while True:
+                directions = []
+                player_status, characters = await batched_builder.request()
+                character = filter_for_npc(characters)
+                player_pos, character_pos = player_status['position'], character['position']
+                if distance_between_points_diagonal(player_pos, character_pos) < threshold:
+                    return
+                px, py = player_pos
+                cx, cy = character_pos
+                xdiff = px - cx
+                if abs(xdiff) > 10:
+                    direction = constants.WEST if xdiff > 0 else constants.EAST
+                    directions.append(direction)
+                ydiff = py - cy
+                if abs(ydiff) > 10:
+                    direction = constants.NORTH if ydiff > 0 else constants.SOUTH
+                    directions.append(direction)
+                if not directions:
+                    raise NavigationFailed
+                start_moving(directions)
+                is_moving = True
+        finally:
+            if is_moving:
+                await stop_moving()
 
 async def face_tile(stream, tile):
     player_status = await stream.next()
     player_tile = player_status['tileX'], player_status['tileY']
     direction_to_face = direction_from_tiles(player_tile, tile)
     await face_direction(direction_to_face, stream)
-
-async def move_directly_to_character(get_character, player_stream, npc_stream):
-    while True:
-        break
 
 async def pathfind_to_tile(x, y, stream, cutoff=-1):
     status = await stream.next()

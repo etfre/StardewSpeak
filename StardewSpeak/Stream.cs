@@ -21,26 +21,6 @@ namespace StardewSpeak
             this.Id = id;
             this.Data = streamData;
         }
-
-        public object Gather(UpdateTickedEventArgs e)
-        {
-            string state = this.Data.state;
-            switch (state) 
-            {
-                case "PLAYER_STATUS":
-                    return GameState.PlayerStatus();
-                case "TOOL_STATUS":
-                    return GameState.ToolStatus();
-                case "CHARACTERS_AT_LOCATION":
-                    return GameState.CharactersAtLocation(Game1.currentLocation);
-                case "ANIMALS_AT_LOCATION":
-                    return GameState.AnimalsAtLocation(Game1.currentLocation);
-                case "PLAYER_ITEMS":
-                    return GameState.PlayerItems();
-            }
-            return null;
-        }
-
         public static List<dynamic> MessageStreams(Dictionary<string, Stream> streams, string streamName, dynamic messageValue) 
         {
             var messages = new List<dynamic>();

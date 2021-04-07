@@ -216,12 +216,12 @@ namespace StardewSpeak
                 var id = pair.Key;
                 var stream = pair.Value;
                 if (stream.Name != "UPDATE_TICKED" || !e.IsMultipleOf((uint)stream.Data.ticks)) continue;
-                string state = stream.Data.state;
+                string type = stream.Data.type;
                 string error = null;
                 dynamic value;
                 try
                 {
-                    value = Requests.HandleRequestMessage(state);
+                    value = Requests.HandleRequestMessage(type);
                 }
                 catch (Exception exception)
                 {

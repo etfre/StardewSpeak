@@ -246,8 +246,9 @@ class TalkToNPCObjective(Objective):
 
     async def run(self):
         async with server.characters_at_location_stream() as npc_stream:
-            fn = functools.partial(game.find_npc_by_name, self.npc_name, npc_stream)
-            await game.move_to_character(fn)
+            fn = functools.partial(game.find_character_by_name, self.npc_name)
+            request_builder = server.RequestBuilder("CHARACTERS_AT_LOCATION")
+            await game.move_to_character(request_builder, fn)
         await game.do_action()
 
 async def use_tool_on_animals(tool: str, animal_type=None):
@@ -260,10 +261,12 @@ async def use_tool_on_animals(tool: str, animal_type=None):
             animal = next((x for x in animals if x["isMature"] and x['currentProduce'] > 0 and x['toolUsedForHarvest'] == tool), None)
             if not animal:
                 return
-            fn = functools.partial(game.find_animal_by_name, animal['name'], animals_stream)
+            fn = functools.partial(game.find_character_by_name, animal['name'])
+            req_builder = server.RequestBuilder('ANIMALS_AT_LOCATION')
             try:
-                await game.move_to_character(fn)
-            except game.NavigationFailed:
+                await game.move_to_character(req_builder, fn)
+            except (game.NavigationFailed, RuntimeError) as e:
+                raise e
                 consecutive_errors += 1
             else:
                 did_use = await game.use_tool_on_animal_by_name(animal['name'])
@@ -277,19 +280,19 @@ async def use_tool_on_animals(tool: str, animal_type=None):
 
 async def pet_animals():
     async with server.animals_at_location_stream() as animals_stream, server.player_status_stream() as player_stream:
+        req_builder = server.RequestBuilder('ANIMALS_AT_LOCATION')
         while True:
             animals = await game.get_animals(animals_stream, player_stream)
             animal = next((x for x in animals if not x["wasPet"]), None)
             if not animal:
                 return
-            fn = functools.partial(game.find_animal_by_name, animal['name'], animals_stream)
+            fn = functools.partial(game.find_character_by_name, animal['name'])
             try:
-                res = await game.move_to_character(fn)
-            except game.NavigationFailed:
+                res = await game.move_to_character(req_builder, fn)
+            except (game.NavigationFailed, RuntimeError):
                 continue
-            if res:
-                await game.pet_animal_by_name(animal['name'])
-                await asyncio.sleep(0.1)
+            await game.pet_animal_by_name(animal['name'])
+            await asyncio.sleep(0.1)
         
 class DefendObjective(Objective):
 
@@ -306,9 +309,9 @@ class DefendObjective(Objective):
                     continue
                 if player_stream.has_value:
                     player_position = player_stream.latest_value['position']
-                visible_monster_positions.sort(key=lambda x: game.distance_between_tiles_diagonal(player_position, x))
+                visible_monster_positions.sort(key=lambda x: game.distance_between_points_diagonal(player_position, x))
                 closest_monster_position = visible_monster_positions[0]
-                distance_from_monster = game.distance_between_tiles_diagonal(player_position, closest_monster_position)
+                distance_from_monster = game.distance_between_points_diagonal(player_position, closest_monster_position)
                 if distance_from_monster > 0:
                     direction_to_face = game.direction_from_positions(player_position, closest_monster_position)
                     await game.face_direction(direction_to_face, player_stream)
@@ -319,43 +322,39 @@ class AttackObjective(Objective):
 
     def __init__(self):
         self.player_position = None
-        self.invisible_monsters = []
 
     async def run(self):
-        async with server.characters_at_location_stream() as char_stream, server.player_status_stream() as player_stream:
-            get_monster = functools.partial(self.get_closest_monster, char_stream, player_stream)
+        player_status_builder = server.RequestBuilder('PLAYER_STATUS')
+        chars_request_builder = server.RequestBuilder('CHARACTERS_AT_LOCATION')
+        async with server.player_status_stream() as player_stream:
             self.player_position = (await player_stream.next())['position']
             while True:
-                target = await game.move_to_character(get_monster)
+                target = await game.move_to_character(self.foobar)
                 if target is None and not self.invisible_monsters:
                     return
                 distance_from_monster = 0
                 while target and distance_from_monster < 90:
                     closest_monster_position = target['position']
-                    distance_from_monster = game.distance_between_tiles_diagonal(self.player_position, closest_monster_position)
+                    distance_from_monster = game.distance_between_points_diagonal(self.player_position, closest_monster_position)
                     if distance_from_monster > 0:
                         direction_to_face = game.direction_from_positions(self.player_position, closest_monster_position)
                         await game.face_direction(direction_to_face, player_stream)
                     await game.swing_tool()
                     await asyncio.sleep(0.1)
-                    target = await get_monster()
+                    target = await self.foobar()
 
-    async def get_closest_monster(self, char_stream, player_stream):
-        chars = await char_stream.next()
-        self.invisible_monsters = []
-        visible_monsters = []
-        for c in chars:
-            if c['isMonster']:
-                monster_list = self.invisible_monsters if c['isInvisible'] else visible_monsters
-                monster_list.append(c)
-        if not visible_monsters:
-            if not self.invisible_monsters:
-                raise RuntimeError('No monsters in current location')
-            return
-        if player_stream.has_value:
-            self.player_position = player_stream.latest_value['position']
-        visible_monsters.sort(key=lambda x: game.distance_between_tiles_diagonal(self.player_position, (x['tileX'], x['tileY'])))
-        closest_monster = visible_monsters[0]
+    async def foobar(self):
+        builders = [server.RequestBuilder('PLAYER_STATUS'), server.RequestBuilder('CHARACTERS_AT_LOCATION')]
+        player_status, chars = await server.RequestBuilder.batch(*builders).request()
+        return self.get_closest_monster(player_status, chars)
+
+    def get_closest_monster(self, player_status, chars):
+        monsters = [c for c in chars if c['isMonster']]
+        if not monsters:
+            raise RuntimeError('No monsters in current location')
+        # get closest visible monster if possible, otherwise closest invisible monster
+        key = lambda x: (not x['isInvisible'], game.distance_between_points_diagonal(player_status['position'], (x['tileX'], x['tileY'])))
+        closest_monster = min(monsters, key=key)
         return closest_monster
 
 

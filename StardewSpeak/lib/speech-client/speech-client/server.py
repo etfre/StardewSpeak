@@ -125,22 +125,22 @@ class StreamClosedError(Exception):
     pass
 
 def player_status_stream(ticks=1):
-    return Stream("UPDATE_TICKED", data={"state": "PLAYER_STATUS", "ticks": ticks})
+    return Stream("UPDATE_TICKED", data={"type": "PLAYER_STATUS", "ticks": ticks})
 
 def tool_status_stream(ticks=1):
-    return Stream("UPDATE_TICKED", data={"state": "TOOL_STATUS", "ticks": ticks})
+    return Stream("UPDATE_TICKED", data={"type": "TOOL_STATUS", "ticks": ticks})
 
 def characters_at_location_stream(ticks=1):
-    return Stream("UPDATE_TICKED", data={"state": "CHARACTERS_AT_LOCATION", "ticks": ticks})
+    return Stream("UPDATE_TICKED", data={"type": "CHARACTERS_AT_LOCATION", "ticks": ticks})
 
 def animals_at_location_stream(ticks=1):
-    return Stream("UPDATE_TICKED", data={"state": "ANIMALS_AT_LOCATION", "ticks": ticks})
+    return Stream("UPDATE_TICKED", data={"type": "ANIMALS_AT_LOCATION", "ticks": ticks})
 
 def player_items_stream(ticks=1):
-    return Stream("UPDATE_TICKED", data={"state": "PLAYER_ITEMS", "ticks": ticks})
+    return Stream("UPDATE_TICKED", data={"type": "PLAYER_ITEMS", "ticks": ticks})
 
 def on_warped_stream(ticks=1):
-    return Stream("ON_WARPED", data={"state": "PLAYER_STATUS", "ticks": ticks})
+    return Stream("ON_WARPED", data={"type": "PLAYER_STATUS", "ticks": ticks})
 
 def on_terrain_feature_list_changed_stream():
     return Stream("ON_TERRAIN_FEATURE_LIST_CHANGED", data={})
@@ -297,14 +297,13 @@ class RequestBuilder:
         mod_requests[sent_msg["id"]] = self._fut
         return self._fut
 
-    def stream(self):
-        raise NotImplementedError
+    def stream(self, ticks=1):
+        return Stream("UPDATE_TICKED", data={"type": self.request_type, "ticks": ticks})
 
     @classmethod
     def batch(cls, *reqs):
         batched = []
         for r in reqs:
-            assert not r.sent
             msg = {"type": r.request_type, "data": r.data}
             batched.append(msg)
         return cls('REQUEST_BATCH', batched)
