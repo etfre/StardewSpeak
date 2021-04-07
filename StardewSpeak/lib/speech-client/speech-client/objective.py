@@ -319,38 +319,40 @@ class DefendObjective(Objective):
 
 class AttackObjective(Objective):
 
-    def __init__(self):
-        self.player_position = None
-
     async def run(self):
         player_status_builder = server.RequestBuilder('PLAYER_STATUS')
         chars_request_builder = server.RequestBuilder('CHARACTERS_AT_LOCATION')
+        batched_request_builder = server.RequestBuilder.batch(player_status_builder, chars_request_builder)
         async with server.player_status_stream() as player_stream:
-            self.player_position = (await player_stream.next())['position']
+            player_position = (await player_status_builder.request())['position']
             while True:
-                target = await game.move_to_character(self.foobar)
-                if target is None and not self.invisible_monsters:
+                try:
+                    target = await game.move_to_character(batched_request_builder, self.get_closest_monster)
+                except ValueError: # no more monsters
                     return
                 distance_from_monster = 0
-                while target and distance_from_monster < 90:
+                while distance_from_monster < 90:
+                    resp = await batched_request_builder.request()
+                    player_position = resp[0]['position']
+                    try:
+                        target = self.get_closest_monster(resp)
+                    except ValueError:
+                        return
                     closest_monster_position = target['position']
-                    distance_from_monster = game.distance_between_points_diagonal(self.player_position, closest_monster_position)
+                    distance_from_monster = game.distance_between_points_diagonal(player_position, closest_monster_position)
                     if distance_from_monster > 0:
-                        direction_to_face = game.direction_from_positions(self.player_position, closest_monster_position)
+                        direction_to_face = game.direction_from_positions(player_position, closest_monster_position)
                         await game.face_direction(direction_to_face, player_stream)
+                    await server.set_mouse_position(player_position[0], player_position[1], from_viewport=True)
                     await game.swing_tool()
                     await asyncio.sleep(0.1)
-                    target = await self.foobar()
 
-    async def foobar(self):
-        builders = [server.RequestBuilder('PLAYER_STATUS'), server.RequestBuilder('CHARACTERS_AT_LOCATION')]
-        player_status, chars = await server.RequestBuilder.batch(*builders).request()
-        return self.get_closest_monster(player_status, chars)
 
-    def get_closest_monster(self, player_status, chars):
+    def get_closest_monster(self, resp):
+        player_status, chars, = resp
         monsters = [c for c in chars if c['isMonster']]
         if not monsters:
-            raise RuntimeError('No monsters in current location')
+            raise ValueError('No monsters in current location')
         # get closest visible monster if possible, otherwise closest invisible monster
         key = lambda x: (not x['isInvisible'], game.distance_between_points_diagonal(player_status['position'], (x['tileX'], x['tileY'])))
         closest_monster = min(monsters, key=key)
