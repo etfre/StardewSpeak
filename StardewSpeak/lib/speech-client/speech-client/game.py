@@ -257,11 +257,11 @@ async def pathfind_to_next_location(
         await face_direction(door_direction, status_stream, move_cursor=True)
         await do_action()
 
-
+# TODO: refactor as method on Path class
 async def travel_path(path: Path, status_stream: server.Stream, next_location=None):
     is_done = False
-    remaining_attempts = 50
-    timeout = len(path.tiles) * 3
+    remaining_attempts = 5
+    timeout = len(path.tiles) * 300
     try:
         async with async_timeout.timeout(timeout):
             while not is_done:
@@ -278,7 +278,10 @@ async def travel_path(path: Path, status_stream: server.Stream, next_location=No
                 except KeyError as e:
                     if remaining_attempts:
                         target_x, target_y = path.tiles[-1] # target can change so check whenever we need a new path
-                        path = await path_to_tile(target_x, target_y, path.location)
+                        current_tiles = path.tiles
+                        new_path = await path_to_tile(target_x, target_y, path.location)
+                        if current_tiles == path.tiles:
+                            path.retarget(new_path)
                         remaining_attempts -= 1
                     else:
                         raise e
@@ -290,16 +293,19 @@ def get_adjacent_tiles(tile):
     x, y = tile
     return [(x, y - 1), (x + 1, y), (x, y + 1), (x - 1, y)]
 
-async def path_to_adjacent(x, y, cutoff=-1):
+async def path_to_adjacent(x, y, tiles_from_target=1, cutoff=-1):
     resp = await server.request("PATH_TO_PLAYER", {"x": x, "y": y, "cutoff": cutoff})
     tiles, location = resp['tiles'], resp['location']
+    return tiles_to_adjacent_path(tiles, location, tiles_from_target=tiles_from_target)
+
+def tiles_to_adjacent_path(tiles, location, tiles_from_target=1):
     if tiles is None:
         raise NavigationFailed(f"Cannot pathfind to player from {x}, {y} at location {location}")
-    tiles =  tiles if len(tiles) == 1 else reversed(tiles[1:])
+    tiles =  tiles[:1] if len(tiles) < tiles_from_target else reversed(tiles[tiles_from_target:])
     return Path(tiles, location)
 
-async def pathfind_to_adjacent(x, y, status_stream: server.Stream, cutoff=-1):
-    path = await path_to_adjacent(x, y, cutoff=cutoff)
+async def pathfind_to_adjacent(x, y, status_stream: server.Stream, tiles_from_target=1, cutoff=-1):
+    path = await path_to_adjacent(x, y, tiles_from_target=tiles_from_target, cutoff=cutoff)
     await travel_path(path, status_stream)
     if path.tiles[-1] != (x, y):
         direction_to_face = direction_from_tiles(path.tiles[-1], (x, y))
@@ -727,19 +733,95 @@ async def pet_animal_by_name(name: str):
 class NavigationFailed(Exception):
     pass
 
-async def move_to_character(fetch_character_builder: server.RequestBuilder, filter_for_npc):
+class MoveToCharacter:
+
+    def __init__(self, get_character_builder):
+        self.get_character_builder = get_character_builder
+
+    async def move(self, tiles_from_target=1):
+        import objective
+        npc = await self.get_character(None)
+        async with server.player_status_stream() as travel_path_stream:
+            path = tiles_to_adjacent_path(npc['pathTiles'], npc['location'], tiles_from_target=tiles_from_target)
+            # don't share streams between tasks, otherwise they steal .next() from each other and cause resource starvation issues
+            pathfind_coro = travel_path(path, travel_path_stream) 
+            pathfind_task_wrapper = objective.active_objective.add_task(pathfind_coro)
+            while not pathfind_task_wrapper.done:
+                npc = await self.get_character(npc)
+                if 'pathTiles' in npc:
+                    new_path = tiles_to_adjacent_path(npc['pathTiles'], npc['location'], tiles_from_target=tiles_from_target)
+                    path.retarget(new_path)
+            if pathfind_task_wrapper.exception:
+                raise pathfind_task_wrapper.exception
+            await self.move_directly_to_character(npc)
+            npc = await self.get_character(npc, get_path=False)
+            npx_x, npc_y = npc['center']
+            await server.set_mouse_position(npx_x, npc_y, from_viewport=True)
+            return npc
+
+    async def get_character(self, current_target, get_path=True):
+        '''
+        Doing pathfinding can be expensive so only do it the first time and when
+        target moves tiles
+        '''
+        req_data = {**self.get_character_builder.data, 'target': current_target, 'getPath': get_path}
+        resp = await self.get_character_builder.request(req_data)
+        if resp is None:
+            raise NavigationFailed()
+        return resp
+
+    async def move_directly_to_character(self, target, threshold=50, timeout=4):
+        self.get_character_builder.data = {**self.get_character_builder.data, 'target': target, 'getPath': False}
+        batched_builder = server.RequestBuilder.batch(server.RequestBuilder('PLAYER_STATUS'), self.get_character_builder)
+        is_moving = False
+        async with async_timeout.timeout(timeout):
+            try:
+                while True:
+                    directions = []
+                    player_status, character = await batched_builder.request()
+                    self.get_character_builder.data['target'] = character
+                    player_pos, character_pos = player_status['position'], character['position']
+                    if distance_between_points_diagonal(player_pos, character_pos) < threshold:
+                        return
+                    px, py = player_pos
+                    cx, cy = character_pos
+                    server.log(player_pos, character)
+                    xdiff = px - cx
+                    if abs(xdiff) > 10:
+                        direction = constants.WEST if xdiff > 0 else constants.EAST
+                        directions.append(direction)
+                    ydiff = py - cy
+                    if abs(ydiff) > 10:
+                        direction = constants.NORTH if ydiff > 0 else constants.SOUTH
+                        directions.append(direction)
+                    if not directions:
+                        raise NavigationFailed
+                    start_moving(directions)
+                    is_moving = True
+            finally:
+                if is_moving:
+                    await stop_moving()
+
+async def path_to_npc(npc):
+    path = npc.get('path')
+    if path:
+        tiles, location = path['tiles'], path['location']
+        return Path(tiles, location)
+    return await path_to_adjacent(npc['tileX'], npc['tileY'])
+
+async def move_to_character(fetch_character_builder: server.RequestBuilder, filter_for_npc, tiles_from_target=1):
     import objective
     npc = await get_npc(fetch_character_builder, filter_for_npc)
     npc_tile = npc['tileX'], npc['tileY']
-    async with server.player_status_stream() as player_stream, server.player_status_stream() as travel_path_stream:
-        path = await path_to_adjacent(npc_tile[0], npc_tile[1])
+    async with server.player_status_stream() as travel_path_stream:
+        path = await path_to_npc(npc)
         pathfind_coro = travel_path(path, travel_path_stream) # don't share streams between tasks, otherwise they steal .next() from each other
         pathfind_task_wrapper = objective.active_objective.add_task(pathfind_coro)
         while not pathfind_task_wrapper.done:
             npc = await get_npc(fetch_character_builder, filter_for_npc)
             next_npc_tile = npc['tileX'], npc['tileY']
             if npc_tile != next_npc_tile:
-                new_path = await path_to_adjacent(npc['tileX'], npc['tileY'])
+                new_path = await path_to_npc(npc)
                 path.retarget(new_path)
                 npc_tile = next_npc_tile
         if pathfind_task_wrapper.exception:
@@ -761,9 +843,8 @@ async def move_directly_to_character(fetch_character_builder: server.RequestBuil
         try:
             while True:
                 directions = []
-                player_status, characters = await batched_builder.request()
-                character = filter_for_npc(characters)
-                player_pos, character_pos = player_status['position'], character['position']
+                player_status, character = await batched_builder.request()
+                player_pos, character_pos = player_status['position'], character.get('center', character['position'])
                 if distance_between_points_diagonal(player_pos, character_pos) < threshold:
                     return
                 px, py = player_pos

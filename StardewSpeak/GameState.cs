@@ -16,7 +16,7 @@ namespace StardewSpeak
 
         public static object PlayerStatus() {
             var player = Game1.player;
-            string location = player.currentLocation?.Name;
+            string location = player.currentLocation?.NameOrUniqueName;
             var playerPosition = player.Position;
             var position = new List<float> { playerPosition.X, playerPosition.Y };
             var facingDirection = player.FacingDirection;
@@ -64,7 +64,7 @@ namespace StardewSpeak
             return new { currentToolIndex = Game1.player.CurrentToolIndex, items, cursorSlotItem, equippedItems };
         }
 
-        public static object CharactersAtLocation(GameLocation location)
+        public static List<dynamic> CharactersAtLocation(GameLocation location)
         {
             var chars = new List<dynamic>();
             var charList = Game1.CurrentEvent != null ? Game1.CurrentEvent.actors : location.characters.ToList();

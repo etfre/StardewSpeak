@@ -289,11 +289,12 @@ class RequestBuilder:
 
     def __init__(self, request_type: str, data=None):
         self.request_type = request_type
-        self.data = data
+        self.data = {} if data is None else data
 
-    def request(self):
+    def request(self, data=None):
+        data = self.data if data is None else data
         self._fut = loop.create_future()
-        sent_msg = send_message(self.request_type, self.data)
+        sent_msg = send_message(self.request_type, data)
         mod_requests[sent_msg["id"]] = self._fut
         return self._fut
 

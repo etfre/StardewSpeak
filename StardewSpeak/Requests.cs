@@ -45,6 +45,7 @@ namespace StardewSpeak
             var player = Game1.player;
             int playerX = player.getTileX();
             int playerY = player.getTileY();
+            GameLocation location = player.currentLocation;
             switch (msgType)
             {
                 case "HEARTBEAT": // engine will shutdown if heartbeat not received after 10 seconds
@@ -70,6 +71,18 @@ namespace StardewSpeak
                     return GameState.PlayerPosition;
                 case "PLAYER_ITEMS":
                     return GameState.PlayerItems();
+                case "GET_MONSTER_TARGET": 
+                    {
+                        var chars = new List<dynamic>();
+                        var monsters = GameState.CharactersAtLocation(Game1.currentLocation).
+                            Select(x => x.isMonster).
+                            OrderByDescending(x => x.isInvisible);
+                        foreach (var monster in monsters) 
+                        { 
+                            
+                        }
+                        return null;
+                    }
                 case "NEW_STREAM":
                     {
                         string streamId = data.stream_id;
@@ -108,8 +121,47 @@ namespace StardewSpeak
                         int targetX = data.x;
                         int targetY = data.y;
                         int cutoff = data.cutoff;
+                        var sw = new Stopwatch();
+                        sw.Start();
                         var path = Pathfinder.Pathfinder.FindPath(player.currentLocation, playerX, playerY, targetX, targetY, cutoff);
+                        sw.Stop();
+                        ModEntry.Log(sw.ElapsedMilliseconds.ToString());
                         return path;
+                    }
+                case "GET_NEAREST_CHARACTER": 
+                    {
+                        if (!(location is IAnimalLocation)) return null;
+                        string characterType = data.characterType; // animal, npc, monster etc
+                        string getBy = data.getBy;
+                        bool getPath = data.getPath;
+                        List<List<int>> currentPathTiles = data.pathTiles;
+                        dynamic target = JsonConvert.DeserializeObject<dynamic>(data.target.ToString());
+                        string targetName = target?.name;
+                        int? targetTileX = target?.tileX;
+                        int? targetTileY = target?.tileY;
+                        float fromPositionX = target == null ? player.Position.X : target.center[0];
+                        float fromPositionY = target == null ? player.Position.Y : target.center[1];
+                        var candidates = new List<dynamic>();
+                        foreach (FarmAnimal farmAnimal in (location as IAnimalLocation).Animals.Values) 
+                        {
+                            var animal = Serialization.SerializeAnimal(farmAnimal);
+                            if ((getBy == "unpet" && !animal.wasPet) || (getBy == "readyForHarvest" && animal.readyForHarvest))
+                            {
+                                candidates.Add(animal);
+                            }
+                        }
+                        var sorted = candidates.OrderByDescending(x => targetName != null && x.name == targetName).
+                            ThenBy(x => Utils.DistanceBeteenPoints(x.position[0], x.position[1], fromPositionX, fromPositionY)).
+                            ToList();
+                        if (!getPath) return candidates.Count > 0 ? candidates[0] : null;
+                        foreach (var candidate in sorted)
+                        {
+                            if (candidate.tileX == targetTileX && candidate.tileY == targetTileY) return candidate;
+                            var pathTiles = Pathfinder.Pathfinder.FindPath(player.currentLocation,
+                                candidate.tileX, candidate.tileY, playerX, playerY, -1);
+                            if (pathTiles != null) return Utils.Merge(candidate, new { pathTiles });
+                        }
+                        return null;
                     }
                 case "PATH_TO_PLAYER":
                     {
