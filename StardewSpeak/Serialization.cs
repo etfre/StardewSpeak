@@ -11,11 +11,11 @@ namespace StardewSpeak
     {
         public static dynamic SerializeAnimal(FarmAnimal animal) 
         {
-            var position = new List<float> { animal.Position.X + Game1.viewport.X, animal.Position.Y + Game1.viewport.Y };
+            var position = new List<float> { animal.Position.X, animal.Position.Y };
             bool isMature = (int)animal.age >= (byte)animal.ageWhenMature;
             int currentProduce = animal.currentProduce.Value;
             bool readyForHarvest = isMature && currentProduce > 0;
-            var center = new List<int> { animal.getStandingX() + Game1.viewport.X, animal.getStandingY() + Game1.viewport.Y };
+            var center = new List<int> { animal.getStandingX(), animal.getStandingY() };
             return new
             {
                 position,

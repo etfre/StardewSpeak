@@ -55,7 +55,7 @@ namespace StardewSpeak
                     foreach (dynamic batchedRequest in data) 
                     {
                         string batchedMsgType = batchedRequest.type;
-                        dynamic batchedMsgData = batchedRequest.data;
+                        dynamic batchedMsgData =JsonConvert.DeserializeObject(batchedRequest.data.ToString());
                         body.Add(HandleRequestMessage(batchedMsgType, batchedMsgData));
                     }
                     return body;
@@ -153,10 +153,11 @@ namespace StardewSpeak
                         var sorted = candidates.OrderByDescending(x => targetName != null && x.name == targetName).
                             ThenBy(x => Utils.DistanceBeteenPoints(x.position[0], x.position[1], fromPositionX, fromPositionY)).
                             ToList();
-                        if (!getPath) return candidates.Count > 0 ? candidates[0] : null;
+                        if (!getPath) return candidates.Count > 0 ? sorted[0] : null;
                         foreach (var candidate in sorted)
                         {
                             if (candidate.tileX == targetTileX && candidate.tileY == targetTileY) return candidate;
+                            if (candidate.tileX == playerX && candidate.tileY == playerY) return candidate;
                             var pathTiles = Pathfinder.Pathfinder.FindPath(player.currentLocation,
                                 candidate.tileX, candidate.tileY, playerX, playerY, -1);
                             if (pathTiles != null) return Utils.Merge(candidate, new { pathTiles });
