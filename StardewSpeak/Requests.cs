@@ -130,34 +130,56 @@ namespace StardewSpeak
                     }
                 case "GET_NEAREST_CHARACTER": 
                     {
-                        if (!(location is IAnimalLocation)) return null;
                         string characterType = data.characterType; // animal, npc, monster etc
                         string getBy = data.getBy;
                         bool getPath = data.getPath;
+                        string requiredName = data.requiredName;
                         List<List<int>> currentPathTiles = data.pathTiles;
                         dynamic target = JsonConvert.DeserializeObject<dynamic>(data.target.ToString());
-                        string targetName = target?.name;
+                        string targetName = requiredName == null ? target?.name : requiredName;
                         int? targetTileX = target?.tileX;
                         int? targetTileY = target?.tileY;
                         float fromPositionX = target == null ? player.Position.X : target.center[0];
                         float fromPositionY = target == null ? player.Position.Y : target.center[1];
                         var candidates = new List<dynamic>();
-                        foreach (FarmAnimal farmAnimal in (location as IAnimalLocation).Animals.Values) 
+                        List<dynamic> sorted;
+                        if (characterType == "animal")
                         {
-                            var animal = Serialization.SerializeAnimal(farmAnimal);
-                            if ((getBy == "unpet" && !animal.wasPet) || (getBy == "readyForHarvest" && animal.readyForHarvest))
+                            if (!(location is IAnimalLocation)) return null;
+                            foreach (FarmAnimal farmAnimal in (location as IAnimalLocation).Animals.Values)
                             {
-                                candidates.Add(animal);
+                                var animal = Serialization.SerializeAnimal(farmAnimal);
+                                if ((getBy == "unpet" && !animal.wasPet) || (getBy == "readyForHarvest" && animal.readyForHarvest))
+                                {
+                                    candidates.Add(animal);
+                                }
                             }
+                            sorted = candidates.OrderByDescending(x => targetName != null && x.name == targetName).
+                                ThenBy(x => Utils.DistanceBeteenPoints(x.position[0], x.position[1], fromPositionX, fromPositionY)).
+                                ToList();
                         }
-                        var sorted = candidates.OrderByDescending(x => targetName != null && x.name == targetName).
-                            ThenBy(x => Utils.DistanceBeteenPoints(x.position[0], x.position[1], fromPositionX, fromPositionY)).
-                            ToList();
-                        if (!getPath) return candidates.Count > 0 ? sorted[0] : null;
+                        else if (characterType == "npc" || characterType == "monster")
+                        {
+                            var charList = Game1.CurrentEvent != null ? Game1.CurrentEvent.actors : location.characters.ToList();
+                            foreach (var character in charList)
+                            {
+                                if ((characterType == "monster" && character.IsMonster) || (characterType == "npc" && !character.IsMonster))
+                                    candidates.Add(Serialization.SerializeCharacter(character));
+                            }
+                            sorted = candidates.OrderBy(x => x.isInvisible).
+                                ThenBy(x => targetName != null && x.name == targetName).
+                                ThenBy(x => Utils.DistanceBeteenPoints(x.position[0], x.position[1], fromPositionX, fromPositionY)).
+                                ToList();
+                        }
+                        else {
+                            throw new InvalidDataException();
+                        }
+                        if (requiredName != null) sorted = sorted.Where(x => x.name == requiredName).ToList();
+                        if (!getPath) return sorted.Count > 0 ? sorted[0] : null;
                         foreach (var candidate in sorted)
                         {
                             if (candidate.tileX == targetTileX && candidate.tileY == targetTileY) return candidate;
-                            if (Utils.DistanceBetweenTiles(candidate.tileX, candidate.tileY, playerX, playerY) < 2) return candidate;
+                            if (Utils.DistanceBeteenPoints(candidate.tileX, candidate.tileY, playerX, playerY) < 2) return candidate;
                             var pathTiles = Pathfinder.Pathfinder.FindPath(player.currentLocation,
                                 candidate.tileX, candidate.tileY, playerX, playerY, -1);
                             if (pathTiles != null) return Utils.Merge(candidate, new { pathTiles });

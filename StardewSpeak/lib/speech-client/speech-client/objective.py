@@ -245,17 +245,16 @@ class TalkToNPCObjective(Objective):
         self.npc_name = npc_name
 
     async def run(self):
-        async with server.characters_at_location_stream() as npc_stream:
-            fn = functools.partial(game.find_character_by_name, self.npc_name)
-            request_builder = server.RequestBuilder("CHARACTERS_AT_LOCATION")
-            await game.move_to_character(request_builder, fn)
+        req_data = {"characterType": "npc", "requiredName": self.npc_name}
+        req_builder = server.RequestBuilder('GET_NEAREST_CHARACTER', req_data)
+        await game.MoveToCharacter(req_builder).move()
         await game.do_action()
 
 async def use_tool_on_animals(tool: str, animal_type=None):
     await game.equip_item_by_name(tool)
     consecutive_errors = 0
     consecutive_error_threshold = 10
-    req_data = {"characterType": "animal", "getBy": "readyForHarvest"}
+    req_data = {"characterType": "animal", "getBy": "readyForHarvest", "requiredName": None}
     req_builder = server.RequestBuilder('GET_NEAREST_CHARACTER', req_data)
     while True:
         animal = await game.MoveToCharacter(req_builder).move()
@@ -269,7 +268,7 @@ async def use_tool_on_animals(tool: str, animal_type=None):
         await asyncio.sleep(0.1)
 
 async def pet_animals():
-    req_data = {"characterType": "animal", "getBy": "unpet"}
+    req_data = {"characterType": "animal", "getBy": "unpet", "requiredName": None}
     req_builder = server.RequestBuilder('GET_NEAREST_CHARACTER', req_data)
     while True:
         try:

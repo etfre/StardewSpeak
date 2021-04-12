@@ -32,5 +32,22 @@ namespace StardewSpeak
                 location = animal.currentLocation.NameOrUniqueName,
             };
         }
+        public static dynamic SerializeCharacter(NPC character) 
+        {
+            var position = new List<float> { character.Position.X, character.Position.Y };
+            var center = new List<int> { character.getStandingX(), character.getStandingY() };
+            return new
+            {
+                name = character.Name,
+                location = character.currentLocation.NameOrUniqueName,
+                tileX = character.getTileX(),
+                tileY = character.getTileY(),
+                isMonster = character.IsMonster,
+                isInvisible = character.IsInvisible,
+                facingDirection = character.FacingDirection,
+                position,
+                center,
+            };
+        }
     }
 }

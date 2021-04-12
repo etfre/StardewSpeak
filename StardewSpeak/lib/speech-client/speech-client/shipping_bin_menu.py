@@ -16,11 +16,6 @@ async def focus_item(new_row, new_col):
     submenu = menu['inventoryMenu']
     await wrapper.focus_box(submenu, new_row, new_col)
 
-async def click_button(name: str):
-    menu = await menu_utils.get_active_menu(menu_type='itemsToGrabMenu')
-    menu_utils.click_
-    server.log(item.name)
-
 mapping = {
     "item <positive_index>": df_utils.async_action(focus_item, None, 'positive_index'),
     "row <positive_index>": df_utils.async_action(focus_item, 'positive_index', None),

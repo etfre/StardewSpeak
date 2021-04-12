@@ -759,7 +759,7 @@ class MoveToCharacter:
             raise NavigationFailed()
         return resp
 
-    async def move_directly_to_character(self, target, threshold=50, timeout=4):
+    async def move_directly_to_character(self, target, threshold=75, timeout=4):
 
         req_data = {**self.get_character_builder.data, 'target': target, 'getPath': False}
         char_req_builder = server.RequestBuilder(self.get_character_builder.request_type, req_data)
