@@ -16,6 +16,8 @@ using StardewValley.Menus;
 using System.Reflection;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using System.Threading;
+using System.Collections.Concurrent;
 
 namespace StardewSpeak
 {
@@ -194,8 +196,20 @@ namespace StardewSpeak
             }
         }
 
+        private void RespondToQueuedRequests(ConcurrentQueue<dynamic> queue, int timeLimit = 5) 
+        {
+            var sw = Stopwatch.StartNew();
+            while (!queue.IsEmpty)
+            {
+                if (!queue.TryDequeue(out dynamic msg)) continue;
+                speechEngine.RespondToMessage(msg);
+                if (sw.ElapsedMilliseconds >= timeLimit) return;
+            }
+        }
+
         private void GameLoop_UpdateTicking(object sender, UpdateTickingEventArgs e)
         {
+            RespondToQueuedRequests(speechEngine.UpdateTickingRequestQueue);
             foreach (var btn in Input.Held.Values) {
                 Input.SetDown(btn);
             }
@@ -203,14 +217,7 @@ namespace StardewSpeak
 
         private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)
         {
-            lock (speechEngine.RequestQueueLock) 
-            {
-                if (speechEngine.RequestQueue.Count > 0) // only handle 1 request per tick to minimize dropping frames
-                {
-                    var msg = speechEngine.RequestQueue.Dequeue();
-                    speechEngine.RespondToMessage(msg);
-                }
-            }
+            RespondToQueuedRequests(speechEngine.UpdateTickedRequestQueue);
             foreach (var pair in ModEntry.Streams)
             {
                 var id = pair.Key;

@@ -16,6 +16,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using StardewValley.Menus;
 using System.Reflection;
+using System.Collections.Concurrent;
 
 namespace StardewSpeak
 {
@@ -24,7 +25,8 @@ namespace StardewSpeak
         Process Proc;
         private readonly object StandardInLock;
         public readonly object RequestQueueLock;
-        public Queue<dynamic> RequestQueue;
+        public ConcurrentQueue<dynamic> UpdateTickedRequestQueue;
+        public ConcurrentQueue<dynamic> UpdateTickingRequestQueue;
         public readonly Action<Process, TaskCompletionSource<int>> OnExit;
 
         public SpeechEngine(Action<Process, TaskCompletionSource<int>> onExit)
@@ -32,7 +34,8 @@ namespace StardewSpeak
             this.OnExit = onExit;
             this.StandardInLock = new object();
             this.RequestQueueLock = new object();
-            this.RequestQueue = new Queue<dynamic>();
+            this.UpdateTickedRequestQueue = new ConcurrentQueue<dynamic>();
+            this.UpdateTickingRequestQueue = new ConcurrentQueue<dynamic>();
         }
 
         public void LaunchProcess()
@@ -118,14 +121,14 @@ namespace StardewSpeak
                 dynamic toLog = msg.data;
                 ModEntry.Log($"Speech engine message: {toLog}");
             }
+            else if (msgType == "UPDATE_HELD_BUTTONS" || msgType == "PRESS_KEY") 
+            {
+                UpdateTickedRequestQueue.Enqueue(msg);
+            }
             else
             {
-                lock (RequestQueueLock)
-                {
-                    RequestQueue.Enqueue(msg);
-                }
+                UpdateTickingRequestQueue.Enqueue(msg);
             }
-            //RespondToMessage(msg);
         }
 
         public void RespondToMessage(dynamic msg) 

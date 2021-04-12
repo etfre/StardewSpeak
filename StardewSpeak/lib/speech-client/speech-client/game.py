@@ -54,6 +54,7 @@ async def update_held_buttons(to_hold=(), to_release=()):
 
 def update_held_buttons_nowait(to_hold=(), to_release=()):
     server.send_message('UPDATE_HELD_BUTTONS', {'toHold': to_hold, 'toRelease': to_release})
+
 class Path:
     def __init__(self, mod_path, location: str):
         tiles = []
@@ -366,8 +367,8 @@ def facing_tile_center(player_status):
     assert -0.5 <= x <= 0.5
     assert -0.5 <= y <= 0.5
     current_direction = player_status["facingDirection"]
-    # start turning when at least 40% into the tile
-    offset_from_mid = 0.10
+    # start turning when at least 43% into the tile
+    offset_from_mid = 0.07
     if current_direction == constants.NORTH:
         return y + offset_from_mid <= 0
     if current_direction == constants.EAST:
@@ -380,7 +381,6 @@ def facing_tile_center(player_status):
 
 async def press_key(key: str):
     await server.request('PRESS_KEY', {'key': key})
-    # directinput.send([key])
 
 @contextlib.asynccontextmanager
 async def press_and_release(keys):
@@ -419,11 +419,6 @@ def set_last_faced_direction(direction: int):
 async def stop_moving():
     to_release = cardinal_buttons
     await update_held_buttons(to_release=to_release)
-    # to_release = "wasd"
-    # for key in to_release:
-    #     if key in directinput.HELD:
-    #         directinput.release(key)
-
 
 async def ensure_not_moving(stream: server.Stream):
     await stop_moving()
