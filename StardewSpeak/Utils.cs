@@ -587,6 +587,14 @@ namespace StardewSpeak
             return hd.canPlantThisSeedHere(objIndex, tileX, tileY, false);
         }
 
+        public static int DistanceBetweenTiles(int x1, int y1, int x2, int y2) 
+        {
+            int xdiff = Math.Abs(x1 - x2);
+            int ydiff = Math.Abs(y1 - y2);
+            return xdiff + ydiff;
+
+        }
+
         public static object SerializeItem(Item i) 
         {
             if (i == null) return null;

@@ -157,7 +157,8 @@ namespace StardewSpeak
                         foreach (var candidate in sorted)
                         {
                             if (candidate.tileX == targetTileX && candidate.tileY == targetTileY) return candidate;
-                            if (candidate.tileX == playerX && candidate.tileY == playerY) return candidate;
+                            if (Utils.DistanceBetweenTiles(candidate.tileX, candidate.tileY, playerX, playerY) < 2) return candidate;
+                            //if (candidate.tileX == playerX && candidate.tileY == playerY) return candidate;
                             var pathTiles = Pathfinder.Pathfinder.FindPath(player.currentLocation,
                                 candidate.tileX, candidate.tileY, playerX, playerY, -1);
                             if (pathTiles != null) return Utils.Merge(candidate, new { pathTiles });
