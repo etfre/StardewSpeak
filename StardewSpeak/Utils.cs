@@ -531,20 +531,28 @@ namespace StardewSpeak
             }
             return null;
         }
-        public static object SerializeClickableCmp(ClickableComponent cmp, Point mousePosition)
+        public static object SerializeClickableCmp(ClickableComponent cmp, Point mousePosition, bool adjustUiMode = true)
         {
             if (cmp == null) return null;
             Rectangle bounds = cmp.bounds;
             bool containsMouse = cmp.containsPoint(mousePosition.X, mousePosition.Y);
-            return new
+            var serializedCmp = new
             {
                 type = "clickableComponent",
                 bounds = new { x = bounds.X, y = bounds.Y, width = bounds.Width, height = bounds.Height },
-                center = new List<int> { bounds.Center.X, bounds.Center.Y },
+                center = new List<dynamic> { bounds.Center.X, bounds.Center.Y },
                 cmp.name,
                 containsMouse,
                 cmp.visible,
             };
+            if (adjustUiMode)
+            {
+                float x = (float)Convert.ToInt32(serializedCmp.center[0]);
+                float y = (float)Convert.ToInt32(serializedCmp.center[1]);
+                serializedCmp.center[0] = x * Game1.options.uiScale / Game1.options.zoomLevel;
+                serializedCmp.center[1] = y * Game1.options.uiScale / Game1.options.zoomLevel;
+            }
+            return serializedCmp;
         }
         public static dynamic GetPrivateField(object obj, string fieldName)
         {
