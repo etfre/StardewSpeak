@@ -11,6 +11,11 @@ namespace StardewSpeak
     {
         public static dynamic SerializeAnimal(FarmAnimal animal) 
         {
+            if (!animal.modData.ContainsKey(Utils.TrackingIdKey))
+            {
+                animal.modData[Utils.TrackingIdKey] = System.Guid.NewGuid().ToString();
+            }
+            string trackingId = animal.modData[Utils.TrackingIdKey];
             var position = new List<float> { animal.Position.X, animal.Position.Y };
             bool isMature = (int)animal.age >= (byte)animal.ageWhenMature;
             int currentProduce = animal.currentProduce.Value;
@@ -18,6 +23,7 @@ namespace StardewSpeak
             var center = new List<int> { animal.getStandingX(), animal.getStandingY() };
             return new
             {
+                trackingId,
                 position,
                 center,
                 tileX = animal.getTileX(),
@@ -34,11 +40,17 @@ namespace StardewSpeak
         }
         public static dynamic SerializeCharacter(NPC character) 
         {
+            if (!character.modData.ContainsKey(Utils.TrackingIdKey)) 
+            {
+                character.modData[Utils.TrackingIdKey] = System.Guid.NewGuid().ToString();
+            }
+            string trackingId = character.modData[Utils.TrackingIdKey];
             var position = new List<float> { character.Position.X, character.Position.Y };
             var center = new List<int> { character.getStandingX(), character.getStandingY() };
             return new
             {
                 name = character.Name,
+                trackingId,
                 location = character.currentLocation.NameOrUniqueName,
                 tileX = character.getTileX(),
                 tileY = character.getTileY(),

@@ -139,6 +139,7 @@ namespace StardewSpeak
                         string targetName = requiredName == null ? target?.name : requiredName;
                         int? targetTileX = target?.tileX;
                         int? targetTileY = target?.tileY;
+                        string targetTrackingId = target?.trackingId;
                         float fromPositionX = target == null ? player.Position.X : target.center[0];
                         float fromPositionY = target == null ? player.Position.Y : target.center[1];
                         var candidates = new List<dynamic>();
@@ -154,7 +155,7 @@ namespace StardewSpeak
                                     candidates.Add(animal);
                                 }
                             }
-                            sorted = candidates.OrderByDescending(x => targetName != null && x.name == targetName).
+                            sorted = candidates.OrderByDescending(x => targetTrackingId != null && x.trackingId == targetTrackingId).
                                 ThenBy(x => Utils.DistanceBeteenPoints(x.position[0], x.position[1], fromPositionX, fromPositionY)).
                                 ToList();
                         }
@@ -167,7 +168,8 @@ namespace StardewSpeak
                                     candidates.Add(Serialization.SerializeCharacter(character));
                             }
                             sorted = candidates.OrderBy(x => x.isInvisible).
-                                ThenBy(x => targetName != null && x.name == targetName).
+                                ThenByDescending(x => targetTrackingId != null && x.trackingId == targetTrackingId).
+                                ThenByDescending(x => targetName != null && x.name == targetName).
                                 ThenBy(x => Utils.DistanceBeteenPoints(x.position[0], x.position[1], fromPositionX, fromPositionY)).
                                 ToList();
                         }

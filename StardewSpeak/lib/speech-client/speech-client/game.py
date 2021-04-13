@@ -35,6 +35,7 @@ cardinal_buttons = (constants.MOVE_UP_BUTTON, constants.MOVE_RIGHT_BUTTON, const
 
 tool_for_object = {
     constants.STONE: {'name': constants.PICKAXE, 'level': 0},
+    constants.MINE_ROCK: {'name': constants.PICKAXE, 'level': 0},
     constants.TWIG: {'name': constants.AXE, 'level': 0},
     constants.WEEDS: {'name': constants.SCYTHE, 'level': 0},
     constants.BOULDER: {'name': constants.PICKAXE, 'level': 2},
@@ -770,6 +771,7 @@ class MoveToCharacter:
                 while True:
                     directions = []
                     player_status, character = await batched_builder.request() 
+                    server.log(character['name'], target['name'])
                     assert character['name'] == target['name']
                     req_data['target'] = character
                     player_pos, character_pos = player_status['center'], character['center']

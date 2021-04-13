@@ -24,6 +24,7 @@ MELEE_WEAPON = 'meleeWeapon'
 
 WEEDS = 'Weeds'
 STONE = 'Stone'
+MINE_ROCK = 'mineRock'
 TWIG = 'Twig'
 HOLLOW_LOG = 'hollowLog'
 STUMP = 'stump'

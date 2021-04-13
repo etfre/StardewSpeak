@@ -20,6 +20,7 @@ namespace StardewSpeak
 {
     public static class Utils
     {
+        public static string TrackingIdKey = $"{ModEntry.helper.ModRegistry.ModID}/trackingId";
 
         public static bool IsTileHoeable(GameLocation location, int x, int y)
         {

@@ -305,25 +305,22 @@ class DefendObjective(Objective):
 class AttackObjective(Objective):
 
     async def run(self):
+        req_data = {"characterType": "monster", "requiredName": None}
+        req_builder = server.RequestBuilder('GET_NEAREST_CHARACTER', req_data)
+        
         player_status_builder = server.RequestBuilder('PLAYER_STATUS')
-        chars_request_builder = server.RequestBuilder('CHARACTERS_AT_LOCATION')
-        batched_request_builder = server.RequestBuilder.batch(player_status_builder, chars_request_builder)
+        batched_request_builder = server.RequestBuilder.batch(player_status_builder, req_builder)
+        batched_request_builder.data[1]['data'] = {**req_data, 'target': None, 'getPath': False}
         async with server.player_status_stream() as player_stream:
             player_position = (await player_status_builder.request())['position']
             while True:
-                try:
-                    target = await game.move_to_character(batched_request_builder, self.get_closest_monster, tiles_from_target=3)
-                except ValueError: # no more monsters
-                    return
+                target = await game.MoveToCharacter(req_builder).move()
                 distance_from_monster = 0
                 while distance_from_monster < 90:
-                    resp = await batched_request_builder.request()
-                    player_position = resp[0]['position']
-                    try:
-                        target = self.get_closest_monster(resp)
-                    except ValueError:
-                        return
-                    closest_monster_position = target['position']
+                    server.log(batched_request_builder.data[1])
+                    player_status, target = await batched_request_builder.request()
+                    player_position = player_status['center']
+                    closest_monster_position = target['center']
                     distance_from_monster = game.distance_between_points_diagonal(player_position, closest_monster_position)
                     if distance_from_monster > 0:
                         direction_to_face = game.direction_from_positions(player_position, closest_monster_position)
