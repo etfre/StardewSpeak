@@ -136,7 +136,7 @@ namespace StardewSpeak
                         string requiredName = data.requiredName;
                         List<List<int>> currentPathTiles = data.pathTiles;
                         dynamic target = JsonConvert.DeserializeObject<dynamic>(data.target.ToString());
-                        string targetName = requiredName == null ? target?.name : requiredName;
+                        string targetName = requiredName ?? (target?.name);
                         int? targetTileX = target?.tileX;
                         int? targetTileY = target?.tileY;
                         string targetTrackingId = target?.trackingId;

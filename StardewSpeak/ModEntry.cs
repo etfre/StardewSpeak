@@ -26,9 +26,10 @@ namespace StardewSpeak
     {
         internal static bool FeedLocation = false;
         SpeechEngine speechEngine;
+        EventHandler eventHandler;
         public static Action<string, LogLevel> log { get; private set; }
         public static Dictionary<string, Stream> Streams { get; set; } = new Dictionary<string, Stream>();
-
+        public static List<InputButton[]> ButtonsToCheck = new List<InputButton[]>();
         public static IModHelper helper;
 
         /*********
@@ -39,7 +40,8 @@ namespace StardewSpeak
         public override void Entry(IModHelper helper)
         {
             ModEntry.helper = helper;
-            helper.Events.Input.ButtonPressed += this.OnButtonPressed;
+
+            //helper.Events.Input.ButtonPressed += this.OnButtonPressed;
             helper.Events.Display.MenuChanged += this.OnMenuChanged;
             helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
             helper.Events.GameLoop.UpdateTicking += GameLoop_UpdateTicking;
@@ -52,6 +54,7 @@ namespace StardewSpeak
             ModEntry.log = this.Monitor.Log;
             this.speechEngine = new SpeechEngine(OnSpeechEngineExited);
             this.speechEngine.LaunchProcess();
+            this.eventHandler = new EventHandler(helper, this.speechEngine);
         }
 
         private void OnSpeechEngineExited(Process process, TaskCompletionSource<int> tcs) 
@@ -154,8 +157,11 @@ namespace StardewSpeak
         private void OnButtonPressed(object sender, ButtonPressedEventArgs e)
         {
             // ignore if player hasn't loaded a save yet
-            if (!Context.IsWorldReady) { }
-                //return;
+            if (!Context.IsWorldReady) { return; }
+
+            SButton btn = e.Button;
+            string key = btn.ToString();
+
             // print button presses to the console window
             string pressed = e.Button.ToString();
             //this.Monitor.Log($"{Game1.player.Name} presseddd {e.Button}.", LogLevel.Debug);

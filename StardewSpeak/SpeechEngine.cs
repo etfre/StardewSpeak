@@ -132,7 +132,7 @@ namespace StardewSpeak
         }
 
         public void RespondToMessage(dynamic msg) 
-        {
+        {   
             dynamic resp;
             try
             {
@@ -185,8 +185,7 @@ namespace StardewSpeak
 
         public void SendEvent(string eventType, object data = null) {
             var msg = new { eventType, data };
-            this.SendMessage("ON_EVENT", msg);
-
+            this.SendMessage("EVENT", msg);
         }
     }
     class MessageToEngine 

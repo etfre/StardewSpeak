@@ -31,6 +31,7 @@ direction_nums = {
 nums_to_directions = {v: k for k, v in direction_nums.items()}
 cardinal_directions = (constants.NORTH, constants.EAST, constants.SOUTH, constants.WEST)
 directions_to_buttons = {d: direction_keys[nums_to_directions[d]][0] for d in cardinal_directions}
+buttons_to_directions = {v: k for k, v in directions_to_buttons.items()}
 cardinal_buttons = (constants.MOVE_UP_BUTTON, constants.MOVE_RIGHT_BUTTON, constants.MOVE_DOWN_BUTTON, constants.MOVE_LEFT_BUTTON)
 
 tool_for_object = {
@@ -539,7 +540,9 @@ async def navigate_tiles(get_items, sort_items=generic_next_item_key, pathfind_f
                     pass
                 else:
                     item_tile = item['tileX'], item['tileY']
+                    await asyncio.sleep(0.1)
                     await set_mouse_position_on_tile(item_tile)
+                    await asyncio.sleep(0.1)
                     yield item
                     break
             if not item_path:

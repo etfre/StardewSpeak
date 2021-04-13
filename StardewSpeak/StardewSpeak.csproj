@@ -52,6 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Actions.cs" />
+    <Compile Include="EventHandler.cs" />
     <Compile Include="GameState.cs" />
     <Compile Include="Input.cs" />
     <Compile Include="Menus.cs" />

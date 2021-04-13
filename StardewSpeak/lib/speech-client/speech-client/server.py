@@ -325,6 +325,7 @@ def send_message(msg_type, msg=None):
 
 
 def on_message(msg_str):
+    import events
     try:
         msg = json.loads(msg_str)
     except json.JSONDecodeError:
@@ -365,8 +366,8 @@ def on_message(msg_str):
             stream.future.set_result(None)
         except asyncio.InvalidStateError:
             pass
-    elif msg_type == "ON_EVENT":
-        handle_event(msg_data["eventType"], msg_data["data"])
+    elif msg_type == "EVENT":
+        events.handle_event(msg_data)
     else:
         raise RuntimeError(f"Unhandled message type from mod: {msg_type}")
 
@@ -384,11 +385,6 @@ async def mouse_click(btn='left', count=1):
         await request('MOUSE_CLICK', {'btn': btn})
         if i + 1 < count:
             await asyncio.sleep(0.1)
-
-def handle_event(event_type, data):
-    if event_type == "ON_WARPED":
-        game_state.last_warp = data
-
 
 def log(*a, sep=' '):
     to_send = [x if isinstance(x, str) else json.dumps(x) for x in a]
