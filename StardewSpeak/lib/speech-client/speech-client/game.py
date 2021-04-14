@@ -434,7 +434,7 @@ def stop_moving():
 
 async def ensure_not_moving():
     stop_moving()
-    await events.wait_for_event('UPDATE_TICKED')
+    await events.wait_for_update_ticked()
 
 async def face_direction(direction: int, stream: server.Stream, move_cursor=False):
     await ensure_not_moving()
