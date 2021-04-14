@@ -60,6 +60,7 @@ def update_held_buttons_nowait(to_hold=(), to_release=()):
 
 class Path:
     def __init__(self, mod_path, location: str):
+        self._tiles = ()
         tiles = []
         self.tile_indices = {}
         for i, mod_tile in enumerate(mod_path):
@@ -69,8 +70,14 @@ class Path:
         self.tiles = tuple(tiles)
         self.location = location
 
-    def pop(self):
-        self.tiles = self.tiles[:-1]
+    @property
+    def tiles(self):
+        return self._tiles
+
+    @tiles.setter
+    def tiles(self, new_tiles):
+        assert new_tiles
+        self._tiles = new_tiles
 
     def retarget(self, p):
         self.tiles = p.tiles
@@ -298,8 +305,9 @@ async def path_to_adjacent(x, y, tiles_from_target=1, cutoff=-1):
 def tiles_to_adjacent_path(tiles, location, tiles_from_target=1):
     if tiles is None:
         raise NavigationFailed(f"Cannot pathfind to player from {x}, {y} at location {location}")
-    tiles =  tiles[:1] if len(tiles) < tiles_from_target else reversed(tiles[tiles_from_target:])
-    return Path(tiles, location)
+    assert tiles
+    adj_tiles =  tiles[:1] if len(tiles) <= tiles_from_target else reversed(tiles[tiles_from_target:])
+    return Path(adj_tiles, location)
 
 async def pathfind_to_adjacent(x, y, status_stream: server.Stream, tiles_from_target=1, cutoff=-1):
     path = await path_to_adjacent(x, y, tiles_from_target=tiles_from_target, cutoff=cutoff)
@@ -427,7 +435,6 @@ def stop_moving():
 async def ensure_not_moving():
     stop_moving()
     await events.wait_for_event('UPDATE_TICKED')
-    await events.wait_for_event('UPDATE_TICKED')
 
 async def face_direction(direction: int, stream: server.Stream, move_cursor=False):
     await ensure_not_moving()
@@ -440,7 +447,6 @@ async def face_direction(direction: int, stream: server.Stream, move_cursor=Fals
         except asyncio.TimeoutError:
             async with press_and_release(btn):
                 await stream.wait(lambda s: s["facingDirection"] == direction, timeout=5)
-    set_last_faced_direction(direction)
     if move_cursor:
         player_status = await stream.next()
         current_tile = player_status['tileX'], player_status['tileY']

@@ -351,7 +351,6 @@ def on_message(msg_str):
 
         stream = streams.get(stream_id)
         if stream is None:
-            log(f"Can't find {stream_id}")
             send_message("STOP_STREAM", stream_id)
             return
         stream_value = msg_data["value"]

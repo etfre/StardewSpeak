@@ -39,7 +39,8 @@ class Observer(RecognitionObserver):
         print("Speech started.")
 
     def on_recognition(self, words):
-        print("Recognized:", " ".join(words))
+        import server
+        server.log("Recognized:", " ".join(words))
 
     def on_failure(self):
         print("Sorry, what was that?")
