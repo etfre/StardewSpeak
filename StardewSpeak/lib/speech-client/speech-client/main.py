@@ -26,7 +26,7 @@ from srabuilder import sleep, environment
 import srabuilder
 
 import stardew, new_game_menu, shop_menu, container_menu, title_menu, load_game_menu, dialogue_menu, no_menu, any_menu, shipping_bin_menu, carpenter_menu, billboard_menu, geode_menu, museum_menu
-import letter_viewer_menu, quest_log_menu
+import letter_viewer_menu, quest_log_menu, animal_query_menu
 from game_menu import game_menu, crafting_page, inventory_page, exit_page
 
 
@@ -93,6 +93,7 @@ def main(args):
     museum_menu.load_grammar()
     letter_viewer_menu.load_grammar()
     quest_log_menu.load_grammar()
+    animal_query_menu.load_grammar()
 
     # threading.Thread(target=command_line_loop, args=(engine,), daemon=True).start()
     srabuilder.run_engine()

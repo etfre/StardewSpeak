@@ -73,14 +73,14 @@ namespace StardewSpeak
         }
         public static void WriteJson(string fname, object obj)
         {
-            var settings = new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
-            settings.Error = (serializer, err) => err.ErrorContext.Handled = true;
-            string objStr = JsonConvert.SerializeObject(obj, Formatting.None, settings);
-            string path = @"C:\Program Files (x86)\GOG Galaxy\Games\Stardew Valley\Mods\StardewSpeak\StardewSpeak\lib\speech-client\debug\" + fname;
-            using (var writetext = new StreamWriter(path))
-            {
-                writetext.WriteLine(objStr);
-            }
+            //var settings = new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
+            //settings.Error = (serializer, err) => err.ErrorContext.Handled = true;
+            //string objStr = JsonConvert.SerializeObject(obj, Formatting.None, settings);
+            //string path = @"C:\Program Files (x86)\GOG Galaxy\Games\Stardew Valley\Mods\StardewSpeak\StardewSpeak\lib\speech-client\debug\" + fname;
+            //using (var writetext = new StreamWriter(path))
+            //{
+            //    writetext.WriteLine(objStr);
+            //}
         }
         public static dynamic Merge(object item1, object item2)
         {
@@ -186,6 +186,45 @@ namespace StardewSpeak
                     responseCC,
                     responses,
                 };
+            }
+            else if (menu is AnimalQueryMenu)
+            {
+                var aqm = menu as AnimalQueryMenu;
+                bool movingAnimal = (bool)Utils.GetPrivateField(aqm, "movingAnimal");
+                menuTypeObj = new
+                {
+                    menuType = "animalQueryMenu",
+                    movingAnimal,
+                };
+                if (movingAnimal)
+                {
+                    var vt = VisibleTiles(Game1.getFarm());
+                    var tileComponents = vt.Select(t => TileToClickableComponent(t[0], t[1], mousePosition)).ToList();
+                    var okButton = SerializeClickableCmp(aqm.okButton, mousePosition);
+                    menuTypeObj = Merge(menuTypeObj, new { tileComponents, okButton });
+                }
+                else
+                {
+                    bool confirmingSell = (bool)Utils.GetPrivateField(aqm, "confirmingSell");
+                    if (confirmingSell)
+                    {
+                        var noButton = SerializeClickableCmp(aqm.noButton, mousePosition);
+                        var yesButton = SerializeClickableCmp(aqm.yesButton, mousePosition);
+                        menuTypeObj = Merge(menuTypeObj, new { yesButton, noButton });
+                    }
+                    else
+                    {
+                        menuTypeObj = Merge(menuTypeObj, new
+                        {
+                            allowReproductionButton = SerializeClickableCmp(aqm.allowReproductionButton, mousePosition),
+                            sellButton = SerializeClickableCmp(aqm.sellButton, mousePosition),
+                            textBoxCC = SerializeClickableCmp(aqm.textBoxCC, mousePosition),
+                            moveHomeButton = SerializeClickableCmp(aqm.moveHomeButton, mousePosition),
+                            okButton = SerializeClickableCmp(aqm.okButton, mousePosition),
+
+                        });
+                    }
+                }
             }
             else if (menu is ShippingMenu)
             {

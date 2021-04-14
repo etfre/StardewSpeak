@@ -28,6 +28,7 @@ namespace StardewSpeak
         public ConcurrentQueue<dynamic> UpdateTickedRequestQueue;
         public ConcurrentQueue<dynamic> UpdateTickingRequestQueue;
         public readonly Action<Process, TaskCompletionSource<int>> OnExit;
+        public bool Running = false;
 
         public SpeechEngine(Action<Process, TaskCompletionSource<int>> onExit)
         {
@@ -71,7 +72,9 @@ namespace StardewSpeak
                 EnableRaisingEvents = true
             })
             {
-                return await RunProcessAsync(this.Proc).ConfigureAwait(false);
+                this.Running = true;
+                var proc = await RunProcessAsync(this.Proc).ConfigureAwait(false);
+                return proc;
             }
         }
 
@@ -83,11 +86,18 @@ namespace StardewSpeak
             }
             catch (SystemException e) { }
         }
+
+        private void HandleExited(Process process, TaskCompletionSource<int> tcs)
+        {
+            this.Running = false;
+            tcs.SetResult(process.ExitCode);
+            this.OnExit(process, tcs);
+        }
         private Task<int> RunProcessAsync(Process process)
         {
             var tcs = new TaskCompletionSource<int>();
 
-            process.Exited += (s, ea) => OnExit(process, tcs);
+            process.Exited += (s, ea) => HandleExited(process, tcs);
             process.OutputDataReceived += (s, ea) => this.OnMessage(ea.Data);
             process.ErrorDataReceived += (s, ea) => this.onError("ERR: " + ea.Data);
 
@@ -121,10 +131,10 @@ namespace StardewSpeak
                 dynamic toLog = msg.data;
                 ModEntry.Log($"Speech engine message: {toLog}");
             }
-            else if (msgType == "UPDATE_HELD_BUTTONS" || msgType == "PRESS_KEY") 
-            {
-                UpdateTickedRequestQueue.Enqueue(msg);
-            }
+            //else if (msgType == "UPDATE_HELD_BUTTONS" || msgType == "PRESS_KEY") 
+            //{
+            //    UpdateTickedRequestQueue.Enqueue(msg);
+            //}
             else
             {
                 UpdateTickingRequestQueue.Enqueue(msg);
@@ -164,8 +174,9 @@ namespace StardewSpeak
             this.SendMessage("RESPONSE", respData);
         }
 
-        public void SendMessage(string msgType, object data = null)     
+        public bool SendMessage(string msgType, object data = null)     
         {
+            if (!this.Running) return false;
             var message = new MessageToEngine(msgType, data);
             var settings = new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
             settings.Error = (serializer, err) => err.ErrorContext.Handled = true;
@@ -178,9 +189,10 @@ namespace StardewSpeak
                 }
                 catch (System.InvalidOperationException e) 
                 {
-                    
+                    this.Running = false;
                 }
             }
+            return true;
         }
 
         public void SendEvent(string eventType, object data = null) {

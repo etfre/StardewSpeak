@@ -7,7 +7,7 @@ import collections
 import contextlib
 import asyncio
 from srabuilder.actions import directinput, pydirectinput
-import server, constants, async_timeout
+import server, constants, async_timeout, events
 
 last_faced_east_west = constants.WEST
 last_faced_north_south = constants.SOUTH
@@ -53,6 +53,7 @@ context_variables = {
 
 async def update_held_buttons(to_hold=(), to_release=()):
     await server.request('UPDATE_HELD_BUTTONS', {'toHold': to_hold, 'toRelease': to_release})
+    await events.wait_for_update_ticked()
 
 def update_held_buttons_nowait(to_hold=(), to_release=()):
     server.send_message('UPDATE_HELD_BUTTONS', {'toHold': to_hold, 'toRelease': to_release})
@@ -201,7 +202,7 @@ async def pathfind_to_resource(tiles, location, stream, cutoff=-1):
     return path, invalid
 
 async def move_to_location(location: str, stream: server.Stream):
-    await ensure_not_moving(stream)
+    await ensure_not_moving()
     route = await request_route(location)
     for i, location in enumerate(route[:-1]):
         next_location = route[i + 1]
@@ -282,7 +283,7 @@ async def travel_path(path: Path, status_stream: server.Stream, next_location=No
                 if current_tiles == path.tiles:
                     path.retarget(new_path)
     finally:
-        await stop_moving()
+        await ensure_not_moving()
     return path
 
 def get_adjacent_tiles(tile):
@@ -383,6 +384,7 @@ def facing_tile_center(player_status):
 
 async def press_key(key: str):
     await server.request('PRESS_KEY', {'key': key})
+    await events.wait_for_update_ticked()
 
 @contextlib.asynccontextmanager
 async def press_and_release(keys):
@@ -418,18 +420,18 @@ def set_last_faced_direction(direction: int):
     else:
         last_faced_east_west = direction
 
-async def stop_moving():
+def stop_moving():
     to_release = cardinal_buttons
-    await update_held_buttons(to_release=to_release)
+    update_held_buttons_nowait(to_release=to_release)
 
-async def ensure_not_moving(stream: server.Stream):
-    await stop_moving()
-    await stream.wait(lambda status: not status["isMoving"], timeout=2)
-    return await stream.next()
-
+async def ensure_not_moving():
+    stop_moving()
+    await events.wait_for_event('UPDATE_TICKED')
+    await events.wait_for_event('UPDATE_TICKED')
 
 async def face_direction(direction: int, stream: server.Stream, move_cursor=False):
-    status = await ensure_not_moving(stream)
+    await ensure_not_moving()
+    status = await server.request('PLAYER_STATUS')
     if status['facingDirection'] != direction:
         btn = directions_to_buttons[direction]
         await press_key(btn)
@@ -517,8 +519,10 @@ async def swing_tool():
 
 async def do_action():
     await press_key(constants.ACTION_BUTTON)
+    await events.wait_for_update_ticked()
 
 async def navigate_tiles(get_items, sort_items=generic_next_item_key, pathfind_fn=pathfind_to_adjacent):
+    import events
     async with server.player_status_stream() as stream:
         player_status = await stream.next()
         start_tile = player_status["tileX"], player_status["tileY"]
@@ -540,9 +544,7 @@ async def navigate_tiles(get_items, sort_items=generic_next_item_key, pathfind_f
                     pass
                 else:
                     item_tile = item['tileX'], item['tileY']
-                    await asyncio.sleep(0.1)
                     await set_mouse_position_on_tile(item_tile)
-                    await asyncio.sleep(0.1)
                     yield item
                     break
             if not item_path:
@@ -556,6 +558,7 @@ async def navigate_nearest_tile(get_items, pathfind_fn=pathfind_to_adjacent):
 async def set_mouse_position_on_tile(tile):
     x, y = tile
     await server.request('SET_MOUSE_POSITION_ON_TILE', {'x': x, 'y': y})
+    await events.wait_for_update_ticked()
 
 def is_debris(obj):
     return obj.get('name') in DEBRIS
@@ -795,7 +798,7 @@ class MoveToCharacter:
                     is_moving = True
             finally:
                 if is_moving:
-                    await stop_moving()
+                    await ensure_not_moving()
 
 async def face_tile(stream, tile):
     player_status = await stream.next()
@@ -812,7 +815,7 @@ async def pathfind_to_tile(x, y, stream, cutoff=-1):
 
 async def move_n_tiles(direction: int, n: int, stream):
     status = await get_player_status()
-    await ensure_not_moving(stream)
+    await ensure_not_moving()
     from_x, from_y = status["tileX"], status["tileY"]
     to_x, to_y = from_x, from_y
     if direction == constants.NORTH:

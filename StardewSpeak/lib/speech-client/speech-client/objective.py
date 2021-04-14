@@ -213,6 +213,7 @@ class PlantSeedsOrFertilizerObjective(Objective):
     async def run(self):
         async for hdt in game.navigate_tiles(self.get_hoe_dirt, game.generic_next_item_key):
             await game.do_action()
+            
 class HoePlotObjective(Objective):
 
     def __init__(self, n1, n2):

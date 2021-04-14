@@ -170,21 +170,28 @@ def inventory_commands():
     }
     return commands
 
-def simple_focus(name: str):
+def simple_focus(*fields):
     import df_utils
 
-    async def to_call(menu, n):
-        await focus_component(menu[n])
+    async def to_call(menu, field_list):
+        for field in field_list:
+            cmp = menu.get(field)
+            if cmp:
+                await focus_component(cmp)
+                return
 
-    return df_utils.async_action(to_call, name)
+    return df_utils.async_action(to_call, fields)
 
-def simple_click(name: str):
+def simple_click(*fields):
     import df_utils
 
-    async def to_call(menu, n):
-        await click_component(menu[n])
-
-    return df_utils.async_action(to_call, name)
+    async def to_call(menu, field_list):
+        for field in field_list:
+            cmp = menu.get(field)
+            if cmp:
+                await click_component(cmp)
+                return
+    return df_utils.async_action(to_call, fields)
 
 async def ensure_awaited(obj):
     if inspect.isawaitable(obj):

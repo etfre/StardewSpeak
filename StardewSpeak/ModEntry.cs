@@ -59,7 +59,6 @@ namespace StardewSpeak
 
         private void OnSpeechEngineExited(Process process, TaskCompletionSource<int> tcs) 
         {
-            tcs.SetResult(process.ExitCode);
             ModEntry.Streams = new Dictionary<string, Stream>();
             Input.ClearHeld();
             Game1.addHUDMessage(new HUDMessage("Speech engine errored. Attempting to restart...", HUDMessage.error_type));
@@ -219,6 +218,7 @@ namespace StardewSpeak
             foreach (var btn in Input.Held.Values) {
                 Input.SetDown(btn);
             }
+            this.speechEngine.SendEvent("UPDATE_TICKING");
         }
 
         private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)
@@ -244,6 +244,7 @@ namespace StardewSpeak
                 var message = new { stream_id = id, value, error };
                 this.speechEngine.SendMessage("STREAM_MESSAGE", message);
             }
+            this.speechEngine.SendEvent("UPDATE_TICKED");
         }
     }
 }
