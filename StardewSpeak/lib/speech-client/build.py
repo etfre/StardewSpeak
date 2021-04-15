@@ -21,14 +21,6 @@ EXCLUDES = ['tkinter']
 
 MAIN = os.path.join('speech-client', 'main.py')
 
-class StopDirectoryRecursion(BaseException):
-    pass
-
-def create_settings_file(app_root):
-    settings = {'command_directory': 'commands'}
-    with open(os.path.join(app_root, 'settings.json'), 'w') as f:
-        json.dump(settings, f)
-
 DIST_FOLDER = 'dist'
 WSR_SRC_FOLDER = os.path.join('engines', 'RecognizerIO', 'RecognizerIO', 'bin', 'Debug')
 WSR_DEST_FOLDER = os.path.join(DIST_FOLDER, 'engines', 'wsr')
@@ -264,11 +256,10 @@ def filter_commands():
 def build_release():
     msbuild = r"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe"
     sln = os.path.abspath(os.path.join('..', '..', '..', 'StardewSpeak.sln'))
-    subprocess.run([msbuild, sln, '/p:Configuration=Release'])
+    subprocess.run([msbuild, sln, '/p:Configuration=Release', "/t:Clean;Rebuild"])
 
 def main():
     args = parse_command_line(prepare_parser())
-    # build_release()
     app_name = 'speech-client'
     app_root = os.path.join('dist')
     try_remove_directory(app_root)
@@ -281,9 +272,10 @@ def main():
             args.icon,
         )
     ]
+    
     freezer = cx_Freeze.Freezer(
         executables,
-        includes=args.includes,
+        includes=["codecs"],
         excludes=EXCLUDES,
         packages=args.packages,
         replacePaths=args.replace_paths,
@@ -298,22 +290,7 @@ def main():
         zipExcludePackages=args.zip_exclude_packages,
     )
     freezer.Freeze()
-    # wsr_dest_folder = os.path.join(app_root, 'engines', 'wsr')
-    # shutil.copytree(WSR_SRC_FOLDER, wsr_dest_folder)
-    # commands_root = os.path.join(app_root, 'commands')
-    # top_level_directories = [app_name]
-    # for directory in top_level_directories:
-    #     app_commands_dir = os.path.join(os.path.expanduser('~'), '.osspeak', 'commands', directory)
-    #     commands_dir = os.path.join(commands_root, directory)
-    #     copy_dir(app_commands_dir, commands_dir, lambda x: x.endswith('.speak') or x.endswith('.py'))
-    # create_settings_file(app_root)
-    # shutil.make_archive(os.path.join(app_root, app_name), 'zip', app_root)
-    # os.chdir('standalone_applications')
-    # zf = zipdir(app_name)
-    # os.chdir('..')
-    # with open(os.path.join(app_root, app_name + '.zip'), 'wb') as f:
-    #     f.write(zf.getvalue())
-    # print(args)
+    build_release()
 
 
 if __name__ == "__main__":

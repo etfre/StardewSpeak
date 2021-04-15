@@ -1,17 +1,3 @@
-"""
-Command-module loader for Kaldi.
-
-This script is based on 'dfly-loader-wsr.py' written by Christo Butcher and
-has been adapted to work with the Kaldi engine instead.
-
-This script can be used to look for Dragonfly command-modules for use with
-the Kaldi engine. It scans the directory it's in and loads any ``_*.py`` it
-finds.
-"""
-
-
-# TODO Have a simple GUI for pausing, resuming, cancelling and stopping
-# recognition, etc
 
 import os.path
 import os
