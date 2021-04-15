@@ -207,11 +207,6 @@ def parse_command_line(parser):
     args.zip_include_packages = normalize_to_list(args.zip_include_packages)
     args.zip_exclude_packages = normalize_to_list(args.zip_exclude_packages)
     replace_paths = []
-    if args.replace_paths:
-        for directive in args.replace_paths.split(os.pathsep):
-            from_path, replacement = directive.split("=")
-            replace_paths.append((from_path, replacement))
-    args.replace_paths = replace_paths
     if args.default_path is not None:
         sys.path = [p for mp in args.default_path for p in mp.split(os.pathsep)]
     if args.include_path is not None:
@@ -278,7 +273,6 @@ def main():
         includes=["codecs"],
         excludes=EXCLUDES,
         packages=args.packages,
-        replacePaths=args.replace_paths,
         compress=args.compress,
         optimizeFlag=args.optimize_flag,
         path=None,
