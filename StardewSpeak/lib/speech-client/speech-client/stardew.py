@@ -115,9 +115,6 @@ def rule_builder():
             defaults={"n": 1, 'positive_num': 1, 'positive_index': 0},
         )
     )
-    # builder.repeat.append(
-    #     rules.ParsedRule(mapping=repeat_mapping, name="stardew_repeat")
-    # )
     return builder
 
 non_repeat_mapping = {
@@ -149,7 +146,7 @@ non_repeat_mapping = {
     "click [<positive_num>]": df_utils.async_action(server.mouse_click, "left", "positive_num"),
     "right click [<positive_num>]": df_utils.async_action(server.mouse_click, "right", "positive_num"),
     "mouse <mouse_directions> [<positive_num>]": df_utils.async_action(move_mouse, 'mouse_directions', 'positive_num'),
-    "start fishing": df_utils.async_action(fishing_menu.start_fishing),
+    "start fishing": objective.function_objective(fishing_menu.start_fishing),
     "catch fish": df_utils.async_action(fishing_menu.catch_fish),
     "write game state": df_utils.async_action(game.write_game_state),
 }

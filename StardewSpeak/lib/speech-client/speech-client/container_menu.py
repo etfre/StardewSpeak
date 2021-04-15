@@ -56,6 +56,7 @@ mapping = {
     "backpack": df_utils.async_action(set_item_grab_submenu, 'inventoryMenu'),
     "container": df_utils.async_action(set_item_grab_submenu, 'itemsToGrabMenu'),
     "ok": df_utils.async_action(click_button, 'okButton'),
+    "(trash | garbage) can": df_utils.async_action(click_button, 'trashCan'),
 }
 
 @menu_utils.valid_menu_test

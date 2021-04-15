@@ -545,7 +545,6 @@ async def navigate_tiles(get_items, sort_items=generic_next_item_key, pathfind_f
         start_tile = player_status["tileX"], player_status["tileY"]
         previous_item_count = -1
         while True:
-            player_status = await stream.next()
             current_tile = player_status["tileX"], player_status["tileY"]
             items = await get_items(player_status['location'])
             if not items:
@@ -569,6 +568,7 @@ async def navigate_tiles(get_items, sort_items=generic_next_item_key, pathfind_f
                     break
             if not item_path:
                 return
+            player_status = await stream.next()
 
 async def navigate_nearest_tile(get_items, pathfind_fn=pathfind_to_adjacent):
     async for item in navigate_tiles(get_items, sort_items=closest_item_key, pathfind_fn=pathfind_fn):
