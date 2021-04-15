@@ -300,11 +300,13 @@ def get_adjacent_tiles(tile):
 async def path_to_adjacent(x, y, tiles_from_target=1, cutoff=-1):
     resp = await server.request("PATH_TO_PLAYER", {"x": x, "y": y, "cutoff": cutoff})
     tiles, location = resp['tiles'], resp['location']
+    if tiles is None:
+        raise NavigationFailed(f"Cannot pathfind to player from {x}, {y} at location {location}")
     return tiles_to_adjacent_path(tiles, location, tiles_from_target=tiles_from_target)
 
 def tiles_to_adjacent_path(tiles, location, tiles_from_target=1):
     if tiles is None:
-        raise NavigationFailed(f"Cannot pathfind to player from {x}, {y} at location {location}")
+        raise NavigationFailed()
     assert tiles
     adj_tiles =  tiles[:1] if len(tiles) <= tiles_from_target else reversed(tiles[tiles_from_target:])
     return Path(adj_tiles, location)
