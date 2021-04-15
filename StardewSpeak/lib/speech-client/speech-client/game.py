@@ -525,9 +525,18 @@ async def swing_tool():
 
 async def do_action():
     await press_key(constants.ACTION_BUTTON)
-    await events.wait_for_update_ticked()
 
-async def navigate_tiles(get_items, sort_items=generic_next_item_key, pathfind_fn=pathfind_to_adjacent):
+async def pathfind_to_adjacent_tile_from_current(stream):
+    player_status = await stream.next()
+    location = player_status['location']
+    for x, y in get_adjacent_tiles((player_status['tileX'], player_status['tileY'])):
+        try:
+            return await pathfind_to_tile(x, y, stream)
+        except NavigationFailed:
+            continue
+    raise NavigationFailed
+
+async def navigate_tiles(get_items, sort_items=generic_next_item_key, pathfind_fn=pathfind_to_adjacent, allow_action_on_same_tile=True):
     import events
     async with server.player_status_stream() as stream:
         player_status = await stream.next()
@@ -544,12 +553,15 @@ async def navigate_tiles(get_items, sort_items=generic_next_item_key, pathfind_f
             previous_item_count = len(items)
             item_path = None
             for item in sorted(items, key=lambda t: sort_items(start_tile, current_tile, t, player_status)):
+                item_tile = (item['tileX'], item['tileY'])
+                if current_tile == item_tile and not allow_action_on_same_tile:
+                    await pathfind_to_adjacent_tile_from_current(stream)
+                    await face_tile(stream, item_tile)
                 try:
                     item_path = await pathfind_fn(item['tileX'], item['tileY'], stream, cutoff=500)
                 except NavigationFailed:
                     pass
                 else:
-                    item_tile = item['tileX'], item['tileY']
                     await set_mouse_position_on_tile(item_tile)
                     yield item
                     break

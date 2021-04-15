@@ -137,7 +137,7 @@ namespace StardewSpeak
             //}
             else
             {
-                UpdateTickingRequestQueue.Enqueue(msg);
+                UpdateTickedRequestQueue.Enqueue(msg);
             }
         }
 

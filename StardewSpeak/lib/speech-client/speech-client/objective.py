@@ -150,7 +150,7 @@ class WaterCropsObjective(Objective):
 
     async def run(self):
         await game.equip_item_by_name(constants.WATERING_CAN)
-        async for crop in game.navigate_tiles(self.get_unwatered_crops, game.generic_next_item_key):
+        async for crop in game.navigate_tiles(self.get_unwatered_crops, game.generic_next_item_key, allow_action_on_same_tile=False):
             await game.swing_tool()
 
 class HarvestCropsObjective(Objective):
@@ -213,7 +213,7 @@ class PlantSeedsOrFertilizerObjective(Objective):
     async def run(self):
         async for hdt in game.navigate_tiles(self.get_hoe_dirt, game.generic_next_item_key):
             await game.do_action()
-            
+
 class HoePlotObjective(Objective):
 
     def __init__(self, n1, n2):
@@ -236,7 +236,7 @@ class HoePlotObjective(Objective):
                 y = start_tile[1] + j * y_increment
                 plot_tiles.add((x, y))
         get_next_diggable = functools.partial(game.get_diggable_tiles, plot_tiles)
-        async for hdt in game.navigate_tiles(get_next_diggable, game.generic_next_item_key):
+        async for hdt in game.navigate_tiles(get_next_diggable, game.generic_next_item_key, allow_action_on_same_tile=False):
             await game.swing_tool()
 
 

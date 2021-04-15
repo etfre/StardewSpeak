@@ -18,9 +18,11 @@ event_registry = {
 event_futures = collections.defaultdict(lambda: server.loop.create_future())
 
 async def wait_for_update_ticking():
+    return
     return wait_for_event('UPDATE_TICKING')
     
 async def wait_for_update_ticked():
+    return
     return wait_for_event('UPDATE_TICKED')
     
 def wait_for_event(event_name: str):
