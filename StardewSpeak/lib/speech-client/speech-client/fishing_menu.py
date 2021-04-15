@@ -6,7 +6,6 @@ async def catch_fish():
 
 async def start_fishing():
     with server.player_status_stream() as stream:
-        await game.navigate_nearest_tile(game.get_water_tiles)
         await game.equip_item_by_name(constants.FISHING_ROD)
         await cast_fishing_rod()
         await wait_for_nibble()
@@ -17,8 +16,9 @@ async def cast_fishing_rod():
 
 async def wait_for_nibble():
     with server.tool_status_stream() as tss:
-        await tss.wait(lambda t: t['isNibbling'])
-        await game.press_key(constants.USE_TOOL_BUTTON)
-        await tss.wait(lambda t: t['isReeling'])
+        tool_status = await tss.wait(lambda t: t['isNibbling'] or not t['inUse'])
+        if tool_status['inUse']:
+            await game.press_key(constants.USE_TOOL_BUTTON)
+            await tss.wait(lambda t: t['isReeling'])
 
 
