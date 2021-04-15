@@ -38,8 +38,8 @@ Play Stardew Valley by voice.
         <td>"go to mines"</td>
     </tr>
     <tr>
-        <td>Dig &lt;m&gt; by &lt;n&gt;</td>
-        <td>Use hoe to dig an <i>m</i> by <i>n</i> grid based on the last two directions faced.</td>
+        <td>Dig &lt;x&gt; by &lt;y&gt;</td>
+        <td>Use hoe to dig an <i>x</i> by <i>y</i> grid based on the last two directions faced.</td>
         <td>"dig three by four"</td>
     </tr>
     <tr>
@@ -49,22 +49,28 @@ Play Stardew Valley by voice.
     </tr>
     <tr>
         <td>Talk to &lt;npc&gt;</td>
-        <td>Move to an NPC and press x. Will fail if the NPC is not in the current location.</td>
+        <td>Move to an NPC and press action button. Will fail if the NPC is not in the current location.</td>
         <td>"talk to Leah"</td>
     </tr>
     <tr>
         <td>action</td>
-        <td>Press x</td>
+        <td>Press action button (default x)</td>
         <td>"action"</td>
     </tr>
     <tr>
         <td>swing</td>
-        <td>Press c</td>
+        <td>Use tool (default c)</td>
         <td>"swing"</td>
+    </tr>
+    <tr>
+        <td>stop</td>
+        <td>Stop current actions</td>
+        <td>"stop"</td>
     </tr>
 </table>
 
-### Shop Menu
+### Menus
+See the [menus file](menus.md) for a list of available menu-specific commands
 <table>
     <tr>
         <th>Command</th>
