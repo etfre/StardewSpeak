@@ -99,7 +99,7 @@ Play Stardew Valley by voice.
     </tr>
     <tr>
         <td>Nearest &lt;item&gt;</td>
-        <td>Move to nearest <a href="./speech-client/items.py">item</a> by name in current location.</td>
+        <td>Move to nearest <a href="./lib/speech-client/speech-client/items.py">item</a> by name in current location.</td>
         <td>
             <div>"nearest chest"</div>
             <div>"nearest bee house"</div>
