@@ -1,5 +1,4 @@
 import dragonfly as df
-import re
 
 class Item:
 
@@ -146,10 +145,7 @@ craftable_items = (
 
 tools = ()
 
-other_items = (
-    Item("Banana Slug"),
-    Item("Baseball Bat"),
-)
+other_items = ()
 
 def item_commands(items):
     commands = {}

@@ -29,9 +29,8 @@ async def get_shipping_bin_tiles(item):
     return game.break_into_pieces([tile])
 
 async def go_to_shipping_bin():
-    async for item in game.navigate_tiles(get_shipping_bin_tiles):
-        await game.do_action()
-        break
+    await game.navigate_nearest_tile(get_shipping_bin_tiles)
+    await game.do_action()
 
 async def get_bed_tile(item):
     tile = await server.request('BED_TILE')
@@ -44,14 +43,15 @@ mapping = {
     "<direction_keys>": objective.objective_action(objective.HoldKeyObjective, "direction_keys"),
     "<direction_nums> <n>": objective.objective_action(objective.MoveNTilesObjective, "direction_nums", "n"),
     "item <positive_index>": df_utils.async_action(game.equip_item_by_index, 'positive_index'),
-    "equip [melee] weapon": df_utils.async_action(game.equip_item, lambda x: x['type'] == constants.MELEE_WEAPON),
+    "equip [melee] weapon": df_utils.async_action(game.equip_melee_weapon),
     "nearest <items>": objective.function_objective(go_to_object, 'items'),
     "jump <direction_nums> [<positive_num>]": df_utils.async_action(move_and_face_previous_direction, 'direction_nums', "positive_num"),
     "go to bed": objective.function_objective(go_to_bed),
     "go to shipping bin": objective.function_objective(go_to_shipping_bin),
+    "start shopping": objective.function_objective(objective.start_shopping),
     "water crops": objective.objective_action(objective.WaterCropsObjective),
     "harvest crops": objective.objective_action(objective.HarvestCropsObjective),
-    "[open | read] (journal | quest log)": df_utils.async_action(game.press_key, constants.JOURNAL_BUTTON),
+    "[open | read] (quests | journal | quest log)": df_utils.async_action(game.press_key, constants.JOURNAL_BUTTON),
 
 }
 

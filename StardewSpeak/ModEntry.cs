@@ -41,7 +41,6 @@ namespace StardewSpeak
         {
             ModEntry.helper = helper;
 
-            //helper.Events.Input.ButtonPressed += this.OnButtonPressed;
             helper.Events.Display.MenuChanged += this.OnMenuChanged;
             helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
             helper.Events.GameLoop.UpdateTicking += GameLoop_UpdateTicking;
@@ -147,60 +146,6 @@ namespace StardewSpeak
             Log($"ON_LARGE_TERRAIN_FEATURE_LIST_CHANGED");
 
         }
-        /*********
-        ** Private methods
-        *********/
-        /// <summary>Raised after the player presses a button on the keyboard, controller, or mouse.</summary>
-        /// <param name="sender">The event sender.</param>
-        /// <param name="e">The event data.</param>
-        private void OnButtonPressed(object sender, ButtonPressedEventArgs e)
-        {
-            // ignore if player hasn't loaded a save yet
-            if (!Context.IsWorldReady) { return; }
-
-            SButton btn = e.Button;
-            string key = btn.ToString();
-
-            // print button presses to the console window
-            string pressed = e.Button.ToString();
-            //this.Monitor.Log($"{Game1.player.Name} presseddd {e.Button}.", LogLevel.Debug);
-            //this.Monitor.Log(e.Button.ToString(), LogLevel.Debug);
-            if (pressed == "R")
-            {
-                var menu = Game1.activeClickableMenu;
-                var serializedMenu = Utils.SerializeMenu(Game1.activeClickableMenu);
-                Utils.WriteJson("menu.json", serializedMenu);
-            }
-            else if (pressed == "K")
-            {
-                speechEngine.Exit();
-            }
-            else if (pressed == "L")
-            {
-                var player = Game1.player;
-                var location = player.currentLocation;
-                var mouseX = Game1.getMouseX();
-                var mouseY = Game1.getMouseY();
-                var point = Game1.currentCursorTile;
-                var tileX = (int)point.X;
-                var tileY = (int)point.Y;
-                var vec = new Vector2(tileX, tileY);
-                var viewport = Game1.viewport;
-                Log($"Current tiles: x: {tileX}, y: {tileY}");
-                Log($"Current mouse position: x: {mouseX}, y: {mouseY}");
-                var tiles = Utils.VisibleTiles(Game1.player.currentLocation);
-
-                var isOccupied = location.isTileOccupiedIgnoreFloors(vec);
-                var rec = new xTile.Dimensions.Location(tileX, tileY);
-                var t = player.CurrentTool; 
-                Utils.WriteJson("debris.json", location.debris.ToList());
-                Utils.WriteJson("objects.json", location.Objects.Values.ToList());
-                Utils.WriteJson("resourceClumps.json", location.resourceClumps.ToList());
-                Utils.WriteJson("currentTool.json", player.CurrentTool);
-                Utils.WriteJson("serializedResourceClumps.json", GameState.ResourceClumps());
-            }
-        }
-
         private void RespondToQueuedRequests(ConcurrentQueue<dynamic> queue, int timeLimit = 5) 
         {
             var sw = Stopwatch.StartNew();

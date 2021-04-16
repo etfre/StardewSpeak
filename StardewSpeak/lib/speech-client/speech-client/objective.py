@@ -268,6 +268,29 @@ async def use_tool_on_animals(tool: str, animal_type=None):
             raise RuntimeError()
         await asyncio.sleep(0.1)
 
+async def start_shopping():
+    async with server.player_status_stream() as stream:
+        loc = (await stream.next())['location']
+        if loc == 'AnimalShop':
+            tile, facing_direction = (12, 16), constants.NORTH
+        elif loc == 'Blacksmith':
+            tile, facing_direction = (3, 15), constants.NORTH
+        elif loc == 'FishShop':
+            tile, facing_direction = (5, 6), constants.NORTH
+        elif loc == 'JojaMart':
+            tile, facing_direction = (11, 25), constants.WEST
+        elif loc == 'LibraryMuseum':
+            tile, facing_direction = (3, 9), constants.NORTH
+        elif loc == 'Saloon':
+            tile, facing_direction = (10, 20), constants.NORTH
+        elif loc == 'ScienceHouse':
+            tile, facing_direction = (8, 20), constants.NORTH
+        elif loc == 'SeedShop':
+            tile, facing_direction = (4, 19), constants.NORTH
+        x, y = tile
+        await game.pathfind_to_tile(x, y,  stream)
+        await game.do_action()
+
 async def pet_animals():
     req_data = {"characterType": "animal", "getBy": "unpet", "requiredName": None}
     req_builder = server.RequestBuilder('GET_NEAREST_CHARACTER', req_data)
@@ -282,26 +305,28 @@ async def pet_animals():
 class DefendObjective(Objective):
 
     async def run(self):
-        async with server.characters_at_location_stream() as char_stream, server.player_status_stream() as player_stream:
-            player_position = (await player_stream.next())['position']
+        req_data = {"characterType": "monster", "requiredName": None}
+        req_builder = server.RequestBuilder('GET_NEAREST_CHARACTER', req_data)
+        player_status_builder = server.RequestBuilder('PLAYER_STATUS')
+        batched_request_builder = server.RequestBuilder.batch(player_status_builder, req_builder)
+        batched_request_builder.data[1]['data'] = {**req_data, 'target': None, 'getPath': False}
+        await game.equip_melee_weapon()
+        async with server.player_status_stream() as player_stream:
+            player_position = (await player_status_builder.request())['position']
             while True:
-                chars = await char_stream.next()
-                monsters = [x for x in chars if x['isMonster']]
-                if not monsters:
+                player_status, target = await batched_request_builder.request()
+                if not target:
                     return
-                visible_monster_positions = [x['position'] for x in chars if not x['isInvisible']]
-                if not visible_monster_positions:
-                    continue
-                if player_stream.has_value:
-                    player_position = player_stream.latest_value['position']
-                visible_monster_positions.sort(key=lambda x: game.distance_between_points_diagonal(player_position, x))
-                closest_monster_position = visible_monster_positions[0]
+                player_position = player_status['center']
+                closest_monster_position = target['center']
                 distance_from_monster = game.distance_between_points_diagonal(player_position, closest_monster_position)
                 if distance_from_monster > 0:
                     direction_to_face = game.direction_from_positions(player_position, closest_monster_position)
                     await game.face_direction(direction_to_face, player_stream)
                 if distance_from_monster < 110:
+                    await server.set_mouse_position(player_position[0], player_position[1], from_viewport=True)
                     await game.swing_tool()
+                await asyncio.sleep(0.1)
 
 class AttackObjective(Objective):
 
@@ -312,13 +337,13 @@ class AttackObjective(Objective):
         player_status_builder = server.RequestBuilder('PLAYER_STATUS')
         batched_request_builder = server.RequestBuilder.batch(player_status_builder, req_builder)
         batched_request_builder.data[1]['data'] = {**req_data, 'target': None, 'getPath': False}
+        await game.equip_melee_weapon()
         async with server.player_status_stream() as player_stream:
             player_position = (await player_status_builder.request())['position']
             while True:
                 target = await game.MoveToCharacter(req_builder).move()
                 distance_from_monster = 0
                 while distance_from_monster < 90:
-                    server.log(batched_request_builder.data[1])
                     player_status, target = await batched_request_builder.request()
                     player_position = player_status['center']
                     closest_monster_position = target['center']

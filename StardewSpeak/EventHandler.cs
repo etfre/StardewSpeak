@@ -74,7 +74,7 @@ namespace StardewSpeak
                 Utils.WriteJson("resourceClumps.json", location.resourceClumps.ToList());
                 Utils.WriteJson("currentTool.json", player.CurrentTool);
                 Utils.WriteJson("serializedResourceClumps.json", GameState.ResourceClumps());
-            }
+                }
         }
         public void PopulateMapKeysToButtons() 
         {

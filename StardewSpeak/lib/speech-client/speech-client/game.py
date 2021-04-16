@@ -477,6 +477,10 @@ async def equip_item(predicate):
                 else:
                     return await server.request('EQUIP_ITEM_INDEX', {"index": matched_index})
 
+async def equip_melee_weapon():
+    predicate = lambda x: x['type'] == constants.MELEE_WEAPON
+    await equip_item(predicate)
+
 async def equip_item_by_name(name: str):
     predicate = lambda x: x['netName'] == name
     return await equip_item(predicate)

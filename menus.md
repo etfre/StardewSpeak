@@ -1,4 +1,6 @@
-All menus with commands can also be navigated with the `north`, `south`, `east`, and `west` commands to move the mouse to an adjacent clickable section of the active menu. An optional number afterwards will fire the command that many times. For example, if the backpack is open with the moouse over the second item on the first row, saying `south two` will move the cursor to the second item on the third row. `Click` and `right click` will click any button underneath the mouse.
+Generally, menu commands should map to what is visible on screen. For example, if a menu contains an ok button, saying `ok` will click that button. Similarly, saying `trash can` will click on any visible trash can. Adding these commands is a manual process that varies from menu to menu, so if a command is missing or not working correctly feel free to create an issue.
+
+All menus with commands can also be navigated with the `north`, `south`, `east`, and `west` commands to move the mouse to an adjacent clickable section of the active menu. An optional number afterwards will fire the command that many times. For example, if the backpack is open with the mouse over the second item on the first row, saying `south two` will move the cursor to the second item on the third row. `Click` and `right click` will click any button underneath the mouse.
 
 ## Available Menu Commands (WIP)
 
