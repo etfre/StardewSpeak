@@ -55,6 +55,29 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
         <td>"go to mines"</td>
     </tr>
     <tr>
+        <td>(go to mail box | (check | read) mail)</td>
+        <td>Walk towards a game <a href="./StardewSpeak/lib/speech-client/speech-client/locations.py">location</a>.</td>
+        <td>
+            <div>"go to mail box"</div>
+            <div>"check mail"</div>
+        </td>
+    </tr>
+    <tr>
+        <td>go to shipping bin</td>
+        <td>Go to shipping bin and press action button.</td>
+        <td>"go to shipping bin"</td>
+    </tr>
+    <tr>
+        <td>go to billboard</td>
+        <td>If in town, go to billboard and press action button.</td>
+        <td>"go to billboard"</td>
+    </tr>
+    <tr>
+        <td>go to calendar</td>
+        <td>If in town, go to calendar and press action button.</td>
+        <td>"go to calendar"</td>
+    </tr>
+    <tr>
         <td>(dig | hoe) &lt;x&gt; by &lt;y&gt;</td>
         <td>Use hoe to dig an <i>x</i> by <i>y</i> grid based on the last two directions faced.</td>
         <td>"dig three by four"</td>
@@ -154,6 +177,16 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
         <td>equip [melee] weapon</td>
         <td>Equip melee weapon if in inventory.</td>
         <td>"equip weapon"</td>
+    </tr>
+    <tr>
+        <td>attack</td>
+        <td>Move to the nearest monster in the current location and begin swinging melee weapon. Continue until there are no more monsters in the current location.</td>
+        <td>"attack"</td>
+    </tr>
+    <tr>
+        <td>defend</td>
+        <td>Wait until a monster comes into melee weapon range and swing at it. Continue until there are no more monsters in the current location.</td>
+        <td>"defend"</td>
     </tr>
     <tr>
         <td>(next | cycle) toolbar</td>
