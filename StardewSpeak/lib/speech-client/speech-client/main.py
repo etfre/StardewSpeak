@@ -5,6 +5,10 @@ import threading
 import time
 import logging
 import sys
+from pathlib import Path
+from io import BytesIO
+from zipfile import ZipFile
+import urllib.request
 
 from dragonfly import RecognitionObserver, get_engine, AppContext
 from dragonfly.log import setup_log
@@ -15,41 +19,61 @@ import stardew, new_game_menu, shop_menu, container_menu, title_menu, load_game_
 import letter_viewer_menu, quest_log_menu, animal_query_menu
 from game_menu import game_menu, crafting_page, inventory_page, exit_page
 
-
-# --------------------------------------------------------------------------
-# Simple recognition observer class.
+MODELS_DIR = os.path.join(str(Path.home()), '.srabuilder', 'modelss')
 
 
 class Observer(RecognitionObserver):
     def on_begin(self):
-        print("Speech started.")
+        pass
 
     def on_recognition(self, words):
         import server
         server.log("Recognized:", " ".join(words))
 
     def on_failure(self):
-        print("Sorry, what was that?")
+        pass
 
+def download_model(write_dir):
+    import game
+    model_url = 'https://github.com/daanzu/kaldi-active-grammar/releases/download/v1.8.0/kaldi_model_daanzu_20200905_1ep-biglm.zip'
+    game.show_hud_message(f'Downloading speech recognition model, this may take a few minutes...', 2)
+    url_open = urllib.request.urlopen(model_url)
+    with ZipFile(BytesIO(url_open.read())) as my_zip_file:
+        my_zip_file.extractall(write_dir)
 
-def command_line_loop(engine):
-    while True:
-        user_input = input("> ")
-        if user_input:
-            time.sleep(4)
-            try:
-                engine.mimic(user_input)
-            except Exception as e:
-                print(e)
+def setup_engine(silence_timeout=500, models_dir=MODELS_DIR):
+    # use abspath for model dir, this may change with app freezing
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    model_dir = os.path.join(models_dir, "kaldi_model")
+    if not os.path.isdir(model_dir):
+        download_model(models_dir)
+    # Set any configuration options here as keyword arguments.
+    engine = get_engine(
+        "kaldi",
+        model_dir=model_dir,
+        expected_error_rate_threshold=0.05,
+        # tmp_dir='kaldi_tmp',  # default for temporary directory
+        # vad_aggressiveness=3,  # default aggressiveness of VAD
+        vad_padding_start_ms=0,  # default ms of required silence surrounding VAD
+        vad_padding_end_ms=silence_timeout,  # default ms of required silence surrounding VAD
+    )
+    # Call connect() now that the engine configuration is set.
+    engine.connect()
+    return engine   
 
-
-# --------------------------------------------------------------------------
-# Main event driving loop.
-
+def run_engine():
+    import game
+    engine = get_engine()
+    engine.prepare_for_recognition()
+    game.show_hud_message('Speech recognition is ready', 4)
+    try:
+        engine.do_recognition()
+    except KeyboardInterrupt:
+        pass
 
 def main(args):
     logging.basicConfig(level=logging.INFO)
-    engine = srabuilder.setup_engine(silence_timeout=275)
+    engine = setup_engine(silence_timeout=275)
 
     # Register a recognition observer
     observer = Observer()
@@ -81,9 +105,7 @@ def main(args):
     letter_viewer_menu.load_grammar()
     quest_log_menu.load_grammar()
     animal_query_menu.load_grammar()
-
-    # threading.Thread(target=command_line_loop, args=(engine,), daemon=True).start()
-    srabuilder.run_engine()
+    run_engine()
 
 
 if __name__ == "__main__":

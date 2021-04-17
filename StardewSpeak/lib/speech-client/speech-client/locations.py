@@ -60,7 +60,7 @@ def init_locations():
         Location("LeahHouse", ["leah's house"]),
         Location("ArchaeologyHouse", ["library museum", "library", "museum", "archaeology house"]),
         Location("ManorHouse", ["manor house", "[mayor] lewis' house"]),
-        Location("Mine", ["mine", "mines"]),
+        Location("Mine", ["[the] (mine | mines)"]),
         Location("Mountain"),
         Location("SamHouse", ["sam's house"]),
         Location("Saloon", ["[stardrop] saloon"]),

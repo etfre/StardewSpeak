@@ -2,9 +2,16 @@
 
 Play Stardew Valley by voice.
 
+## Installation
+
 ## Getting Started
 
 ## Commands
+
+Commands wrapped in brackets are optional, meaning that `hello [world]` will match either `hello` or `hello world`. Commands wrapped in brackets or parentheses with `|` describes alternatives. Commands wrapped in `<>` refer to a particular set of alternatives: `<direction>` refers to movement directions, `<n>`, `<x>`, and `<y>` refer to numbers, `<location>` refers to game locations, and `<item>` refers to game items.
+
+See the [menus file](menus.md) for a list of available menu-specific commands.
+
 ### General
 <table>
     <tr>
@@ -23,18 +30,18 @@ Play Stardew Valley by voice.
         <td>"one two west" - move left 12 tiles</td>
     </tr>
     <tr>
-        <td>Clear debris</td>
+        <td>clear debris</td>
         <td>Begin clearing weeds, stone, and wood.</td>
         <td>"clear debris"</td>
     </tr>
     <tr>
-        <td>Chop trees</td>
+        <td>chop trees</td>
         <td>Begin chopping down nearby trees.</td>
         <td>"chop trees"</td>
     </tr>
     <tr>
-        <td>Go to &lt;location&gt;</td>
-        <td>Walk towards a game location.</td>
+        <td>go to &lt;location&gt;</td>
+        <td>Walk towards a game <a href="./StardewSpeak/lib/speech-client/speech-client/locations.py">location</a>.</td>
         <td>"go to mines"</td>
     </tr>
     <tr>
@@ -58,22 +65,22 @@ Play Stardew Valley by voice.
         <td>"start harvesting"</td>
     </tr>
     <tr>
-        <td>Pet animals</td>
+        <td>pet animals</td>
         <td>Attempt to pet all animals in the current location. Will sometimes fail if the animals are clumped together or are in tight areas that make pathfinding difficult.</td>
         <td>"pet animals"</td>
     </tr>
     <tr>
-        <td>Milk animals</td>
+        <td>milk animals</td>
         <td>Attempt to milk all cows and goats in the current location. Will sometimes fail if the animals are clumped together or are in tight areas that make pathfinding difficult.</td>
         <td>"milk animals"</td>
     </tr>
     <tr>
-        <td>Start fishing</td>
+        <td>start fishing</td>
         <td>Cast fishing rod at maximum distance. If the cast is successful, wait for a nibble and begin reeling.</td>
         <td>"start fishing"</td>
     </tr>
     <tr>
-        <td>Catch fish</td>
+        <td>catch fish</td>
         <td>Automatically complete fish catching minigame. Will also catch any treasure chests that appear.</td>
         <td>"catch fish"</td>
     </tr>
@@ -83,7 +90,7 @@ Play Stardew Valley by voice.
         <td>"talk to Leah"</td>
     </tr>
     <tr>
-        <td>Start shopping</td>
+        <td>start shopping</td>
         <td>If in a store location (Pierre's General Store, Marnie's house, etc.), move to shopkeeper and press action button.</td>
         <td>"start shopping"</td>
     </tr>
@@ -98,7 +105,7 @@ Play Stardew Valley by voice.
         <td>"go inside"</td>
     </tr>
     <tr>
-        <td>Nearest &lt;item&gt;</td>
+        <td>nearest &lt;item&gt;</td>
         <td>Move to nearest <a href="./StardewSpeak/lib/speech-client/speech-client/items.py">item</a> by name in current location.</td>
         <td>
             <div>"nearest chest"</div>
@@ -143,7 +150,24 @@ Play Stardew Valley by voice.
         <td>Cycle the toolbar.</td>
         <td>"next toolbar"</td>
     </tr>
+    <tr>
+        <td>[left] click [&lt;n&gt;]</td>
+        <td>Left click <i>n</i> times.</td>
+        <td>"click"</td>
+    </tr>
+    <tr>
+        <td>right click [&lt;n&gt;]</td>
+        <td>Right click <i>n</i> times.</td>
+        <td>"right click"</td>
+    </tr>
+    <tr>
+        <td>mouse &lt;direction&gt; [&lt;n&gt;]</td>
+        <td>Move the mouse <i>n</i> tiles (64 pixels).</td>
+        <td>"mouse down"</td>
+    </tr>
+    <tr>
+        <td>small mouse &lt;direction&gt; [&lt;n&gt;]</td>
+        <td>Move the mouse <i>n</i> pixels.</td>
+        <td>"small mouse down seven"</td>
+    </tr>
 </table>
-
-### Menus
-See the [menus file](menus.md) for a list of available menu-specific commands

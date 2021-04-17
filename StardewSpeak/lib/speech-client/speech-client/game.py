@@ -488,6 +488,9 @@ async def equip_item_by_name(name: str):
 async def equip_item_by_index(idx: int):
     return await server.request('EQUIP_ITEM_INDEX', {"index": idx})
 
+def show_hud_message(msg: str, msg_type: int):
+    server.send_message("SHOW_HUD_MESSAGE", {'message': msg, 'msgType': msg_type})
+
 def closest_item_key(start_tile, current_tile, item, player_status):
     target_tile = item['tileX'], item['tileY']
     return distance_between_points(current_tile, target_tile)

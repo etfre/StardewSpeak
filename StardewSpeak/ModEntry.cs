@@ -27,10 +27,12 @@ namespace StardewSpeak
         internal static bool FeedLocation = false;
         SpeechEngine speechEngine;
         EventHandler eventHandler;
+
         public static Action<string, LogLevel> log { get; private set; }
         public static Dictionary<string, Stream> Streams { get; set; } = new Dictionary<string, Stream>();
         public static List<InputButton[]> ButtonsToCheck = new List<InputButton[]>();
         public static IModHelper helper;
+        public static HUDMessage QueuedMessage = null;
 
         /*********
 ** Public methods
@@ -72,6 +74,11 @@ namespace StardewSpeak
 
         private void OnSaveLoaded(object sender, SaveLoadedEventArgs e) 
         {
+            if (QueuedMessage != null) 
+            {
+                Game1.addHUDMessage(QueuedMessage);
+                QueuedMessage = null;
+            }
             Routing.Reset();
         }
 
@@ -163,7 +170,7 @@ namespace StardewSpeak
             foreach (var btn in Input.Held.Values) {
                 Input.SetDown(btn);
             }
-            this.speechEngine.SendEvent("UPDATE_TICKING");
+            //this.speechEngine.SendEvent("UPDATE_TICKING");
         }
 
         private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)
@@ -189,7 +196,7 @@ namespace StardewSpeak
                 var message = new { stream_id = id, value, error };
                 this.speechEngine.SendMessage("STREAM_MESSAGE", message);
             }
-            this.speechEngine.SendEvent("UPDATE_TICKED");
+            //this.speechEngine.SendEvent("UPDATE_TICKED");
         }
     }
 }

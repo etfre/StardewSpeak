@@ -238,6 +238,21 @@ namespace StardewSpeak
                         }
                         return null;
                     }
+                case "SHOW_HUD_MESSAGE": 
+                    {
+                        string message = data.message;
+                        int mType = data.msgType;
+                        var msg = new HUDMessage(message, mType);
+                        if (Context.IsWorldReady)
+                        {
+                            Game1.addHUDMessage(msg);
+                        }
+                        else
+                        {
+                            ModEntry.QueuedMessage = msg;
+                        }
+                        return true;
+                    }
                 case "GET_LADDER_UP_TILE":
                     {
                         if (player.currentLocation is StardewValley.Locations.MineShaft)
