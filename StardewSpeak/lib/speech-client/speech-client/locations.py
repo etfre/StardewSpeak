@@ -55,7 +55,7 @@ def init_locations():
         Location("Forest"),
         Location("HaleyHouse", ["haley's house", "emily's house", "to willow lane"]),
         Location("Hospital"),
-        Location("JojaMart", ["joe jah mart"]),
+        Location("JojaMart"),
         Location("JoshHouse", ["josh's house"]),
         Location("LeahHouse", ["leah's house"]),
         Location("ArchaeologyHouse", ["library museum", "library", "museum", "archaeology house"]),

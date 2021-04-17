@@ -19,7 +19,23 @@ import stardew, new_game_menu, shop_menu, container_menu, title_menu, load_game_
 import letter_viewer_menu, quest_log_menu, animal_query_menu
 from game_menu import game_menu, crafting_page, inventory_page, exit_page
 
-MODELS_DIR = os.path.join(str(Path.home()), '.srabuilder', 'modelss')
+MODELS_DIR = os.path.join(str(Path.home()), '.stardewspeak', 'models')
+
+user_lexicon = (
+    ("backspace", "b { k s p e I s"),
+    ("crystalarium", "k r I s t V l { r i V m"),
+    ("geode", "dZ i o U d"),
+    ("glowstone", "g l o U s t o U n"),
+    ("jack-o-lantern", "dZ { k o U l { n t 3 n"),
+    ('joja', "dZ 'o U dZ 'V"),
+    ("krobus", "k r o U b V s"),
+    ("kwee", "k w i"),
+    ("lamp-post", "l { m p p o U s t"),
+    ("riverland", "r I v 3 l { n d"),
+    ("stardrop", "s t A r d r A p"),
+    ("x-ray", "E k s r e I"),
+    ("yoba", "j o U b V"),
+)
 
 
 class Observer(RecognitionObserver):
@@ -33,10 +49,16 @@ class Observer(RecognitionObserver):
     def on_failure(self):
         pass
 
+def add_user_lexicon(model_dir: str):
+    with open (os.path.join(model_dir, "user_lexicon.txt"), 'w') as f:
+        for word, phonetics in user_lexicon:
+            line = f'{word} {phonetics}\n'
+            f.write(line)
+
 def download_model(write_dir):
     import game
     model_url = 'https://github.com/daanzu/kaldi-active-grammar/releases/download/v1.8.0/kaldi_model_daanzu_20200905_1ep-biglm.zip'
-    game.show_hud_message(f'Downloading speech recognition model, this may take a few minutes...', 2)
+    game.show_hud_message(f'Downloading speech recognition model. This may take a few minutes...', 2)
     url_open = urllib.request.urlopen(model_url)
     with ZipFile(BytesIO(url_open.read())) as my_zip_file:
         my_zip_file.extractall(write_dir)
@@ -47,6 +69,7 @@ def setup_engine(silence_timeout=500, models_dir=MODELS_DIR):
     model_dir = os.path.join(models_dir, "kaldi_model")
     if not os.path.isdir(model_dir):
         download_model(models_dir)
+        add_user_lexicon(model_dir)
     # Set any configuration options here as keyword arguments.
     engine = get_engine(
         "kaldi",
