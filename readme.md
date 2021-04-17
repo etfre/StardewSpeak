@@ -8,17 +8,19 @@ StardewSpeak can be installed just like [any other SMAPI-based mod](https://star
 
 Test out your microphone with the Windows 10 voice recorder or some other piece of software to ensure that you are using a microphone that is able to clearly capture your speech.
 
+An internet connection is required to download the language model the first time the game runs. The model is just over a gigabyte in size, so this could take some time depending on your connection. On subsequent launches of Stardew Valley, speech recognition should begin within a few seconds, although this could also vary depending on the speed of your computer. The speech engine uses about 2.5 gigabytes of RAM, so be careful about running it alongside other RAM-intensive applications.
+
 ## Getting Started
 
-Speech recognition begins automatically when Stardew Valley is launched. 
+Speech recognition begins automatically when Stardew Valley is launched. A chime sound will play when speech recognition is ready, and a notification will appear when a saved game is loaded. 
 
-An internet connection is required to download the language model the first time the game runs. The model is just over a gigabyte in size, so this could take some time depending on your connection. On subsequent launches of Stardew Valley, speech recognition should begin with a couple seconds, although this could also vary depending on the speed of your computer. The speech engine uses about 2.5 gigabytes of RAM, so be careful about running it alongside other RAM-intensive applications.
+All menus can (or will) be navigated by voice. As an example, to load a saved game from the title menu, say `load` to enter the saved game menu. Then `game` followed by the number of the game you want to play, e.g. `game three` to load the third game. If you have more than four saved games, `scroll down` and `scroll up` will click the up and down arrows. See the [menus file](menus.md) for more information and a list of available menu-specific commands. 
+
+Once in game, try saying `go to farm` to begin to your farm. Saying `stop` will stop whatever the farmer is currently doing.
 
 ## Commands
 
 Commands wrapped in brackets are optional, meaning that `hello [world]` will match either `hello` or `hello world`. Commands wrapped in brackets or parentheses with `|` describes alternatives. Commands wrapped in `<>` refer to a particular set of alternatives: `<direction>` refers to movement directions, `<n>`, `<x>`, and `<y>` refer to numbers, `<location>` refers to game locations, and `<item>` refers to game items.
-
-See the [menus file](menus.md) for a list of available menu-specific commands.
 
 ### General
 <table>
