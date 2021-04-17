@@ -1,4 +1,4 @@
-
+import winsound
 import os.path
 import os
 import threading
@@ -88,6 +88,7 @@ def run_engine():
     import game
     engine = get_engine()
     engine.prepare_for_recognition()
+    winsound.PlaySound('..\\assets\\ready.wav', winsound.SND_FILENAME | winsound.SND_ASYNC)
     game.show_hud_message('Speech recognition is ready', 4)
     try:
         engine.do_recognition()

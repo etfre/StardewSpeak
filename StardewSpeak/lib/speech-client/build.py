@@ -17,13 +17,19 @@ from cx_Freeze.common import normalize_to_list
 
 __all__ = ["main"]
 
-EXCLUDES = ['tkinter']
+EXCLUDES = ['tkinter', 'email']
 
 MAIN = os.path.join('speech-client', 'main.py')
 
 DIST_FOLDER = 'dist'
 WSR_SRC_FOLDER = os.path.join('engines', 'RecognizerIO', 'RecognizerIO', 'bin', 'Debug')
 WSR_DEST_FOLDER = os.path.join(DIST_FOLDER, 'engines', 'wsr')
+
+def get_version():
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    manifest_path = os.path.abspath(os.path.join(current_dir, '..', '..', 'manifest.json'))
+    with open(manifest_path) as f:
+        return json.load(f)['Version']
 
 
 DESCRIPTION = """
@@ -40,15 +46,8 @@ Copyright (c) 2001-2006 Computronix Corporation. All rights reserved.
     cx_Freeze.__version__
 )
 
-def try_remove_directory(path):
-    try:
-        shutil.rmtree(path)
-    except FileNotFoundError:
-        pass
-
 def prepare_parser():
-    parser = argparse.ArgumentParser(epilog=VERSION)
-    parser.add_argument("--version", action="version", version=VERSION)
+    parser = argparse.ArgumentParser()
     parser.add_argument("--command-folders", nargs="*", metavar="SCRIPT", help="Command module folders")
     parser.add_argument(
         "-O",
@@ -233,21 +232,6 @@ def zipdir(path):
             zipfile_ob.write(os.path.join(root, file))
     return file_like_object
 
-def copy_dir(root_src_dir, root_dst_dir, filter=None):
-    try_remove_directory(root_dst_dir)
-    for src_dir, dirs, files in os.walk(root_src_dir):
-        files_to_write = [f for f in files if filter(f)] if filter else files
-        if files_to_write:
-            dst_dir = src_dir.replace(root_src_dir, root_dst_dir, 1)
-            os.makedirs(dst_dir, exists_ok=True)
-            for file_ in files_to_write:
-                src_file = os.path.join(src_dir, file_)
-                dst_file = os.path.join(dst_dir, file_)
-                shutil.copy(src_file, dst_dir)
-
-def filter_commands():
-    pass
-
 def build_release():
     msbuild = r"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe"
     sln = os.path.abspath(os.path.join('..', '..', '..', 'StardewSpeak.sln'))
@@ -257,7 +241,7 @@ def main():
     args = parse_command_line(prepare_parser())
     app_name = 'speech-client'
     app_root = os.path.join('dist')
-    try_remove_directory(app_root)
+    shutil.rmtree(app_root, ignore_errors=True)
     executables = [
         cx_Freeze.Executable(
             MAIN,

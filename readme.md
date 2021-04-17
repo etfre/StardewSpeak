@@ -4,7 +4,15 @@ Play Stardew Valley by voice.
 
 ## Installation
 
+StardewSpeak can be installed just like [any other SMAPI-based mod](https://stardewvalleywiki.com/Modding:Player_Guide/Getting_Started). 
+
+Test out your microphone with the Windows 10 voice recorder or some other piece of software to ensure that you are using a microphone that is able to clearly capture your speech.
+
 ## Getting Started
+
+Speech recognition begins automatically when Stardew Valley is launched. 
+
+An internet connection is required to download the language model the first time the game runs. The model is just over a gigabyte in size, so this could take some time depending on your connection. On subsequent launches of Stardew Valley, speech recognition should begin with a couple seconds, although this could also vary depending on the speed of your computer. The speech engine uses about 2.5 gigabytes of RAM, so be careful about running it alongside other RAM-intensive applications.
 
 ## Commands
 
