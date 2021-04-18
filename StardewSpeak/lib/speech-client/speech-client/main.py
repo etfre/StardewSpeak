@@ -89,10 +89,6 @@ def run_engine():
     import game
     engine = get_engine()
     engine.prepare_for_recognition()
-    # xna blocks child processes from playing audio, so create new detatched process
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    script = os.path.join(current_dir, "play_sound.py")
-    subprocess.Popen([sys.executable, script], close_fds = True)
     game.show_hud_message('Speech recognition is ready', 4)
     try:
         engine.do_recognition()

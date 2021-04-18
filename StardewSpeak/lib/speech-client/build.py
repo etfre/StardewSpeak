@@ -17,13 +17,9 @@ from cx_Freeze.common import normalize_to_list
 
 __all__ = ["main"]
 
-EXCLUDES = ['tkinter', 'email']
+EXCLUDES = ['tkinter']
 
 MAIN = os.path.join('speech-client', 'main.py')
-
-DIST_FOLDER = 'dist'
-WSR_SRC_FOLDER = os.path.join('engines', 'RecognizerIO', 'RecognizerIO', 'bin', 'Debug')
-WSR_DEST_FOLDER = os.path.join(DIST_FOLDER, 'engines', 'wsr')
 
 def get_version():
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -224,7 +220,6 @@ def parse_command_line(parser):
     return args
 
 def zipdir(path):
-    # ziph is zipfile handle
     file_like_object = io.BytesIO()
     zipfile_ob = zipfile.ZipFile(file_like_object, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9)
     for root, dirs, files in os.walk(path):
@@ -236,6 +231,8 @@ def build_release():
     msbuild = r"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe"
     sln = os.path.abspath(os.path.join('..', '..', '..', 'StardewSpeak.sln'))
     subprocess.run([msbuild, sln, '/p:Configuration=Release', "/t:Clean;Rebuild"])
+    shutil.rmtree(r'C:\Program Files (x86)\GOG Galaxy\Games\Stardew Valley\Mods\StardewSpeak\lib\speech-client\dist', ignore_errors=True)
+    shutil.copytree(r'C:\Program Files (x86)\GOG Galaxy\Games\Stardew Valley\Mods\StardewSpeak\StardewSpeak\lib\speech-client\dist', r'C:\Program Files (x86)\GOG Galaxy\Games\Stardew Valley\Mods\StardewSpeak\lib\speech-client\dist')
 
 def main():
     args = parse_command_line(prepare_parser())
