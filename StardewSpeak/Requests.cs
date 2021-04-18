@@ -121,7 +121,6 @@ namespace StardewSpeak
                         int targetX = data.x;
                         int targetY = data.y;
                         int cutoff = data.cutoff;
-                        var sw = new Stopwatch();
                         var path = Pathfinder.Pathfinder.FindPath(player.currentLocation, playerX, playerY, targetX, targetY, cutoff);
                         return path;
                     }

@@ -68,3 +68,20 @@ def type_letters(letters: str):
         pydirectinput.press(char)
     if shift_down:
         pydirectinput.keyUp('shift')
+
+
+def title_case(words):
+    return " ".join([x.title() for x in words])
+
+def dictation_wrap(fn):
+    return df.Function(lambda dictation: do_dictation(fn(dictation.split())))
+
+def do_dictation(dictation):
+    text = str(dictation)
+    type_letters(text)
+
+def typing_commands():
+    return {
+        "<letters_and_keys>": df.Function(lambda **kw: type_letters(kw['letters_and_keys'])),
+        "title <dictation>": dictation_wrap(title_case),
+    }

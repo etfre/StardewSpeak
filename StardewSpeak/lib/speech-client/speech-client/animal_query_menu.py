@@ -1,6 +1,6 @@
 import dragonfly as df
 from srabuilder import rules
-import menu_utils, server, df_utils, game, objective, server, constants
+import menu_utils, server, df_utils, game, objective, server, constants, letters
 
 ANIMAL_QUERY_MENU = 'animalQueryMenu'
 
@@ -13,10 +13,11 @@ mapping = {
     "sell": menu_utils.simple_click("sellButton"),
     "(change | move) home [building]": menu_utils.simple_click("moveHomeButton"),
     "(name | rename)": menu_utils.simple_click("textBoxCC"),
+    **letters.typing_commands()
 }
 
 def load_grammar():
-    extras = [df.Choice("direction_keys", game.direction_keys)]
+    extras = [df.Choice("direction_keys", game.direction_keys), letters.letters_and_keys, df.Dictation("dictation")]
     grammar = menu_utils.build_menu_grammar('animal_query_menu', mapping, ANIMAL_QUERY_MENU, extras=extras)
     grammar.load()
     

@@ -707,6 +707,9 @@ async def move_mouse_in_direction(direction: int, amount: int):
 async def on_menu_changed(new_menu):
     await server.stop_everything()
 
+def set_context_menu(menu):
+    context_variables['ACTIVE_MENU'] = menu
+
 def get_context_menu(menu_type=None):
     import menu_utils
     menu = context_variables['ACTIVE_MENU']

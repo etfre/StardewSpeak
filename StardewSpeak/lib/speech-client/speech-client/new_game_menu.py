@@ -4,24 +4,14 @@ import title_menu, menu_utils, server, df_utils, game, letters
 
 CHARACTER_CUSTOMIZATION_MENU = 'characterCustomizationMenu'
 
-async def get_new_game_menu():
-    menu = await menu_utils.get_active_menu(title_menu.TITLE_MENU)
+def validate_new_game_menu(menu):
     return title_menu.get_submenu(menu, CHARACTER_CUSTOMIZATION_MENU)
 
-async def focus_box(cmp_name):
-    await menu_utils.click_menu_button(cmp_name, menu_getter=get_new_game_menu)
-
-async def click_box(name):
-    menu = await get_new_game_menu()
-    await menu_utils.click_component(menu[name])
-
-async def click_farm(farm):
-    menu = await get_new_game_menu()
+async def click_farm(menu, farm):
     cmp = menu_utils.find_component_by_field(menu['farmTypeButtons'], 'name', farm)
     await menu_utils.click_component(cmp)
 
-async def click_arrow_field(field, cmp_list_name, count):
-    menu = await get_new_game_menu()
+async def click_arrow_field(menu, field, cmp_list_name, count):
     cmp = menu_utils.find_component_by_field(menu[cmp_list_name], 'name', field)
     for i in range(count):
         await menu_utils.click_component(cmp)
@@ -52,51 +42,28 @@ arrow_fields = {
     "skin": "Skin",
 }
 
-
-def title_case(words):
-    return " ".join([x.title() for x in words])
-
-def dictation_wrap(fn):
-    return df.Function(lambda dictation: do_dictation(fn(dictation.split())))
-
-def do_dictation(dictation):
-    text = str(dictation)
-    letters.type_letters(text)
-
 mapping = {
-    "name": df_utils.async_action(focus_box, 'nameBoxCC'),
-    "farm name": df_utils.async_action(focus_box, 'farmnameBoxCC'),
-    "favorite thing": df_utils.async_action(focus_box, 'favThingBoxCC'),
-    "(random | [roll] dice)": df_utils.async_action(focus_box, 'randomButton'),
-    "(ok [button] | start game)": df_utils.async_action(focus_box, 'okButton'),
-    "skip (intro | introduction)": df_utils.async_action(focus_box, 'skipIntroButton'),
-    "go back": df_utils.async_action(focus_box, 'backButton'),
+    "name": menu_utils.simple_click('nameBoxCC'),
+    "farm name": menu_utils.simple_click('farmnameBoxCC'),
+    "favorite thing": menu_utils.simple_click('favThingBoxCC'),
+    "(random | [roll] dice)": menu_utils.simple_click('randomButton'),
+    "(ok [button] | start game)": menu_utils.simple_click('okButton'),
+    "skip (intro | introduction)": menu_utils.simple_click('skipIntroButton'),
+    "go back": menu_utils.simple_click('backButton'),
     "<farm_types> farm": df_utils.async_action(click_farm, 'farm_types'),
     "<arrows> <arrow_fields> [<positive_num>]": df_utils.async_action(click_arrow_field, 'arrow_fields', 'arrows', 'positive_num'),
-    "<letters_and_keys>": df.Function(lambda **kw: letters.type_letters(kw['letters_and_keys'])),
-    "say <dictation>": dictation_wrap(title_case),
-    "[go] back": df_utils.async_action(click_box, "backButton"),
+    "[go] back": menu_utils.simple_click("backButton"),
+    **letters.typing_commands(),
 }
 
-@menu_utils.valid_menu_test
-def is_active():
-    title_menu.get_submenu(game.get_context_menu(title_menu.TITLE_MENU), 'characterCustomizationMenu')
-
 def load_grammar():
-    grammar = df.Grammar("new_game_menu")
-    main_rule = df.MappingRule(
-        name="new_game_menu_rule",
-        mapping=mapping,
-        extras=[
-            df.Choice("farm_types", farm_types),
-            df.Choice("arrow_fields", arrow_fields),
-            df.Choice("arrows", arrows),
-            df_utils.positive_num,
-            letters.letters_and_keys,
-            df.Dictation("dictation"),
-        ],
-        defaults={'positive_num': 1},
-        context=is_active
-    )
-    grammar.add_rule(main_rule)
+    extras=[
+        df.Choice("farm_types", farm_types),
+        df.Choice("arrow_fields", arrow_fields),
+        df.Choice("arrows", arrows),
+        df_utils.positive_num,
+        letters.letters_and_keys,
+        df.Dictation("dictation"),
+    ]
+    grammar = menu_utils.build_menu_grammar("new_game_menu", mapping, validate_new_game_menu, extras=extras)
     grammar.load()
