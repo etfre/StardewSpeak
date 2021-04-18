@@ -12,7 +12,7 @@ An internet connection is required to download the language model the first time
 
 ## Getting Started
 
-Speech recognition begins automatically when Stardew Valley is launched. A chime sound will play when speech recognition is ready, and a notification will appear when a saved game is loaded. 
+Speech recognition begins automatically when Stardew Valley is launched. If you are playing in windowed mode, the microphone icon in the taskbar indicates that speech recognition is active. Additionally, an in-game notification will appear.
 
 All menus can (or will) be navigated by voice. As an example, to load a saved game from the title menu, say `load` to enter the saved game menu. Then `game` followed by the number of the game you want to play, e.g. `game three` to load the third game. If you have more than four saved games, `scroll down` and `scroll up` will click the up and down arrows. See the [menus file](menus.md) for more information and a list of available menu-specific commands. 
 
