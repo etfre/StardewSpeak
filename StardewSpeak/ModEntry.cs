@@ -68,8 +68,8 @@ namespace StardewSpeak
             this.speechEngine.LaunchProcess();
         }
 
-        public static void Log(string msg) {
-            ModEntry.log(msg, LogLevel.Debug);
+        public static void Log(string msg, LogLevel level) {
+            ModEntry.log(msg, level);
         }
 
         private void OnSaveLoaded(object sender, SaveLoadedEventArgs e) 
@@ -101,10 +101,8 @@ namespace StardewSpeak
                 if (stream.Name == "ON_WARPED") {
                     var message = new { stream_id = id, value = warpEvent };
                     this.speechEngine.SendMessage("STREAM_MESSAGE", message);
-                    Log($"Warped to {e.NewLocation}");
                 }
             }
-            //this.speechEngine.SendEvent("ON_WARPED", warpEvent);
         }
 
         private void OnMenuChanged(object sender, MenuChangedEventArgs e) 
@@ -134,8 +132,6 @@ namespace StardewSpeak
             var removed = e.Removed.Select(x => new { x.Value.currentTileLocation });
             var changedEvent = new { location = e.Location.NameOrUniqueName, removed };
             this.MessageStreams("ON_TERRAIN_FEATURE_LIST_CHANGED", changedEvent);
-            Log($"ON_TERRAIN_FEATURE_LIST_CHANGED");
-            //this.speechEngine.SendEvent("ON_WARPED", warpEvent);
         }
 
 
@@ -144,13 +140,10 @@ namespace StardewSpeak
         {
             var changedEvent = new { location = e.Location.NameOrUniqueName };
             this.MessageStreams("ON_OBJECT_LIST_CHANGED", changedEvent);
-            Log($"ON_OBJECT_LIST_CHANGED");
-            //this.speechEngine.SendEvent("ON_WARPED", warpEvent);
         }
 
         private void OnLargeTerrainFeatureListChanged(object sender, LargeTerrainFeatureListChangedEventArgs e) 
         {
-            Log($"ON_LARGE_TERRAIN_FEATURE_LIST_CHANGED");
 
         }
         private void RespondToQueuedRequests(ConcurrentQueue<dynamic> queue, int timeLimit = 5) 

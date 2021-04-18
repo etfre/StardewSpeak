@@ -43,15 +43,15 @@ namespace StardewSpeak
         {
             string rootDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             #if DEBUG
-                ModEntry.Log("Running in debug mode");
+                ModEntry.Log("Running Python client in debug mode", LogLevel.Trace);
                 var fileName = "\"" + Path.Combine(rootDir, @"StardewSpeak\lib\speech-client\Scripts\python.exe") + "\"";
                 var arguments = "\"" + Path.Combine(rootDir, @"StardewSpeak\lib\speech-client\speech-client\main.py") + "\"";
                 Task.Factory.StartNew(() => RunProcessAsync(fileName, arguments));
-            #else
-                ModEntry.Log("Running in release mode");
-                string exePath = "\"" + Path.Combine(rootDir, @"lib\speech-client\dist\speech-client.exe") + "\"";
+#else
+                ModEntry.Log("Running in release mode", LogLevel.Trace);
+                string exePath = "\"" + Path.Combine(rootDir, @"lib\speech-client\dist\speech-client\speech-client.exe") + "\"";
                 Task.Factory.StartNew(() => RunProcessAsync(exePath, null));
-            #endif
+#endif
         }
 
         public async Task<int> RunProcessAsync(string fileName, string args)
@@ -128,8 +128,9 @@ namespace StardewSpeak
             string msgType = msg.type;
             if (msgType == "LOG")
             {
-                dynamic toLog = msg.data;
-                ModEntry.Log($"Speech engine message: {toLog}");
+                string toLog = msg.data.value;
+                LogLevel logLevel = msg.data.level;
+                ModEntry.Log($"Speech engine message: {toLog}", logLevel);
             }
             //else if (msgType == "UPDATE_HELD_BUTTONS" || msgType == "PRESS_KEY") 
             //{
@@ -164,7 +165,7 @@ namespace StardewSpeak
 
         void onError(string data)
         {
-            ModEntry.Log($"Speech engine error: {data}");
+            ModEntry.Log($"Speech engine error: {data}", LogLevel.Debug);
         }
 
         void SendResponse(string id, object value = null, object error = null) 

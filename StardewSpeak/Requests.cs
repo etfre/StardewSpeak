@@ -122,10 +122,7 @@ namespace StardewSpeak
                         int targetY = data.y;
                         int cutoff = data.cutoff;
                         var sw = new Stopwatch();
-                        sw.Start();
                         var path = Pathfinder.Pathfinder.FindPath(player.currentLocation, playerX, playerY, targetX, targetY, cutoff);
-                        sw.Stop();
-                        ModEntry.Log(sw.ElapsedMilliseconds.ToString());
                         return path;
                     }
                 case "GET_NEAREST_CHARACTER": 
