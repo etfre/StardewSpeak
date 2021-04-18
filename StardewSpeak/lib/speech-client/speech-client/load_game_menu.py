@@ -11,7 +11,7 @@ async def go_back(menu):
     await menu_utils.click_component(menu['backButton'])
 
 async def load_game(menu, game_idx: int):
-    button_index = game_idx - menu['currentItemIndex']
+    button_index = game_idx
     try:
         btn = menu['slotButtons'][button_index]
     except IndexError:
