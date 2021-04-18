@@ -44,6 +44,7 @@ mapping = {
     "<direction_nums> <n>": objective.objective_action(objective.MoveNTilesObjective, "direction_nums", "n"),
     "item <positive_index>": df_utils.async_action(game.equip_item_by_index, 'positive_index'),
     "equip [melee] weapon": df_utils.async_action(game.equip_melee_weapon),
+    "equip <items>": df_utils.async_action(game.equip_item_by_name, "items"),
     "nearest <items>": objective.function_objective(go_to_object, 'items'),
     "jump <direction_nums> [<positive_num>]": df_utils.async_action(move_and_face_previous_direction, 'direction_nums', "positive_num"),
     "go to bed": objective.function_objective(go_to_bed),
@@ -52,6 +53,7 @@ mapping = {
     "water crops": objective.objective_action(objective.WaterCropsObjective),
     "harvest crops": objective.objective_action(objective.HarvestCropsObjective),
     "[open | read] (quests | journal | quest log)": df_utils.async_action(game.press_key, constants.JOURNAL_BUTTON),
+    
 
 }
 

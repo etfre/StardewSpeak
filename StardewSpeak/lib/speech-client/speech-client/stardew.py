@@ -14,8 +14,7 @@ from dragonfly import *
 from srabuilder import rules
 
 from srabuilder.actions import directinput, pydirectinput
-import constants, server, game, objective, locations, items, container_menu, title_menu, menu_utils, fishing_menu, letters, new_game_menu, df_utils
-
+import constants, server, game, objective, locations, items, container_menu, title_menu, menu_utils, fishing_menu, letters, new_game_menu, df_utils, characters
 
 tools = {
     "axe": constants.AXE,
@@ -34,54 +33,6 @@ mouse_directions = {
     "down": constants.SOUTH,
     "left": constants.WEST,
 }
-
-npcs = {
-    'abigail': constants.ABIGAIL,
-    'alex': constants.ALEX,
-    'birdie': constants.BIRDIE,
-    '[the] bouncer': constants.BOUNCER,
-    'caroline': constants.CAROLINE,
-    'clint': constants.CLINT,
-    'demetrius': constants.DEMETRIUS,
-    '[the] dwarf': constants.DWARF,
-    'elliott': constants.ELLIOTT,
-    'emily': constants.EMILY,
-    'evelyn': constants.EVELYN,
-    'george': constants.GEORGE,
-    'gil': constants.GIL,
-    '[the] governor': constants.GOVERNOR,
-    'grandpa': constants.GRANDPA,
-    'gunther': constants.GUNTHER,
-    'gus': constants.GUS,
-    'haley': constants.HALEY,
-    'harvey': constants.HARVEY,
-    'jas': constants.JAS,
-    'jodi': constants.JODI,
-    'kent': constants.KENT,
-    'krobus': constants.KROBUS,
-    'leah': constants.LEAH,
-    'leo': constants.LEO,
-    '[mayor] lewis': constants.LEWIS,
-    'linus': constants.LINUS,
-    'marlon': constants.MARLON,
-    'marnie': constants.MARNIE,
-    '(muh roo | mar oo)': constants.MARU,
-    'morris': constants.MORRIS,
-    'mister (kwee | key)': constants.MR_QI,
-    'pam': constants.PAM,
-    'penny': constants.PENNY,
-    'pierre': constants.PIERRE,
-    'professor snail': constants.PROFESSOR_SNAIL,
-    'robin': constants.ROBIN,
-    'sam': constants.SAM,
-    'sandy': constants.SANDY,
-    'sebastian': constants.SEBASTIAN,
-    'shane': constants.SHANE,
-    'vincent': constants.VINCENT,
-    'willy': constants.WILLY,
-    '[the] wizard': constants.WIZARD,
-}
-
 
 numrep2 = Sequence(
     [Choice(None, rules.nonZeroDigitMap), Repetition(Choice(None, rules.digitMap), min=0, max=10)],
@@ -106,7 +57,7 @@ def rule_builder():
                 num2,
                 Choice("direction_nums", game.direction_nums),
                 Choice("tools", tools),
-                Choice("npcs", npcs),
+                Choice("npcs", characters.npcs),
                 Choice("mouse_directions", mouse_directions),
                 Choice("locations", locations.commands(locations.locations)),
                 Choice("points", locations.commands(locations.points)),
@@ -133,7 +84,7 @@ non_repeat_mapping = {
     "attack": objective.objective_action(objective.AttackObjective),
     "defend": objective.objective_action(objective.DefendObjective),
     "(hoe | dig) <n> by <n2>": objective.objective_action(objective.HoePlotObjective, "n", "n2"),
-    "equip <tools>": df_utils.async_action(game.equip_item_by_name, 'tools'),
+    # "equip <tools>": df_utils.async_action(game.equip_item_by_name, 'tools'),
     "talk to <npcs>": objective.objective_action(objective.TalkToNPCObjective, "npcs"),
     "refill watering can": objective.function_objective(game.refill_watering_can),
     "gather crafting": objective.function_objective(game.gather_crafted_items),

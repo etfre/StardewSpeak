@@ -481,8 +481,8 @@ async def equip_melee_weapon():
     predicate = lambda x: x['type'] == constants.MELEE_WEAPON
     await equip_item(predicate)
 
-async def equip_item_by_name(name: str):
-    predicate = lambda x: x['netName'] == name
+async def equip_item_by_name(item):
+    predicate = lambda x: x['netName'] == item.name
     return await equip_item(predicate)
 
 async def equip_item_by_index(idx: int):

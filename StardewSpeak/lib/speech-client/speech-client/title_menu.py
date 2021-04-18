@@ -23,7 +23,7 @@ async def click_menu_button(btn_name: str):
 
 def get_submenu(tm, menu_type=None):
     if tm is None or tm.get('menuType') != TITLE_MENU:
-        return
+        raise menu_utils.InvalidMenuOption()
     submenu = tm.get('subMenu')
     if not submenu or (menu_type is not None and submenu['menuType'] != menu_type):
         raise menu_utils.InvalidMenuOption()
