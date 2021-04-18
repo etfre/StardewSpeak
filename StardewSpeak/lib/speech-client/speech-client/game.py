@@ -804,7 +804,6 @@ class MoveToCharacter:
                 while True:
                     directions = []
                     player_status, character = await batched_builder.request() 
-                    server.log(character['name'], target['name'])
                     assert character['name'] == target['name']
                     req_data['target'] = character
                     player_pos, character_pos = player_status['center'], character['center']

@@ -33,8 +33,6 @@ namespace StardewSpeak
         private void OnButtonPressed(object sender, ButtonPressedEventArgs e)
         {
             // ignore if player hasn't loaded a save yet
-            if (!Context.IsWorldReady) { return; }
-
             string key = e.Button.ToString();
             MapKeysToButtons.TryGetValue(key, out string button);
             speechEngine.SendEvent("KEY_PRESSED", new { key, button, isWorldReady = Context.IsWorldReady });

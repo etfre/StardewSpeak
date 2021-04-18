@@ -169,7 +169,7 @@ class AsyncFunction(ActionBase):
         try:
             await self.async_fn(*a, **kw)
         except (Exception, asyncio.CancelledError, asyncio.TimeoutError) as e:
-            log(traceback.format_exc())
+            log(traceback.format_exc(), level=1)
 
     def execute(self, data=None):
         assert isinstance(data, dict)
@@ -329,7 +329,7 @@ def on_message(msg_str):
     try:
         msg = json.loads(msg_str)
     except json.JSONDecodeError:
-        log(f"Got invalid message from mod {msg_str}")
+        log(f"Got invalid message from mod {msg_str}", level=1)
         return
     msg_type = msg["type"]
     msg_data = msg["data"]

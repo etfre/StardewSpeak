@@ -21,7 +21,7 @@ class AsyncFunction(df.ActionBase):
         try:
             await self.async_fn(*args, **kwargs)
         except (Exception, asyncio.CancelledError, asyncio.TimeoutError) as e:
-            server.log(traceback.format_exc())
+            server.log(traceback.format_exc(), level=1)
 
     def execute(self, data=None):
         assert isinstance(data, dict)

@@ -45,7 +45,7 @@ class Observer(RecognitionObserver):
 
     def on_recognition(self, words):
         import server
-        server.log("Recognized:", " ".join(words))
+        server.log("Recognized:", " ".join(words), level=1)
 
     def on_failure(self):
         pass
@@ -97,7 +97,7 @@ def run_engine():
 
 def main(args):
     logging.basicConfig(level=logging.INFO)
-    engine = setup_engine(silence_timeout=275)
+    engine = setup_engine(silence_timeout=300)
 
     # Register a recognition observer
     observer = Observer()

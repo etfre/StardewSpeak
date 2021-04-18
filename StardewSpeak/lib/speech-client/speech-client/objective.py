@@ -54,17 +54,17 @@ class Objective:
 
     async def wrap_run(self):
         name = self.__class__.__name__
-        server.log(f"Starting objective {name}")
+        server.log(f"Starting objective {name}", level=1)
         self.run_task = server.TaskWrapper(self.run())
         await self.run_task.task
         if self.run_task.exception:
             if isinstance(self.run_task.exception, (Exception, ObjectiveFailedError)):
-                server.log(f"Objective {name} errored: \n{self.run_task.exception_trace}")
+                server.log(f"Objective {name} errored: \n{self.run_task.exception_trace}", level=1)
             elif isinstance(self.run_task.exception, asyncio.CancelledError):
-                server.log(f"Canceling objective {name}")
+                server.log(f"Canceling objective {name}", level=1)
             await game.release_all_keys()
         else:
-            server.log(f"Successfully completed objective {name}")
+            server.log(f"Successfully completed objective {name}", level=1)
         for task_wrapper in self.tasks:
             await task_wrapper.cancel()
 

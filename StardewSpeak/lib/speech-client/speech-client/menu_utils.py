@@ -126,7 +126,7 @@ class InventoryMenuWrapper:
     async def focus_box_by_item_name(self, name: str):
         pass
 
-def scroll_commands(menu_getter="foo", page_size=4):
+def scroll_commands(page_size=4):
     import df_utils
 
     return {
