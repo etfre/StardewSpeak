@@ -16,17 +16,6 @@ from srabuilder import rules
 from srabuilder.actions import directinput, pydirectinput
 import constants, server, game, objective, locations, items, container_menu, title_menu, menu_utils, fishing_menu, letters, new_game_menu, df_utils, characters
 
-tools = {
-    "axe": constants.AXE,
-    "fishing (rod | pole)": constants.FISHING_ROD,
-    "hoe": constants.HOE,
-    "pickaxe": constants.PICKAXE,
-    "scythe": constants.SCYTHE,
-    "watering can": constants.WATERING_CAN,
-    "milk pail": constants.MILK_PAIL,
-    "pan": constants.PAN,
-    "shears": constants.SHEARS,
-}
 mouse_directions = {
     "up": constants.NORTH,
     "right": constants.EAST,
@@ -56,7 +45,6 @@ def rule_builder():
                 df_utils.positive_index,
                 num2,
                 Choice("direction_nums", game.direction_nums),
-                Choice("tools", tools),
                 Choice("npcs", characters.npcs),
                 Choice("mouse_directions", mouse_directions),
                 Choice("locations", locations.commands(locations.locations)),
@@ -84,7 +72,6 @@ non_repeat_mapping = {
     "attack": objective.objective_action(objective.AttackObjective),
     "defend": objective.objective_action(objective.DefendObjective),
     "(hoe | dig) <n> by <n2>": objective.objective_action(objective.HoePlotObjective, "n", "n2"),
-    # "equip <tools>": df_utils.async_action(game.equip_item_by_name, 'tools'),
     "talk to <npcs>": objective.objective_action(objective.TalkToNPCObjective, "npcs"),
     "refill watering can": objective.function_objective(game.refill_watering_can),
     "gather crafting": objective.function_objective(game.gather_crafted_items),
