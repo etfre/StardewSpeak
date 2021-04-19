@@ -761,7 +761,6 @@ other_items = (
     Item("Void Essence"),
     Item("Mixed Seeds"),
     Item("Fiber"),
-    Item("Oilof Garlic", ["oil of garlic"]),
     Item("Life Elixir"),
     Item("Wild Bait"),
     Item("Glacierfish"),
