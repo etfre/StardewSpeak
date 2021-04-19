@@ -59,7 +59,8 @@ def update_held_buttons_nowait(to_hold=(), to_release=()):
     server.send_message('UPDATE_HELD_BUTTONS', {'toHold': to_hold, 'toRelease': to_release})
 
 class Path:
-    def __init__(self, mod_path, location: str):
+
+    def __init__(self, mod_path, location: str, stop_check=None, stop_moving_when_done=True):
         self._tiles = ()
         tiles = []
         self.tile_indices = {}
@@ -69,6 +70,8 @@ class Path:
             self.tile_indices[tile] = i
         self.tiles = tuple(tiles)
         self.location = location
+        self.stop_check = stop_check
+        self.stop_moving_when_done = stop_moving_when_done
 
     @property
     def tiles(self):
@@ -83,6 +86,54 @@ class Path:
         self.tiles = p.tiles
         self.tile_indices = p.tile_indices
         self.location = p.location
+
+    async def travel(self, status_stream: server.Stream, next_location=None):
+        is_done = False
+        try:
+            while not is_done:
+                player_status = await status_stream.next()
+                current_location = player_status["location"]
+                if current_location != self.location:
+                    if next_location == current_location:
+                        break
+                    raise NavigationFailed(
+                        f"Unexpected location {current_location}, pathfinding for {self.location}"
+                    )
+                try:
+                    is_done = self.move_update(player_status)
+                except KeyError as e:
+                    target_x, target_y = self.tiles[-1] # target can change so check whenever we need a new path
+                    current_tiles = self.tiles
+                    new_path = await path_to_tile(target_x, target_y, self.location)
+                    if current_tiles == self.tiles:
+                        self.retarget(new_path)
+        finally:
+            if self.stop_moving_when_done:
+                await ensure_not_moving()
+
+
+    def move_update(self, player_status):
+        """Return False to continue, True when done"""
+        if self.stop_check is not None and self.stop_check(player_status):
+            return True
+        current_tile = player_status["tileX"], player_status["tileY"]
+        current_tile_index = self.tile_indices[current_tile]
+        try:
+            target_tile = self.tiles[current_tile_index + 1]
+        except IndexError:
+            # Last tile, all done!
+            if player_status["isMoving"] and facing_tile_center(player_status):
+                return False
+            return True
+        if not player_status['canMove'] and player_status['currentEvent']:
+            raise NavigationFailed("Cannot move during cutscene")
+        direction_to_move = direction_from_tiles(current_tile, target_tile)
+        # Rule out not moving, moving in the same direction as next tile, and moving in the opposite direction
+        current_direction = player_status["facingDirection"]
+        turn_coming = player_status["isMoving"] and abs(current_direction - direction_to_move) % 2 == 1
+        if turn_coming and facing_tile_center(player_status):
+            return False
+        start_moving([direction_to_move])
 
 def distance_between_points(t1, t2):
     # pathfinding doesn't move diagonally for simplicity so just sum differences between x and y
@@ -201,10 +252,11 @@ async def pathfind_to_resource(tiles, location, stream, cutoff=-1):
     for tile in tiles:
         try:
             path_to_take = await path_to_tile(tile[0], tile[1], location, cutoff=cutoff)
-            path = await travel_path(path_to_take, stream)
+            await path_to_take.travel(stream)
         except NavigationFailed as e:
             invalid.append(tile)
         else:
+            path = path_to_take
             break
     return path, invalid
 
@@ -263,35 +315,10 @@ async def pathfind_to_next_location(
     status_stream: server.Stream,
 ):
     path, door_direction = await path_to_next_location(next_location, status_stream)
-    await travel_path(path, status_stream, next_location)
+    await path.travel(status_stream, next_location)
     if door_direction is not None:
         await face_direction(door_direction, status_stream, move_cursor=True)
         await do_action()
-
-# TODO: refactor as method on Path class
-async def travel_path(path: Path, status_stream: server.Stream, next_location=None):
-    is_done = False
-    try:
-        while not is_done:
-            player_status = await status_stream.next()
-            current_location = player_status["location"]
-            if current_location != path.location:
-                if next_location == current_location:
-                    break
-                raise NavigationFailed(
-                    f"Unexpected location {current_location}, pathfinding for {path.location}"
-                )
-            try:
-                is_done = move_update(path, player_status)
-            except KeyError as e:
-                target_x, target_y = path.tiles[-1] # target can change so check whenever we need a new path
-                current_tiles = path.tiles
-                new_path = await path_to_tile(target_x, target_y, path.location)
-                if current_tiles == path.tiles:
-                    path.retarget(new_path)
-    finally:
-        await ensure_not_moving()
-    return path
 
 def get_adjacent_tiles(tile):
     x, y = tile
@@ -313,34 +340,12 @@ def tiles_to_adjacent_path(tiles, location, tiles_from_target=1):
 
 async def pathfind_to_adjacent(x, y, status_stream: server.Stream, tiles_from_target=1, cutoff=-1):
     path = await path_to_adjacent(x, y, tiles_from_target=tiles_from_target, cutoff=cutoff)
-    await travel_path(path, status_stream)
+    await path.travel(status_stream)
     if path.tiles[-1] != (x, y):
         direction_to_face = direction_from_tiles(path.tiles[-1], (x, y))
         await face_direction(direction_to_face, status_stream)
     return path
     
-
-def move_update(path, player_status):
-    """Return False to continue, True when done"""
-    current_tile = player_status["tileX"], player_status["tileY"]
-    current_tile_index = path.tile_indices[current_tile]
-    try:
-        target_tile = path.tiles[current_tile_index + 1]
-    except IndexError:
-        # Last tile, all done!
-        if player_status["isMoving"] and facing_tile_center(player_status):
-            return False
-        return True
-    if not player_status['canMove'] and player_status['currentEvent']:
-        raise NavigationFailed("Cannot move during cutscene")
-    direction_to_move = direction_from_tiles(current_tile, target_tile)
-    # Rule out not moving, moving in the same direction as next tile, and moving in the opposite direction
-    current_direction = player_status["facingDirection"]
-    turn_coming = player_status["isMoving"] and abs(current_direction - direction_to_move) % 2 == 1
-    if turn_coming and facing_tile_center(player_status):
-        return False
-    start_moving([direction_to_move])
-
 
 def direction_from_tiles(tile, target_tile):
     x, y = tile
@@ -482,7 +487,9 @@ async def equip_melee_weapon():
     await equip_item(predicate)
 
 async def equip_item_by_name(item):
-    predicate = lambda x: x['netName'] == item.name
+    import items
+    name = item.name if isinstance(item, items.Item) else item
+    predicate = lambda x: x['netName'] == name
     return await equip_item(predicate)
 
 async def equip_item_by_index(idx: int):
@@ -566,7 +573,8 @@ async def navigate_tiles(get_items, sort_items=generic_next_item_key, pathfind_f
                     await pathfind_to_adjacent_tile_from_current(stream)
                     await face_tile(stream, item_tile)
                 try:
-                    item_path = await pathfind_fn(item['tileX'], item['tileY'], stream, cutoff=500)
+                    server.log(item, level=1)
+                    item_path = await pathfind_fn(item['tileX'], item['tileY'], stream)
                 except NavigationFailed:
                     pass
                 else:
@@ -760,26 +768,28 @@ class NavigationFailed(Exception):
 
 class MoveToCharacter:
 
-    def __init__(self, get_character_builder):
+    def __init__(self, get_character_builder, tiles_from_target=1, distance=75):
         self.get_character_builder = get_character_builder
+        self.tiles_from_target = tiles_from_target
+        self.distance = distance
 
-    async def move(self, tiles_from_target=1):
+    async def move(self):
         import objective
         npc = await self.get_character(None)
         if 'pathTiles' in npc:
             async with server.player_status_stream() as travel_path_stream:
-                path = tiles_to_adjacent_path(npc['pathTiles'], npc['location'], tiles_from_target=tiles_from_target)
+                path = tiles_to_adjacent_path(npc['pathTiles'], npc['location'], tiles_from_target=self.tiles_from_target)
                 # don't share streams between tasks, otherwise they steal .next() from each other and cause resource starvation issues
-                pathfind_coro = travel_path(path, travel_path_stream) 
+                pathfind_coro = path.travel(travel_path_stream) 
                 pathfind_task_wrapper = objective.active_objective.add_task(pathfind_coro)
                 while not pathfind_task_wrapper.done:
                     npc = await self.get_character(npc)
                     if 'pathTiles' in npc:
-                        new_path = tiles_to_adjacent_path(npc['pathTiles'], npc['location'], tiles_from_target=tiles_from_target)
+                        new_path = tiles_to_adjacent_path(npc['pathTiles'], npc['location'], tiles_from_target=self.tiles_from_target)
                         path.retarget(new_path)
                 if pathfind_task_wrapper.exception:
                     raise pathfind_task_wrapper.exception
-        await self.move_directly_to_character(npc)
+        await self.move_directly_to_character(npc, threshold=self.distance)
         npc = await self.get_character(npc, get_path=False)
         npx_x, npc_y = npc['center']
         await server.set_mouse_position(npx_x, npc_y, from_viewport=True)
@@ -839,7 +849,7 @@ async def pathfind_to_tile(x, y, stream, cutoff=-1):
     status = await stream.next()
     loc = status['location']
     path = await path_to_tile(x, y, loc, cutoff=cutoff)
-    await travel_path(path, stream)
+    await path.travel(stream)
     return path
 
 async def move_n_tiles(direction: int, n: int, stream):
@@ -858,7 +868,7 @@ async def move_n_tiles(direction: int, n: int, stream):
     else:
         raise ValueError(f"Unexpected direction {direction}")
     path = await path_to_tile(to_x, to_y, status['location'])
-    await travel_path(path, stream)
+    await path.travel(stream)
 
 async def get_player_status():
     req_builder = server.RequestBuilder('PLAYER_STATUS')

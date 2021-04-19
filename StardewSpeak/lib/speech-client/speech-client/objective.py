@@ -324,7 +324,7 @@ class DefendObjective(Objective):
                     direction_to_face = game.direction_from_positions(player_position, closest_monster_position)
                     await game.face_direction(direction_to_face, player_stream)
                 if distance_from_monster < 110:
-                    await server.set_mouse_position(player_position[0], player_position[1], from_viewport=True)
+                    await server.set_mouse_position(closest_monster_position[0], closest_monster_position[1], from_viewport=True)
                     await game.swing_tool()
                 await asyncio.sleep(0.1)
 
@@ -341,9 +341,9 @@ class AttackObjective(Objective):
         async with server.player_status_stream() as player_stream:
             player_position = (await player_status_builder.request())['position']
             while True:
-                target = await game.MoveToCharacter(req_builder).move()
+                target = await game.MoveToCharacter(req_builder, tiles_from_target=2, distance=100).move()
                 distance_from_monster = 0
-                while distance_from_monster < 90:
+                while distance_from_monster < 110:
                     player_status, target = await batched_request_builder.request()
                     player_position = player_status['center']
                     closest_monster_position = target['center']
@@ -351,7 +351,7 @@ class AttackObjective(Objective):
                     if distance_from_monster > 0:
                         direction_to_face = game.direction_from_positions(player_position, closest_monster_position)
                         await game.face_direction(direction_to_face, player_stream)
-                    await server.set_mouse_position(player_position[0], player_position[1], from_viewport=True)
+                    await server.set_mouse_position(closest_monster_position[0], closest_monster_position[1], from_viewport=True)
                     await game.swing_tool()
                     await asyncio.sleep(0.1)
 

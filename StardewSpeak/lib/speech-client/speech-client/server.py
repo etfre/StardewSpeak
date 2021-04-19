@@ -47,8 +47,10 @@ async def stop_all_ongoing_tasks():
     await asyncio.gather(*cancel_awaitables)
 
 async def stop_everything():
+    import game
     import objective
     await asyncio.gather(stop_all_ongoing_tasks(), objective.cancel_active_objective())
+    await game.release_all_keys()
 
 class Stream:
     def __init__(self, name, data=None):
