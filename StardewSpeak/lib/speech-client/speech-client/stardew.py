@@ -13,7 +13,6 @@ import json
 from dragonfly import *
 from srabuilder import rules
 
-from srabuilder.actions import directinput, pydirectinput
 import constants, server, game, objective, locations, items, container_menu, title_menu, menu_utils, fishing_menu, letters, new_game_menu, df_utils, characters
 
 mouse_directions = {
@@ -61,9 +60,8 @@ non_repeat_mapping = {
     "stop": df_utils.async_action(server.stop_everything),
     "swing": df_utils.async_action(game.press_key, constants.USE_TOOL_BUTTON),
     "(action | check)": df_utils.async_action(game.press_key, constants.ACTION_BUTTON),
-    "(escape | menu)": Function(lambda: pydirectinput.press(["esc"])),
-    "next toolbar": Function(lambda: pydirectinput.press(["tab"])),
-    # "go to mailbox": objective.objective_action(objective.MoveToPointObjective),
+    "(escape | menu)": df_utils.async_action(game.press_key, constants.MENU_BUTTON),
+    "next toolbar": df_utils.async_action(game.press_key, constants.TOOLBAR_SWAP),
     "go to <locations>": objective.objective_action(objective.MoveToLocationObjective, "locations"),
     "<points>": objective.function_objective(objective.move_to_point, "points"),
     "chop trees": objective.objective_action(objective.ChopTreesObjective),

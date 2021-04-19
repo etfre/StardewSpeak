@@ -6,7 +6,6 @@ import json
 import collections
 import contextlib
 import asyncio
-from srabuilder.actions import directinput, pydirectinput
 import server, constants, async_timeout, events
 
 last_faced_east_west = constants.WEST
@@ -478,7 +477,7 @@ async def equip_item(predicate):
                 if items_info['currentToolIndex'] == matched_index:
                     return True
                 if matched_index >= row_size:
-                    directinput.send(['tab'])
+                    await press_key(constants.TOOLBAR_SWAP)
                 else:
                     return await server.request('EQUIP_ITEM_INDEX', {"index": matched_index})
 

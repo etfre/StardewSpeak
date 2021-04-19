@@ -10,6 +10,8 @@ MOVE_RIGHT_BUTTON = 'moveRightButton'
 MOVE_DOWN_BUTTON = 'moveDownButton'
 MOVE_LEFT_BUTTON = 'moveLeftButton'
 USE_TOOL_BUTTON = 'useToolButton'
+TOOLBAR_SWAP = 'toolbarSwap'
+MENU_BUTTON = 'menuButton'
 
 AXE = 'Axe'
 FISHING_ROD = 'Fishing Rod'

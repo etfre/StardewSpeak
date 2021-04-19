@@ -12,8 +12,6 @@ import json
 from dragonfly import *
 from srabuilder import rules
 
-# from actions import directinput
-from srabuilder.actions import directinput, pydirectinput
 import constants
 
 loop = None
