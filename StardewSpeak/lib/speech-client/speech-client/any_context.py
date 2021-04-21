@@ -48,7 +48,6 @@ def rule_builder():
                 Choice("mouse_directions", mouse_directions),
                 Choice("locations", locations.commands(locations.locations)),
                 Choice("points", locations.commands(locations.points)),
-                title_menu.main_button_choice,
             ],
             defaults={"n": 1, 'positive_num': 1, 'positive_index': 0},
         )

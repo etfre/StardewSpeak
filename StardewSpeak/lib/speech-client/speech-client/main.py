@@ -16,7 +16,7 @@ from dragonfly.log import setup_log
 from srabuilder import sleep, environment
 import srabuilder
 
-import stardew, new_game_menu, shop_menu, container_menu, title_menu, load_game_menu, dialogue_menu, no_menu, any_menu, shipping_bin_menu, carpenter_menu, billboard_menu, geode_menu, museum_menu
+import any_context, new_game_menu, shop_menu, container_menu, title_menu, load_game_menu, dialogue_menu, no_menu, any_menu, shipping_bin_menu, carpenter_menu, billboard_menu, geode_menu, museum_menu
 import letter_viewer_menu, quest_log_menu, animal_query_menu
 from game_menu import game_menu, crafting_page, inventory_page, exit_page
 
@@ -106,7 +106,7 @@ def main(args):
     sleep.load_sleep_wake_grammar(True)
     startdew_context = AppContext(title="stardew")
     map_contexts_to_builder = {
-        (startdew_context,): stardew.rule_builder(),
+        (startdew_context,): any_context.rule_builder(),
     }
     srabuilder.load_environment_grammars(map_contexts_to_builder)
     new_game_menu.load_grammar()

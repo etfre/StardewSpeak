@@ -1,4 +1,5 @@
 import time
+import functools
 import math
 import os
 import os.path
@@ -293,7 +294,7 @@ async def path_to_next_location(next_location: str, status_stream):
         except NavigationFailed:
             continue
         return path, door_direction
-    raise NavigationFailed(f"Cannot pathfind to connection to location {location}")
+    raise NavigationFailed(f"Cannot pathfind from {location} to {next_location}")
 
 
 async def path_to_tile(x, y, location, cutoff=-1):
@@ -659,27 +660,39 @@ async def get_ready_crafted(loc):
     ready_crafted = [x for x in objs if x['readyForHarvest'] and x['type'] == "Crafting"]
     return ready_crafted
 
+def visible_wrapper(fn):
+    seen_tiles = set()
+    
+    async def get_visible(loc):
+        items = await fn(loc)
+        for item in items:
+            if item['isOnScreen']:
+                seen_tiles.add((item['tileX'], item['tileY']))
+        seen_or_visible_items = [x for x in items if (x['tileX'], x['tileY']) in seen_tiles]
+        return seen_or_visible_items
+    
+    return get_visible
+
 async def get_forage_visible_items(loc):
-    objs = await get_location_objects(loc)
-    items = [x for x in objs if x['canBeGrabbed'] and x['type'] == "Basic" and x['isOnScreen'] and x['isForage']]
-    return items
+    items = await get_location_objects(loc)
+    return [x for x in items if x['canBeGrabbed'] and x['type'] == "Basic" and x['isForage']]
 
 async def get_visible_artifact_spots(loc):
     objs = await get_location_objects(loc)
-    items = [x for x in objs if x['name'] == "Artifact Spot" and x['isOnScreen']]
-    return items
+    return [x for x in objs if x['name'] == "Artifact Spot"]
 
 async def get_grabble_visible_objects(loc):
     objs = await get_location_objects(loc)
     filtered_objs = []
     for o in objs:
-        if o['canBeGrabbed'] and o['type'] == "Basic" and o['isOnScreen'] and o['category'] != 0:
+        if o['canBeGrabbed'] and o['type'] == "Basic" and o['category'] != 0:
             filtered_objs.append(o)
     return filtered_objs
 
 async def dig_artifacts():
     await equip_item_by_name(constants.HOE)
-    async for item in navigate_tiles(get_visible_artifact_spots, generic_next_item_key):
+    getter = visible_wrapper(get_visible_artifact_spots)
+    async for item in navigate_tiles(getter, generic_next_item_key):
         await equip_item_by_name(constants.HOE)
         await swing_tool()
 
@@ -688,11 +701,13 @@ async def gather_crafted_items():
         await do_action()
 
 async def gather_forage_items():
-    async for item in navigate_tiles(get_forage_visible_items, generic_next_item_key):
+    getter = visible_wrapper(get_forage_visible_items)
+    async for item in navigate_tiles(getter, generic_next_item_key):
         await do_action()
 
 async def gather_objects():
-    async for item in navigate_tiles(get_grabble_visible_objects, generic_next_item_key):
+    getter = visible_wrapper(get_grabble_visible_objects)
+    async for item in navigate_tiles(getter, generic_next_item_key):
         await do_action()
 
 async def get_water_tiles(loc):
