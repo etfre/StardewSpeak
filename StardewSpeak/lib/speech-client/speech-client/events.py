@@ -3,6 +3,8 @@ import server
 import asyncio
 import inspect
 import collections
+from dragonfly import  get_engine
+import dragonfly.engines.base.engine
 
 def on_key_pressed(data):
     import game
@@ -10,10 +12,19 @@ def on_key_pressed(data):
         direction = game.buttons_to_directions[data['button']]
         game.set_last_faced_direction(direction)
 
+async def on_speech_mimicked(data):
+    await asyncio.sleep(3)
+    engine = get_engine()
+    try:
+        engine.mimic(data['said'].lower())
+    except dragonfly.engines.base.engine.MimicFailure as e:
+        server.log(str(e), level=2)
+
 event_registry = {
     "KEY_PRESSED": on_key_pressed,
     "UPDATE_TICKING": lambda x: None,
     "UPDATE_TICKED": lambda x: None,
+    "SPEECH_MIMICKED": on_speech_mimicked,
 }
 event_futures = collections.defaultdict(lambda: server.loop.create_future())
 

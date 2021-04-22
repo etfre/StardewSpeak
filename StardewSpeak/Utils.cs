@@ -192,21 +192,18 @@ namespace StardewSpeak
             {
                 var cb = menu as CoopMenu;
                 var slotButtons = SerializeComponentList(cb.slotButtons, mousePosition);
-
-                //var responses = db.responses.Select(x => new { x.responseKey, x.responseText, x.hotkey }).ToList();
+                String currentTab = Utils.GetPrivateField(cb, "currentTab").ToString();
                 menuTypeObj = new
                 {
                     menuType = "coopMenu",
-                    cancelDeleteButton = SerializeClickableCmp(cb.cancelDeleteButton, mousePosition),
                     downArrow = SerializeClickableCmp(cb.downArrow, mousePosition),
                     hostTab = SerializeClickableCmp(cb.hostTab, mousePosition),
                     joinTab = SerializeClickableCmp(cb.joinTab, mousePosition),
-                    okDeleteButton = SerializeClickableCmp(cb.okDeleteButton, mousePosition),
                     refreshButton = SerializeClickableCmp(cb.refreshButton, mousePosition),
                     upArrow = SerializeClickableCmp(cb.upArrow, mousePosition),
                     slotButtons,
+                    currentTab,
                 };
-                String currentTab = Utils.GetPrivateField(cb, "currentTab").ToString();
                 if (currentTab == "JOIN_TAB") 
                 {
                 
@@ -495,12 +492,26 @@ namespace StardewSpeak
                 {
                     menuType = "loadGameMenu",
                     currentItemIndex,
-                    deleteButtons = SerializeComponentList(lgm.deleteButtons, mousePosition),
-                    slotButtons = SerializeComponentList(lgm.slotButtons, mousePosition),
-                    upArrow = SerializeClickableCmp(lgm.upArrow, mousePosition),
-                    downArrow = SerializeClickableCmp(lgm.downArrow, mousePosition),
                     lgm.deleteConfirmationScreen,
                 };
+                if (lgm.deleteConfirmationScreen)
+                {
+                    menuTypeObj = Utils.Merge(menuTypeObj, new
+                    {
+                        cancelDeleteButton = SerializeClickableCmp(lgm.cancelDeleteButton, mousePosition),
+                        okDeleteButton = SerializeClickableCmp(lgm.okDeleteButton, mousePosition),
+                    });
+                }
+                else 
+                {
+                    menuTypeObj = Utils.Merge(menuTypeObj, new
+                    {
+                        deleteButtons = SerializeComponentList(lgm.deleteButtons, mousePosition),
+                        slotButtons = SerializeComponentList(lgm.slotButtons, mousePosition),
+                        upArrow = SerializeClickableCmp(lgm.upArrow, mousePosition),
+                        downArrow = SerializeClickableCmp(lgm.downArrow, mousePosition),
+                    });
+                }
             }
             else if (menu is Billboard)
             {

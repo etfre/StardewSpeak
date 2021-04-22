@@ -56,6 +56,16 @@ namespace StardewSpeak
             this.speechEngine = new SpeechEngine(OnSpeechEngineExited);
             this.speechEngine.LaunchProcess();
             this.eventHandler = new EventHandler(helper, this.speechEngine);
+            helper.ConsoleCommands.Add("stardewspeak_say", "Mimic speech recognition", Command_MimicSpeech);
+        }
+
+        private void Command_MimicSpeech(string name, string[] actions) 
+        {
+            if (actions.Length == 0) return;
+            {
+                string said = String.Join(" ", actions);
+                this.speechEngine.SendEvent("SPEECH_MIMICKED", new { said });
+            }
         }
 
         private void OnSpeechEngineExited(Process process, TaskCompletionSource<int> tcs) 
