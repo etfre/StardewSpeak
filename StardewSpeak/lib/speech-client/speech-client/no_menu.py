@@ -1,7 +1,7 @@
 import dragonfly as df
 import functools
 from srabuilder import rules
-import title_menu, menu_utils, server, df_utils, game, container_menu, objective, constants, items
+import characters, locations, fishing_menu, title_menu, menu_utils, server, df_utils, game, container_menu, objective, constants, items
 
 mouse_directions = {
     "up": "up",
@@ -39,6 +39,12 @@ async def get_bed_tile(item):
 async def go_to_bed():
     await game.navigate_nearest_tile(get_bed_tile)
 
+numrep2 = df.Sequence(
+    [df.Choice(None, rules.nonZeroDigitMap), df.Repetition(df.Choice(None, rules.digitMap), min=0, max=10)],
+    name="n2",
+)
+num2 = df.Modifier(numrep2, rules.parse_numrep)
+
 mapping = {
     "<direction_keys>": objective.objective_action(objective.HoldKeyObjective, "direction_keys"),
     "<direction_nums> <n>": objective.objective_action(objective.MoveNTilesObjective, "direction_nums", "n"),
@@ -53,7 +59,29 @@ mapping = {
     "water crops": objective.objective_action(objective.WaterCropsObjective),
     "harvest crops": objective.objective_action(objective.HarvestCropsObjective),
     "[open | read] (quests | journal | quest log)": df_utils.async_action(game.press_key, constants.JOURNAL_BUTTON),
-    
+    "face <direction_nums>": objective.objective_action(objective.FaceDirectionObjective, "direction_nums"),
+    "stop": df_utils.async_action(server.stop_everything),
+    "swing": df_utils.async_action(game.press_key, constants.USE_TOOL_BUTTON),
+    "next toolbar": df_utils.async_action(game.press_key, constants.TOOLBAR_SWAP),
+    "go to <locations>": objective.objective_action(objective.MoveToLocationObjective, "locations"),
+    "<points>": objective.function_objective(objective.move_to_point, "points"),
+    "chop trees": objective.objective_action(objective.ChopTreesObjective),
+    "start planting": objective.objective_action(objective.PlantSeedsOrFertilizerObjective),
+    "clear debris": objective.objective_action(objective.ClearDebrisObjective),
+    "attack": objective.objective_action(objective.AttackObjective),
+    "defend": objective.objective_action(objective.DefendObjective),
+    "(hoe | dig) <n> by <n2>": objective.objective_action(objective.HoePlotObjective, "n", "n2"),
+    "talk to <npcs>": objective.objective_action(objective.TalkToNPCObjective, "npcs"),
+    "refill watering can": objective.function_objective(game.refill_watering_can),
+    "gather crafting": objective.function_objective(game.gather_crafted_items),
+    "forage": objective.function_objective(game.gather_forage_items),
+    "gather (objects | items)": objective.function_objective(game.gather_objects),
+    "dig (artifact | artifacts)": objective.function_objective(game.dig_artifacts),
+    "go inside": objective.function_objective(game.go_inside),
+    "pet animals": objective.function_objective(objective.pet_animals),
+    "milk animals": objective.function_objective(objective.use_tool_on_animals, constants.MILK_PAIL),
+    "start fishing": objective.function_objective(fishing_menu.start_fishing),
+    "catch fish": df_utils.async_action(fishing_menu.catch_fish),
 
 }
 
@@ -70,12 +98,16 @@ def load_grammar():
             rules.num,
             df_utils.positive_index,
             df_utils.positive_num,
+            df.Choice("npcs", characters.npcs),
+            num2,
             df.Choice("direction_keys", game.direction_keys),
             df.Choice("direction_nums", game.direction_nums),
             items.items_choice,
+            df.Choice("locations", locations.commands(locations.locations)),
+            df.Choice("points", locations.commands(locations.points)),
         ],
         context=is_active,
-        defaults={'positive_num': 1},
+        defaults={"n": 1, 'positive_num': 1, 'positive_index': 0},
     )
     grammar.add_rule(main_rule)
     grammar.load()

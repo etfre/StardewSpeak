@@ -573,7 +573,6 @@ async def navigate_tiles(get_items, sort_items=generic_next_item_key, pathfind_f
                     await pathfind_to_adjacent_tile_from_current(stream)
                     await face_tile(stream, item_tile)
                 try:
-                    server.log(item, level=1)
                     item_path = await pathfind_fn(item['tileX'], item['tileY'], stream)
                 except NavigationFailed:
                     pass

@@ -96,6 +96,7 @@ def run_engine():
         pass
 
 def main(args):
+    import server
     logging.basicConfig(level=logging.INFO)
     engine = setup_engine(silence_timeout=300)
 
@@ -105,6 +106,7 @@ def main(args):
 
     sleep.load_sleep_wake_grammar(True)
     startdew_context = AppContext(title="stardew")
+    server.setup_async_loop()
     map_contexts_to_builder = {
         (startdew_context,): any_context.rule_builder(),
     }
