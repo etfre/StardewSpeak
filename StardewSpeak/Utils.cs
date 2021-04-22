@@ -15,6 +15,7 @@ using Microsoft.Xna.Framework.Input;
 using System.Reflection;
 using StardewValley.TerrainFeatures;
 using StardewValley.Tools;
+using static StardewValley.Menus.CoopMenu;
 
 namespace StardewSpeak
 {
@@ -185,6 +186,47 @@ namespace StardewSpeak
                     menuType = "dialogueBox",
                     responseCC,
                     responses,
+                };
+            }
+            else if (menu is CoopMenu)
+            {
+                var cb = menu as CoopMenu;
+                var slotButtons = SerializeComponentList(cb.slotButtons, mousePosition);
+
+                //var responses = db.responses.Select(x => new { x.responseKey, x.responseText, x.hotkey }).ToList();
+                menuTypeObj = new
+                {
+                    menuType = "coopMenu",
+                    cancelDeleteButton = SerializeClickableCmp(cb.cancelDeleteButton, mousePosition),
+                    downArrow = SerializeClickableCmp(cb.downArrow, mousePosition),
+                    hostTab = SerializeClickableCmp(cb.hostTab, mousePosition),
+                    joinTab = SerializeClickableCmp(cb.joinTab, mousePosition),
+                    okDeleteButton = SerializeClickableCmp(cb.okDeleteButton, mousePosition),
+                    refreshButton = SerializeClickableCmp(cb.refreshButton, mousePosition),
+                    upArrow = SerializeClickableCmp(cb.upArrow, mousePosition),
+                    slotButtons,
+                };
+                String currentTab = Utils.GetPrivateField(cb, "currentTab").ToString();
+                if (currentTab == "JOIN_TAB") 
+                {
+                
+                }
+                else if (currentTab == "HOST_TAB")
+                {
+
+                }
+            }
+            else if (menu is TitleTextInputMenu)
+            {
+                var ttim = menu as TitleTextInputMenu;
+                menuTypeObj = new
+                {
+                    menuType = "titleTextInputMenu",
+                    doneNamingButton = SerializeClickableCmp(ttim.doneNamingButton, mousePosition),
+                    pasteButton = SerializeClickableCmp(ttim.pasteButton, mousePosition),
+                    randomButton = SerializeClickableCmp(ttim.randomButton, mousePosition),
+                    textBoxCC = SerializeClickableCmp(ttim.textBoxCC, mousePosition),
+
                 };
             }
             else if (menu is AnimalQueryMenu)
