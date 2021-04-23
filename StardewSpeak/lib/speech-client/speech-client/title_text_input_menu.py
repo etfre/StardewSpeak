@@ -2,10 +2,10 @@ import dragonfly as df
 from srabuilder import rules
 import title_menu, menu_utils, server, df_utils, game, container_menu
 
-COOP_MENU = 'coopMenu'
+TITLE_TEXT_INPUT_MENU = 'titleTextInputMenu'
 
-def validate_coop_menu(menu):
-    return title_menu.get_submenu(menu, COOP_MENU)
+def validate_menu(menu):
+    return title_menu.get_submenu(menu, TITLE_TEXT_INPUT_MENU)
 
 async def host_new_farm(menu):
     server.log(menu['currentTab'], level=3)  
@@ -26,7 +26,7 @@ async def load_game(menu, game_idx: int):
         await menu_utils.click_component(btn)
 
 mapping = {
-    "host": menu_utils.simple_click("hostTab"),
+    "paste": menu_utils.simple_click("paseButton"),
     "join": menu_utils.simple_click("joinTab"),
     "host new farm": df_utils.async_action(host_new_farm),
     "join lan game": df_utils.async_action(join_lan_game),
@@ -39,6 +39,6 @@ mapping = {
 def load_grammar():
     extras = [rules.num, df_utils.positive_index, df_utils.positive_num]
     defaults = {'positive_num': 1}
-    grammar = menu_utils.build_menu_grammar("coop", mapping, validate_coop_menu, extras=extras, defaults=defaults) 
+    grammar = menu_utils.build_menu_grammar("titleTextInput", mapping, validate_menu, extras=extras, defaults=defaults) 
     grammar.load()
     

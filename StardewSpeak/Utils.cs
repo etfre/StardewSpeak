@@ -385,12 +385,10 @@ namespace StardewSpeak
                 };
                 if (TitleMenu.subMenu != null)
                 {
-                    var backButton = SerializeClickableCmp(tm.backButton, mousePosition);
+                    bool addBackButton = tm.backButton != null && !(TitleMenu.subMenu is CharacterCustomization) && TitleMenu.subMenu.readyToClose();
+                    dynamic backButton = addBackButton ? SerializeClickableCmp(tm.backButton, mousePosition) : null;
                     var subMenu = Merge(SerializeMenu(TitleMenu.subMenu), new { backButton });
-                    menuTypeObj = Merge(menuTypeObj, new
-                    {
-                        subMenu,
-                    });
+                    menuTypeObj = Merge(menuTypeObj, new { subMenu });
                 }
                 else 
                 {
