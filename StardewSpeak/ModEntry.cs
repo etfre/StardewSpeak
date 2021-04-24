@@ -56,7 +56,7 @@ namespace StardewSpeak
             this.speechEngine = new SpeechEngine(OnSpeechEngineExited);
             this.speechEngine.LaunchProcess();
             this.eventHandler = new EventHandler(helper, this.speechEngine);
-            helper.ConsoleCommands.Add("stardewspeak_say", "Mimic speech recognition after three second delay, e.g. \"stardewspeak_say load game\"", Command_MimicSpeech);
+            helper.ConsoleCommands.Add("stardewspeak_mimic", "Mimic speech recognition after three second delay, e.g. \"stardewspeak_mimic load game\"", Command_MimicSpeech);
         }
 
         private void Command_MimicSpeech(string name, string[] actions) 
