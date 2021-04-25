@@ -40,7 +40,9 @@ capital_letter_map = {f"(capital | upper | uppercase) {k}": v.upper() for k, v i
 keys = {
     "backspace": "backspace",
     "space": "space",
-    "(dot | period)": "period"
+    "(dot | period)": ".",
+    "dash": "-",
+    "underscore": "_",
 }
 
 def multiply_keys(rep):

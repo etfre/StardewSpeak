@@ -17,7 +17,7 @@ from srabuilder import sleep, environment
 import srabuilder
 
 import any_context, new_game_menu, shop_menu, container_menu, title_menu, load_game_menu, dialogue_menu, no_menu, any_menu, shipping_bin_menu, carpenter_menu, billboard_menu, geode_menu, museum_menu
-import letter_viewer_menu, quest_log_menu, animal_query_menu, coop_menu
+import letter_viewer_menu, quest_log_menu, animal_query_menu, coop_menu, title_text_input_menu
 from game_menu import game_menu, crafting_page, inventory_page, exit_page
 
 MODELS_DIR = os.path.join(str(Path.home()), '.stardewspeak', 'models')
@@ -132,6 +132,7 @@ def main(args):
     quest_log_menu.load_grammar()
     animal_query_menu.load_grammar()
     coop_menu.load_grammar()
+    title_text_input_menu.load_grammar()
     run_engine()
 
 

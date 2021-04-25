@@ -221,7 +221,6 @@ namespace StardewSpeak
                     menuType = "titleTextInputMenu",
                     doneNamingButton = SerializeClickableCmp(ttim.doneNamingButton, mousePosition),
                     pasteButton = SerializeClickableCmp(ttim.pasteButton, mousePosition),
-                    randomButton = SerializeClickableCmp(ttim.randomButton, mousePosition),
                     textBoxCC = SerializeClickableCmp(ttim.textBoxCC, mousePosition),
 
                 };

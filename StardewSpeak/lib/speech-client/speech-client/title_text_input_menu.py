@@ -26,14 +26,9 @@ async def load_game(menu, game_idx: int):
         await menu_utils.click_component(btn)
 
 mapping = {
-    "paste": menu_utils.simple_click("paseButton"),
-    "join": menu_utils.simple_click("joinTab"),
-    "host new farm": df_utils.async_action(host_new_farm),
-    "join lan game": df_utils.async_action(join_lan_game),
-    "refresh": menu_utils.simple_click("refreshButton"),
-    "[host | load] (farm | game) <positive_index>": df_utils.async_action(load_game, "positive_index"),
+    "paste": menu_utils.simple_click("pasteButton"),
+    "ok": menu_utils.simple_click("doneNamingButton"),
     "[go] back": menu_utils.simple_click("backButton"),
-
 }
 
 def load_grammar():
