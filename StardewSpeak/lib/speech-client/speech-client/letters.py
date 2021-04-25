@@ -33,11 +33,14 @@ letter_map = {
     "(zulu) ": "z",
 }
 
+numbers = {k: str(v) for k, v in df_utils.digitMap.items()}
+
 capital_letter_map = {f"(capital | upper | uppercase) {k}": v.upper() for k, v in letter_map.items()}
 
 keys = {
     "backspace": "backspace",
     "space": "space",
+    "(dot | period)": "period"
 }
 
 def multiply_keys(rep):
@@ -51,10 +54,10 @@ def flatten_list(rep):
         flattened.extend(l)
     return flattened
 
-letters_and_keys_choice = df.Choice(None, {**letter_map, **capital_letter_map, **keys})
-letters_and_keys = df.Repetition(letters_and_keys_choice, name="letters_and_keys", min=1, max=16)
+all_chars_choice = df.Choice(None, {**letter_map, **capital_letter_map, **keys, **numbers})
+letters_and_keys = df.Repetition(all_chars_choice, name="letters_and_keys", min=1, max=16)
 
-def type_letters(letters: str):
+def type_characters(letters: str):
     shift_down = False
     for char in letters:
         shift_char = char.isupper()
@@ -78,10 +81,10 @@ def dictation_wrap(fn):
 
 def do_dictation(dictation):
     text = str(dictation)
-    type_letters(text)
+    type_characters(text)
 
 def typing_commands():
     return {
-        "<letters_and_keys>": df.Function(lambda **kw: type_letters(kw['letters_and_keys'])),
+        "<letters_and_keys>": df.Function(lambda **kw: type_characters(kw['letters_and_keys'])),
         "title <dictation>": dictation_wrap(title_case),
     }
