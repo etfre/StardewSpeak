@@ -121,7 +121,7 @@ namespace StardewSpeak
             return routeCache;
         }
 
-        public static List<GameLocation> AllGameLocations() 
+        public static List<GameLocation> AllGameLocations(bool includeBuildings = true) 
         {
             var allLocations = new List<GameLocation>();
             foreach (var gl in Game1.locations)
@@ -129,7 +129,7 @@ namespace StardewSpeak
                 string name = gl.NameOrUniqueName;
                 if (string.IsNullOrWhiteSpace(name)) continue;
                 allLocations.Add(gl);
-                if (gl is StardewValley.Locations.BuildableGameLocation)
+                if (includeBuildings && gl is StardewValley.Locations.BuildableGameLocation)
                 {
                     StardewValley.Locations.BuildableGameLocation bl = gl as StardewValley.Locations.BuildableGameLocation;
                     foreach (var b in bl.buildings)

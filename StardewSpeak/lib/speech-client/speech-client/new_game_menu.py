@@ -62,7 +62,6 @@ mapping = {
     "next": menu_utils.simple_click('coopHelpLeftButton'),
     "previous": menu_utils.simple_click('coopHelpRightButton'),
     "advanced options": menu_utils.simple_click('advancedOptionsButton'),
-    "go back": menu_utils.simple_click('backButton'),
     "<farm_types> farm": df_utils.async_action(click_farm, 'farm_types'),
     "<arrows> <arrow_fields> [<positive_num>]": df_utils.async_action(click_arrow_field, 'arrow_fields', 'arrows', 'positive_num'),
     "[go] back": menu_utils.simple_click("backButton"),
