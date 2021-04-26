@@ -40,6 +40,9 @@ arrow_fields = {
     "(pet | animal)": "Pet",
     "shirt": "Shirt",
     "skin": "Skin",
+    "(wallets | money style)": "Wallets",
+    "(difficulty | profit margin)": "Difficulty",
+    "[starting] cabins": "Cabins",
 }
 
 mapping = {
