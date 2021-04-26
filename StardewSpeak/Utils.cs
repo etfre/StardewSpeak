@@ -408,20 +408,37 @@ namespace StardewSpeak
                 menuTypeObj = new
                 {
                     menuType = "characterCustomizationMenu",
-                    backButton = SerializeClickableCmp(ccm.backButton, mousePosition),
-                    cabinLayoutButtons = SerializeComponentList(ccm.cabinLayoutButtons, mousePosition),
-                    farmTypeButtons = SerializeComponentList(ccm.farmTypeButtons, mousePosition),
-                    favThingBoxCC = SerializeClickableCmp(ccm.favThingBoxCC, mousePosition),
-                    farmnameBoxCC = SerializeClickableCmp(ccm.farmnameBoxCC, mousePosition),
-                    genderButtons = SerializeComponentList(ccm.genderButtons, mousePosition),
-                    leftSelectionButtons = SerializeComponentList(ccm.leftSelectionButtons, mousePosition),
-                    nameBoxCC = SerializeClickableCmp(ccm.nameBoxCC, mousePosition),
-                    okButton = SerializeClickableCmp(ccm.okButton, mousePosition),
-                    petButtons = SerializeComponentList(ccm.petButtons, mousePosition),
-                    randomButton = SerializeClickableCmp(ccm.randomButton, mousePosition),
-                    rightSelectionButtons = SerializeComponentList(ccm.rightSelectionButtons, mousePosition),
-                    skipIntroButton = SerializeClickableCmp(ccm.skipIntroButton, mousePosition),
                 };
+                if (ccm.showingCoopHelp)
+                {
+                    menuTypeObj = Merge(menuTypeObj, new
+                    {
+                        okButton = SerializeClickableCmp(ccm.coopHelpOkButton, mousePosition),
+                        coopHelpLeftButton = SerializeClickableCmp(ccm.coopHelpLeftButton, mousePosition),
+                        coopHelpRightButton = SerializeClickableCmp(ccm.coopHelpRightButton, mousePosition),
+                    });
+                }
+                else 
+                {
+                    menuTypeObj = Merge(menuTypeObj, new
+                    {
+                        advancedOptionsButton = SerializeClickableCmp(ccm.advancedOptionsButton, mousePosition),
+                        backButton = SerializeClickableCmp(ccm.backButton, mousePosition),
+                        cabinLayoutButtons = SerializeComponentList(ccm.cabinLayoutButtons, mousePosition),
+                        coopHelpButton = SerializeClickableCmp(ccm.coopHelpButton, mousePosition),
+                        farmTypeButtons = SerializeComponentList(ccm.farmTypeButtons, mousePosition),
+                        favThingBoxCC = SerializeClickableCmp(ccm.favThingBoxCC, mousePosition),
+                        farmnameBoxCC = SerializeClickableCmp(ccm.farmnameBoxCC, mousePosition),
+                        genderButtons = SerializeComponentList(ccm.genderButtons, mousePosition),
+                        leftSelectionButtons = SerializeComponentList(ccm.leftSelectionButtons, mousePosition),
+                        nameBoxCC = SerializeClickableCmp(ccm.nameBoxCC, mousePosition),
+                        okButton = SerializeClickableCmp(ccm.okButton, mousePosition),
+                        petButtons = SerializeComponentList(ccm.petButtons, mousePosition),
+                        randomButton = SerializeClickableCmp(ccm.randomButton, mousePosition),
+                        rightSelectionButtons = SerializeComponentList(ccm.rightSelectionButtons, mousePosition),
+                        skipIntroButton = SerializeClickableCmp(ccm.skipIntroButton, mousePosition),
+                    });
+                }
             }
             else if (menu is QuestLog)
             {
