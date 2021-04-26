@@ -11,6 +11,10 @@ async def click_farm(menu, farm):
     cmp = menu_utils.find_component_by_field(menu['farmTypeButtons'], 'name', farm)
     await menu_utils.click_component(cmp)
 
+async def click_cabin_layout(menu, index):
+    cmp = menu['cabinLayoutButtons'][index]
+    await menu_utils.click_component(cmp)
+
 async def click_arrow_field(menu, field, cmp_list_name, count):
     cmp = menu_utils.find_component_by_field(menu[cmp_list_name], 'name', field)
     for i in range(count):
@@ -47,6 +51,8 @@ arrow_fields = {
 
 mapping = {
     "name": menu_utils.simple_click('nameBoxCC'),
+    "((nearby | close) cabin layout | cabin layout (nearby | close))": df_utils.async_action(click_cabin_layout, 0),
+    "(separate cabin layout | cabin layout separate)": df_utils.async_action(click_cabin_layout, 1),
     "farm name": menu_utils.simple_click('farmnameBoxCC'),
     "favorite thing": menu_utils.simple_click('favThingBoxCC'),
     "(random | [roll] dice)": menu_utils.simple_click('randomButton'),
