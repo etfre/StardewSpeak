@@ -42,14 +42,11 @@ LOCATION_COMMANDS = {
 }
 
 grammar = None
+loaded_location_names = []
 
 async def get_locations():
     names = (await server.request("GET_ALL_GAME_LOCATIONS")) or DEFAULT_LOCATIONS
-    locations = []
-    for name in names:
-        commands = LOCATION_COMMANDS.get(name)
-        locations.append(Location(name, commands))
-    return locations
+    return names
 
 class Location:
 
@@ -130,15 +127,23 @@ def is_active():
 
 async def load_grammar():
     global grammar
+    global loaded_location_names
     import df_utils
     from srabuilder import rules
+    names = await get_locations()
+    if names == loaded_location_names:
+        return
+    loaded_location_names = names
+    locs = []
+    for name in names:
+        loc_commands = LOCATION_COMMANDS.get(name)
+        locs.append(Location(name, loc_commands))
     if grammar is None:
         grammar = df.Grammar("locations")
     if grammar.rules:
         assert len(grammar.rules) == 1
         grammar.unload()
         grammar.remove_rule(grammar.rules[0])
-    locs = await get_locations()
     main_rule = df.MappingRule(
         name="locations_rule",
         mapping=mapping,
