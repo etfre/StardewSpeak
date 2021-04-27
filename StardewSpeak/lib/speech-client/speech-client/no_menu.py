@@ -14,9 +14,9 @@ async def get_objects_by_name(name: str, loc: str):
     objs = await game.get_location_objects('')
     return [x for x in objs if x['name'] == name] 
 
-async def go_to_object(item: items.Item):
+async def go_to_object(item: items.Item, index):
     obj_getter = functools.partial(get_objects_by_name, item.name)
-    await game.navigate_nearest_tile(obj_getter)
+    await game.navigate_nearest_tile(obj_getter, index=index)
 
 async def move_and_face_previous_direction(direction: int, n: int):
     async with server.player_status_stream() as stream:
@@ -51,7 +51,7 @@ mapping = {
     "item <positive_index>": df_utils.async_action(game.equip_item_by_index, 'positive_index'),
     "equip [melee] weapon": df_utils.async_action(game.equip_melee_weapon),
     "equip <items>": df_utils.async_action(game.equip_item_by_name, "items"),
-    "nearest <items>": objective.function_objective(go_to_object, 'items'),
+    "nearest <items> [<positive_index>]": objective.function_objective(go_to_object, 'items', 'positive_index'),
     "jump <direction_nums> [<positive_num>]": df_utils.async_action(move_and_face_previous_direction, 'direction_nums', "positive_num"),
     "go to bed": objective.function_objective(go_to_bed),
     "go to shipping bin": objective.function_objective(go_to_shipping_bin),

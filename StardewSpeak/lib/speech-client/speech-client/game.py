@@ -552,7 +552,7 @@ async def pathfind_to_adjacent_tile_from_current(stream):
             continue
     raise NavigationFailed
 
-async def navigate_tiles(get_items, sort_items=generic_next_item_key, pathfind_fn=pathfind_to_adjacent, allow_action_on_same_tile=True):
+async def navigate_tiles(get_items, sort_items=generic_next_item_key, pathfind_fn=pathfind_to_adjacent, allow_action_on_same_tile=True, index=None):
     import events
     async with server.player_status_stream() as stream:
         player_status = await stream.next()
@@ -567,7 +567,10 @@ async def navigate_tiles(get_items, sort_items=generic_next_item_key, pathfind_f
                 raise RuntimeError('Unable to modify current tile')
             previous_item_count = len(items)
             item_path = None
-            for item in sorted(items, key=lambda t: sort_items(start_tile, current_tile, t, player_status)):
+            sorted_items = sorted(items, key=lambda t: sort_items(start_tile, current_tile, t, player_status))
+            if index is not None:
+                sorted_items = [sorted_items[index]]
+            for item in sorted_items:
                 item_tile = (item['tileX'], item['tileY'])
                 if current_tile == item_tile and not allow_action_on_same_tile:
                     await pathfind_to_adjacent_tile_from_current(stream)
@@ -584,8 +587,8 @@ async def navigate_tiles(get_items, sort_items=generic_next_item_key, pathfind_f
                 return
             player_status = await stream.next()
 
-async def navigate_nearest_tile(get_items, pathfind_fn=pathfind_to_adjacent):
-    async for item in navigate_tiles(get_items, sort_items=closest_item_key, pathfind_fn=pathfind_fn):
+async def navigate_nearest_tile(get_items, pathfind_fn=pathfind_to_adjacent, index=None):
+    async for item in navigate_tiles(get_items, sort_items=closest_item_key, pathfind_fn=pathfind_fn, index=index):
         return item
     raise NavigationFailed
 

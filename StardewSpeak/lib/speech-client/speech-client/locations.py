@@ -30,7 +30,7 @@ LOCATION_COMMANDS = {
     "Cellar4": ["cellar four"],
     "ElliottHouse": ["elliott's house"],
     "HaleyHouse": ["haley's house", "emily's house", "to willow lane"],
-    "JoshHouse": ["josh's house"],
+    "JoshHouse": ["(alex's | george's | evelyn's) house", "one river road"],
     "LeahHouse": ["leah's house"],
     "ArchaeologyHouse": ["library museum", "library", "museum", "archaeology house"],
     "ManorHouse": ["manor house", "[mayor] lewis' house"],
@@ -45,7 +45,7 @@ grammar = None
 loaded_location_names = []
 
 async def get_locations():
-    names = (await server.request("GET_ALL_GAME_LOCATIONS")) or DEFAULT_LOCATIONS
+    names = tuple(await server.request("GET_ALL_GAME_LOCATIONS")) or DEFAULT_LOCATIONS
     return names
 
 class Location:
@@ -114,7 +114,6 @@ def commands(locs):
                 raise ValueError(f"Duplicate location {cmd}")
             commands[cmd] = loc
     return commands
-
 
 mapping = {
     "go to <locations>": objective.objective_action(objective.MoveToLocationObjective, "locations"),
