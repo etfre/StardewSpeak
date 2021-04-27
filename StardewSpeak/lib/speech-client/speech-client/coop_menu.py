@@ -8,7 +8,6 @@ def validate_coop_menu(menu):
     return title_menu.get_submenu(menu, COOP_MENU)
 
 async def host_new_farm(menu):
-    server.log(menu['currentTab'], level=3)  
     if menu['currentTab'] == "HOST_TAB":
         await menu_utils.click_component(menu['slotButtons'][0])
 

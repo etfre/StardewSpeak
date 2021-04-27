@@ -385,7 +385,7 @@ async def mouse_click(btn='left', count=1):
         if i + 1 < count:
             await asyncio.sleep(0.1)
 
-def log(*a, sep=' ', level=0):
+def log(*a, sep=' ', level=1):
     to_send = [x if isinstance(x, str) else json.dumps(x) for x in a]
     return send_message("LOG", {'value': sep.join(to_send), 'level': level})
 

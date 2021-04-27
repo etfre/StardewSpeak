@@ -125,7 +125,7 @@ namespace StardewSpeak
             {
                 return;
             }
-            string msgType = msg.type;
+                string msgType = msg.type;
             if (msgType == "LOG")
             {
                 string toLog = msg.data.value;

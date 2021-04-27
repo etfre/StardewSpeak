@@ -45,9 +45,6 @@ async def click_range(start, end):
     submenu_wrapper = item_grab['inventoryMenu']
     await submenu_wrapper.click_range(submenu, start, end)
 
-async def focus_item_by_name(item):
-    server.log(item.name)
-
 mapping = {
     "deposit <positive_index>": df_utils.async_action(click_range, "positive_index", None),
     "deposit <positive_index> through <positive_index2>": df_utils.async_action(click_range, "positive_index", 'positive_index2'),
