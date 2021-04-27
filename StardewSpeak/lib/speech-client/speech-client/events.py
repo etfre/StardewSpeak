@@ -20,11 +20,16 @@ async def on_speech_mimicked(data):
     except dragonfly.engines.base.engine.MimicFailure as e:
         server.log(str(e), level=2)
 
+async def on_save_loaded(data):
+    import locations
+    await locations.load_grammar()
+
 event_registry = {
     "KEY_PRESSED": on_key_pressed,
     "UPDATE_TICKING": lambda x: None,
     "UPDATE_TICKED": lambda x: None,
     "SPEECH_MIMICKED": on_speech_mimicked,
+    "SAVE_LOADED": on_save_loaded,
 }
 event_futures = collections.defaultdict(lambda: server.loop.create_future())
 

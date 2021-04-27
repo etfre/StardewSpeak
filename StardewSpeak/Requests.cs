@@ -408,6 +408,11 @@ namespace StardewSpeak
                         Input.SetDown(key);
                         return true;
                     }
+                case "GET_ALL_GAME_LOCATIONS": 
+                    {
+                        var locs = Routing.AllGameLocations(includeBuildings: false).Select(x => x.NameOrUniqueName).ToList();
+                        return locs;
+                    }
                 case "CATCH_FISH":
                     {
                         var am = Game1.activeClickableMenu;

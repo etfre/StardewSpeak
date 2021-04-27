@@ -18,6 +18,7 @@ import srabuilder
 
 import any_context, new_game_menu, shop_menu, container_menu, title_menu, load_game_menu, dialogue_menu, no_menu, any_menu, shipping_bin_menu, carpenter_menu, billboard_menu, geode_menu, museum_menu
 import letter_viewer_menu, quest_log_menu, animal_query_menu, coop_menu, title_text_input_menu
+import locations
 from game_menu import game_menu, crafting_page, inventory_page, exit_page
 
 MODELS_DIR = os.path.join(str(Path.home()), '.stardewspeak', 'models')
@@ -50,7 +51,7 @@ class Observer(RecognitionObserver):
     def on_failure(self):
         pass
 
-def add_user_lexicon(model_dir: str):
+def add_base_user_lexicon(model_dir: str):
     with open (os.path.join(model_dir, "user_lexicon.txt"), 'w') as f:
         for word, phonetics in user_lexicon:
             line = f'{word} {phonetics}\n'
@@ -70,7 +71,7 @@ def setup_engine(silence_timeout=500, models_dir=MODELS_DIR):
     model_dir = os.path.join(models_dir, "kaldi_model")
     if not os.path.isdir(model_dir):
         download_model(models_dir)
-        add_user_lexicon(model_dir)
+        add_base_user_lexicon(model_dir)
     # Set any configuration options here as keyword arguments.
     engine = get_engine(
         "kaldi",
@@ -133,6 +134,7 @@ def main(args):
     animal_query_menu.load_grammar()
     coop_menu.load_grammar()
     title_text_input_menu.load_grammar()
+    server.call_soon(locations.load_grammar)
     run_engine()
 
 

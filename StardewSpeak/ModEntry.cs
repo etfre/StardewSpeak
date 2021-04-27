@@ -90,6 +90,7 @@ namespace StardewSpeak
                 QueuedMessage = null;
             }
             Routing.Reset();
+            this.speechEngine.SendEvent("SAVE_LOADED");
         }
 
         private void OnLocationListChanged(object sender, LocationListChangedEventArgs e)

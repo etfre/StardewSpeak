@@ -1,5 +1,55 @@
 import re
-import game, constants, server
+import game, constants, server, objective
+import dragonfly as df
+import menu_utils
+
+DEFAULT_LOCATIONS = ("FarmHouse", "Farm", "FarmCave", "Town", "JoshHouse",
+    "HaleyHouse", "SamHouse", "Blacksmith", "ManorHouse", "SeedShop", "Saloon",
+    "Trailer", "Hospital", "HarveyRoom", "Beach", "ElliottHouse", "Mountain",
+    "ScienceHouse", "SebastianRoom", "Tent", "Forest", "WizardHouse", "AnimalShop",
+    "LeahHouse", "BusStop", "Mine", "Sewer", "BugLand", "Desert", "Club", "SandyHouse",
+    "ArchaeologyHouse", "WizardHouseBasement", "AdventureGuild", "Woods", "Railroad",
+    "WitchSwamp", "WitchHut", "WitchWarpCave", "Summit", "FishShop", "BathHouse_Entry",
+    "BathHouse_MensLocker", "BathHouse_WomensLocker", "BathHouse_Pool", "CommunityCenter",
+    "JojaMart", "Greenhouse", "SkullCave", "Backwoods", "Tunnel", "Trailer_Big", "Cellar",
+    "Cellar2", "Cellar3", "Cellar4", "BeachNightMarket", "MermaidHouse", "Submarine",
+    "AbandonedJojaMart", "MovieTheater", "Sunroom", "BoatTunnel", "IslandSouth",
+    "IslandSouthEast", "IslandSouthEastCave", "IslandEast", "IslandWest", "IslandNorth",
+    "IslandHut", "IslandWestCave1", "IslandNorthCave1", "IslandFieldOffice", "IslandFarmHouse", 
+    "CaptainRoom", "IslandShrine", "IslandFarmCave", "Caldera", "LeoTreeHouse", "QiNutRoom")
+
+LOCATION_COMMANDS = {
+    "BathHouse_Entry": ["bath house"],
+    "BathHouse_MensLocker": ["men's locker"],
+    "BathHouse_WomensLocker": ["women's locker"],
+    "BathHouse_Pool": ["bath house pool"],
+    "Trailer_Big": ["trailer big this is a placeholder"],
+    "Cellar": ["cellar one"],
+    "Cellar2": ["cellar two"],
+    "Cellar3": ["cellar three"],
+    "Cellar4": ["cellar four"],
+    "ElliottHouse": ["elliott's house"],
+    "HaleyHouse": ["haley's house", "emily's house", "to willow lane"],
+    "JoshHouse": ["josh's house"],
+    "LeahHouse": ["leah's house"],
+    "ArchaeologyHouse": ["library museum", "library", "museum", "archaeology house"],
+    "ManorHouse": ["manor house", "[mayor] lewis' house"],
+    "Mine": ["[the] (mine | mines)"],
+    "SamHouse": ["sam's house"],
+    "Saloon": ["[stardrop] saloon"],
+    "ScienceHouse": ["[the] science house", "[the] carpenter's house"],
+    "SeedShop": ["[the] seed (shop | store)", "pierre's [general] (shop | store)", "[pierre's] general (shop | store)", "[the] general (shop | store)"],
+}
+
+grammar = None
+
+async def get_locations():
+    names = (await server.request("GET_ALL_GAME_LOCATIONS")) or DEFAULT_LOCATIONS
+    locations = []
+    for name in names:
+        commands = LOCATION_COMMANDS.get(name)
+        locations.append(Location(name, commands))
+    return locations
 
 class Location:
 
@@ -38,6 +88,8 @@ class Point:
         if callable(self.tiles):
             return await self.tiles(item)
         return [{'tileX': x[0], 'tileY': x[1]} for x in self.tiles]
+
+
 
 def init_locations():
     return (
@@ -152,4 +204,38 @@ def commands(locs):
     return commands
 
 
-locations = init_locations()
+mapping = {
+    "go to <locations>": objective.objective_action(objective.MoveToLocationObjective, "locations"),
+}
+
+
+@menu_utils.valid_menu_test
+def is_active():
+    return game.get_context_menu() is None
+
+async def load_grammar():
+    global grammar
+    import df_utils
+    from srabuilder import rules
+    if grammar is None:
+        grammar = df.Grammar("locations")
+    if grammar.rules:
+        assert len(grammar.rules) == 1
+        grammar.unload()
+        grammar.remove_rule(grammar.rules[0])
+    locs = await get_locations()
+    main_rule = df.MappingRule(
+        name="locations_rule",
+        mapping=mapping,
+        extras=[
+            rules.num,
+            df_utils.positive_index,
+            df_utils.positive_num,
+            df.Choice("locations", commands(locs)),
+        ],
+        context=is_active,
+        defaults={"n": 1, 'positive_num': 1, 'positive_index': 0},
+    )
+    grammar.add_rule(main_rule)
+    grammar.load()
+    
