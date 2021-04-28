@@ -1,4 +1,5 @@
 import winsound
+import shutil
 import subprocess
 import os.path
 import os
@@ -24,19 +25,7 @@ from game_menu import game_menu, crafting_page, inventory_page, exit_page
 MODELS_DIR = os.path.join(str(Path.home()), '.stardewspeak', 'models')
 
 user_lexicon = (
-    ("backspace", "b { k s p e I s"),
-    ("crystalarium", "k r I s t V l { r i V m"),
-    ("geode", "dZ i o U d"),
-    ("glowstone", "g l o U s t o U n"),
-    ("jack-o-lantern", "dZ { k o U l { n t 3 n"),
     ('joja', "dZ 'o U dZ 'V"),
-    ("krobus", "k r o U b V s"),
-    ("kwee", "k w i"),
-    ("lamp-post", "l { m p p o U s t"),
-    ("riverland", "r I v 3 l { n d"),
-    ("stardrop", "s t A r d r A p"),
-    ("x-ray", "E k s r e I"),
-    ("yoba", "j o U b V"),
 )
 
 
@@ -52,10 +41,9 @@ class Observer(RecognitionObserver):
         pass
 
 def add_base_user_lexicon(model_dir: str):
-    with open (os.path.join(model_dir, "user_lexicon.txt"), 'w') as f:
-        for word, phonetics in user_lexicon:
-            line = f'{word} {phonetics}\n'
-            f.write(line)
+    import df_utils
+    dst = os.path.join(model_dir, "user_lexicon.txt")
+    shutil.copyfile(df_utils.lexicon_source_path(), dst)
 
 def download_model(write_dir):
     import game
@@ -64,13 +52,14 @@ def download_model(write_dir):
     url_open = urllib.request.urlopen(model_url)
     with ZipFile(BytesIO(url_open.read())) as my_zip_file:
         my_zip_file.extractall(write_dir)
+    shutil.rmtree(os.path.join(write_dir, "kaldi_model.tmp"), ignore_errors=True)
 
-def setup_engine(silence_timeout=500, models_dir=MODELS_DIR):
+
+def setup_engine(silence_timeout, model_dir):
     # use abspath for model dir, this may change with app freezing
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    model_dir = os.path.join(models_dir, "kaldi_model")
     if not os.path.isdir(model_dir):
-        download_model(models_dir)
+        download_model(MODELS_DIR)
         add_base_user_lexicon(model_dir)
     # Set any configuration options here as keyword arguments.
     engine = get_engine(
@@ -99,7 +88,8 @@ def run_engine():
 def main(args):
     import server
     logging.basicConfig(level=logging.INFO)
-    engine = setup_engine(silence_timeout=300)
+    model_dir = os.path.join(MODELS_DIR, "kaldi_model")
+    engine = setup_engine(300, model_dir)
 
     # Register a recognition observer
     observer = Observer()
@@ -134,7 +124,10 @@ def main(args):
     animal_query_menu.load_grammar()
     coop_menu.load_grammar()
     title_text_input_menu.load_grammar()
-    server.call_soon(locations.load_grammar)
+    if not getattr(sys, "frozen", False):
+        src = os.path.join(model_dir, "user_lexicon.txt")
+        dst = os.path.join(os.path.abspath(__file__), "..", "..", "user_lexicon.txt")
+        shutil.copyfile(src, dst)
     run_engine()
 
 

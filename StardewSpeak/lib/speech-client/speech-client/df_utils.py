@@ -1,4 +1,7 @@
 import functools
+import sys
+import os
+import os.path
 import inspect
 import asyncio
 import traceback
@@ -66,6 +69,13 @@ def sync_action(fn, *args):
 def async_action(async_fn, *args):
     format_args_fn = functools.partial(format_args, args)
     return AsyncFunction(async_fn, format_args=format_args_fn)
+
+def lexicon_source_path():
+    import __main__
+    dirname = os.path.dirname(__main__.__file__)
+    if not getattr(sys, 'frozen', False) or 1:
+        dirname = os.path.join(dirname, '..')
+    return os.path.abspath(os.path.join(dirname, 'user_lexicon.txt'))
 
 ten_through_twelve = {
     "ten": 10,

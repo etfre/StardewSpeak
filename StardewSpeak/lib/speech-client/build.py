@@ -27,13 +27,6 @@ def get_version():
     with open(manifest_path) as f:
         return json.load(f)['Version']
 
-
-DESCRIPTION = """
-Freeze a Python script and all of its referenced modules to a base \
-executable which can then be distributed without requiring a Python \
-installation.
-"""
-
 VERSION = """
 %(prog)s {}
 Copyright (c) 2007-2020 Anthony Tuininga. All rights reserved.
@@ -190,7 +183,7 @@ def prepare_parser():
         "--icon", dest="icon", help="name of the icon file for the application"
     )
     # remove the initial "usage: " of format_usage()
-    parser.usage = parser.format_usage()[len("usage: ") :] + DESCRIPTION
+    parser.usage = parser.format_usage()[len("usage: ") :]
     return parser
 
 
@@ -258,7 +251,11 @@ def main():
         optimizeFlag=args.optimize_flag,
         path=None,
         targetDir=app_root,
-        includeFiles=[('Lib\site-packages\webrtcvad_wheels-2.0.10.post2.dist-info', 'lib\webrtcvad_wheels-2.0.10.post2.dist-info')],
+        includeFiles=[
+            ('Lib\site-packages\webrtcvad_wheels-2.0.10.post2.dist-info', 'lib\webrtcvad_wheels-2.0.10.post2.dist-info'),
+            ('user_lexicon.txt', 'user_lexicon.txt'),
+            ("Lib\site-packages\kaldi_active_grammar\kaldi", "lib\site-packages\kaldi-active-grammar\kaldi")
+        ],
         zipIncludes=args.zip_includes,
         silent=args.silent,
         zipIncludePackages=args.zip_include_packages,
