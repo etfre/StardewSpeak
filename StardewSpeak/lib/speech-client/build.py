@@ -231,6 +231,7 @@ def main():
     args = parse_command_line(prepare_parser())
     app_name = 'speech-client'
     app_root = os.path.join('dist')
+    source_root = os.path.join(app_root, 'speech-client')
     shutil.rmtree(app_root, ignore_errors=True)
     executables = [
         cx_Freeze.Executable(
@@ -250,11 +251,10 @@ def main():
         compress=args.compress,
         optimizeFlag=args.optimize_flag,
         path=None,
-        targetDir=app_root,
+        targetDir=source_root,
         includeFiles=[
             ('Lib\site-packages\webrtcvad_wheels-2.0.10.post2.dist-info', 'lib\webrtcvad_wheels-2.0.10.post2.dist-info'),
-            ('user_lexicon.txt', 'user_lexicon.txt'),
-            ("Lib\site-packages\kaldi_active_grammar\kaldi", "lib\site-packages\kaldi-active-grammar\kaldi")
+            ("models", "..\\models")
         ],
         zipIncludes=args.zip_includes,
         silent=args.silent,

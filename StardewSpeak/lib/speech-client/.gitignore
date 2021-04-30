@@ -5,3 +5,6 @@ debug/
 dist/
 pyvenv.cfg
 *.pyc
+cx_Logging-doc/
+cx_Logging.lib
+models/

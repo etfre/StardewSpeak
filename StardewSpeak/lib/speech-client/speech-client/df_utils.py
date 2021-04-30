@@ -73,9 +73,7 @@ def async_action(async_fn, *args):
 def lexicon_source_path():
     import __main__
     dirname = os.path.dirname(__main__.__file__)
-    if not getattr(sys, 'frozen', False) or 1:
-        dirname = os.path.join(dirname, '..')
-    return os.path.abspath(os.path.join(dirname, 'user_lexicon.txt'))
+    return os.path.abspath(os.path.join(dirname, '..', 'user_lexicon.txt'))
 
 ten_through_twelve = {
     "ten": 10,

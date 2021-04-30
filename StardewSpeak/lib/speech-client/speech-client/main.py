@@ -11,6 +11,7 @@ from pathlib import Path
 from io import BytesIO
 from zipfile import ZipFile
 import urllib.request
+import shlex
 
 from dragonfly import RecognitionObserver, get_engine, AppContext
 from dragonfly.log import setup_log
@@ -22,7 +23,7 @@ import letter_viewer_menu, quest_log_menu, animal_query_menu, coop_menu, title_t
 import locations
 from game_menu import game_menu, crafting_page, inventory_page, exit_page
 
-MODELS_DIR = os.path.join(str(Path.home()), '.stardewspeak', 'models')
+MODELS_DIR = os.path.join(os.path.dirname(__file__), '..', 'models')
 
 user_lexicon = (
     ('joja', "dZ 'o U dZ 'V"),
@@ -59,6 +60,8 @@ def setup_engine(silence_timeout, model_dir):
     # use abspath for model dir, this may change with app freezing
     current_dir = os.path.dirname(os.path.abspath(__file__))
     if not os.path.isdir(model_dir):
+        if getattr(sys, 'frozen', False):
+            raise RuntimeError
         download_model(MODELS_DIR)
         add_base_user_lexicon(model_dir)
     # Set any configuration options here as keyword arguments.
