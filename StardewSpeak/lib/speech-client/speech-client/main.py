@@ -127,6 +127,7 @@ def main(args):
     animal_query_menu.load_grammar()
     coop_menu.load_grammar()
     title_text_input_menu.load_grammar()
+    locations.load_grammar()
     if not getattr(sys, "frozen", False):
         src = os.path.join(model_dir, "user_lexicon.txt")
         dst = os.path.join(os.path.abspath(__file__), "..", "..", "user_lexicon.txt")

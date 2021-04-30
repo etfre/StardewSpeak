@@ -21,8 +21,7 @@ async def on_speech_mimicked(data):
         server.log(str(e), level=2)
 
 async def on_save_loaded(data):
-    import locations
-    await locations.load_grammar()
+    pass
 
 event_registry = {
     "KEY_PRESSED": on_key_pressed,
