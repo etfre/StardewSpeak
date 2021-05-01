@@ -12,6 +12,7 @@ from io import BytesIO
 from zipfile import ZipFile
 import urllib.request
 import shlex
+import argparse
 
 from dragonfly import RecognitionObserver, get_engine, AppContext
 from dragonfly.log import setup_log
@@ -23,7 +24,14 @@ import letter_viewer_menu, quest_log_menu, animal_query_menu, coop_menu, title_t
 import locations
 from game_menu import game_menu, crafting_page, inventory_page, exit_page
 
-MODELS_DIR = os.path.join(os.path.dirname(__file__), '..', 'models')
+parser = argparse.ArgumentParser(description='Process some integers.')
+parser.add_argument('--main', default=__file__,help='Path of main file, needed when script is invoked by Stardew Valley')
+
+args = parser.parse_args()
+    
+IS_FROZEN = getattr(sys, 'frozen', False)
+
+MODELS_DIR = os.path.join(args.main, '..', '..', 'models') if IS_FROZEN else os.path.join(args.main, '..', 'models')
 
 user_lexicon = (
     ('joja', "dZ 'o U dZ 'V"),
@@ -57,11 +65,13 @@ def download_model(write_dir):
 
 
 def setup_engine(silence_timeout, model_dir):
+    import __main__
     # use abspath for model dir, this may change with app freezing
-    current_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.abspath(__file__)
+    current_dir = os.path.dirname(file_path)
     if not os.path.isdir(model_dir):
-        if getattr(sys, 'frozen', False):
-            raise RuntimeError
+        if IS_FROZEN:
+            raise RuntimeError(f"Cannot find kaldi model at {os.path.abspath(model_dir)} using executable path {file_path}")
         download_model(MODELS_DIR)
         add_base_user_lexicon(model_dir)
     # Set any configuration options here as keyword arguments.
@@ -128,7 +138,7 @@ def main(args):
     coop_menu.load_grammar()
     title_text_input_menu.load_grammar()
     locations.load_grammar()
-    if not getattr(sys, "frozen", False):
+    if not IS_FROZEN:
         src = os.path.join(model_dir, "user_lexicon.txt")
         dst = os.path.join(os.path.abspath(__file__), "..", "..", "user_lexicon.txt")
         shutil.copyfile(src, dst)

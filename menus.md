@@ -1,3 +1,5 @@
+# Menus
+
 Generally, menu commands should map to what is visible on screen. For example, if a menu contains an ok button, saying `ok` will click that button. Similarly, saying `trash can` will click on any visible trash can. Adding these commands is a manual process that varies from menu to menu, so if a command is missing or not working correctly feel free to create an issue.
 
 All menus with commands can also be navigated with the `north`, `south`, `east`, and `west` commands to move the mouse to an adjacent clickable section of the active menu. An optional number afterwards will fire the command that many times. For example, if the backpack is open with the mouse over the second item on the first row, saying `south two` will move the cursor to the second item on the third row. `Click` and `right click` will click any button underneath the mouse.
@@ -11,7 +13,6 @@ Some menus, like the new game menu, contain text boxes for <a href="./StardewSpe
 <br></br>
 * [Shipping Bin](#shipping-bin)
 * [Shop Menu](#shop-menu)
-<br/><br/>
 
 ### Title Menu
 <table>
@@ -46,7 +47,6 @@ Some menus, like the new game menu, contain text boxes for <a href="./StardewSpe
         <td>"change language"</td>
     </tr>
 </table>
-<br/><br/>
 
 ### New Game Menu
 <table>
@@ -111,7 +111,6 @@ Some menus, like the new game menu, contain text boxes for <a href="./StardewSpe
         <td>"back"</td>
     </tr>
 </table>
-<br/><br/>
 
 ### Load Game Menu
 <table>
@@ -156,7 +155,6 @@ Some menus, like the new game menu, contain text boxes for <a href="./StardewSpe
         <td>"back"</td>
     </tr>
 </table>
-<br/><br/>
 
 ### Containers
 Any menu that involves transfers between player items and another container, such as chests.
@@ -187,7 +185,6 @@ Any menu that involves transfers between player items and another container, suc
         <td>"trash can"</td>
     </tr>
 </table>
-<br/><br/>
 
 ### Shipping Bin
 <table>
@@ -217,7 +214,6 @@ Any menu that involves transfers between player items and another container, suc
         <td>"undo"</td>
     </tr>
 </table>
-<br/><br/>
 
 ### Shop Menu
 <table>

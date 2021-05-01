@@ -56,7 +56,7 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
     </tr>
     <tr>
         <td>(go to mail box | (check | read) mail)</td>
-        <td>Walk towards a game <a href="./StardewSpeak/lib/speech-client/speech-client/locations.py">location</a>.</td>
+        <td>If on the farm, go the the mailbox and press the action button</a>.</td>
         <td>
             <div>"go to mail box"</div>
             <div>"check mail"</div>
@@ -64,17 +64,17 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
     </tr>
     <tr>
         <td>go to shipping bin</td>
-        <td>Go to shipping bin and press action button.</td>
+        <td>Go to the shipping bin and press action button.</td>
         <td>"go to shipping bin"</td>
     </tr>
     <tr>
         <td>go to billboard</td>
-        <td>If in town, go to billboard and press action button.</td>
+        <td>If in town, go to the billboard and press action button.</td>
         <td>"go to billboard"</td>
     </tr>
     <tr>
         <td>go to calendar</td>
-        <td>If in town, go to calendar and press action button.</td>
+        <td>If in town, go to the calendar and press action button.</td>
         <td>"go to calendar"</td>
     </tr>
     <tr>
