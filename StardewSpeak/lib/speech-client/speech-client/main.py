@@ -24,14 +24,21 @@ import letter_viewer_menu, quest_log_menu, animal_query_menu, coop_menu, title_t
 import locations
 from game_menu import game_menu, crafting_page, inventory_page, exit_page
 
-parser = argparse.ArgumentParser(description='Process some integers.')
-parser.add_argument('--main', default=__file__,help='Path of main file, needed when script is invoked by Stardew Valley')
-
-args = parser.parse_args()
-    
 IS_FROZEN = getattr(sys, 'frozen', False)
 
-MODELS_DIR = os.path.join(args.main, '..', '..', 'models') if IS_FROZEN else os.path.join(args.main, '..', 'models')
+parser = argparse.ArgumentParser(description='Process some integers.')
+parser.add_argument('--main', default=__file__,help='Path of main file, needed when script is invoked by Stardew Valley')
+parser.add_argument('--model_dir', default=None, help='Model directory')
+args = parser.parse_args()
+
+def find_model_dir(from_args):
+    if from_args:
+        return from_args
+    current_dir = os.path.join(os.path.dirname(__file__))
+    return os.path.join(current_dir, '..', 'models')
+    
+
+MODELS_DIR = find_model_dir(args.model_dir)
 
 user_lexicon = (
     ('joja', "dZ 'o U dZ 'V"),
@@ -65,13 +72,9 @@ def download_model(write_dir):
 
 
 def setup_engine(silence_timeout, model_dir):
-    import __main__
-    # use abspath for model dir, this may change with app freezing
-    file_path = os.path.abspath(__file__)
-    current_dir = os.path.dirname(file_path)
     if not os.path.isdir(model_dir):
         if IS_FROZEN:
-            raise RuntimeError(f"Cannot find kaldi model at {os.path.abspath(model_dir)} using executable path {file_path}")
+            raise RuntimeError(f"Cannot find kaldi model at {os.path.abspath(model_dir)} using executable path {__file__}")
         download_model(MODELS_DIR)
         add_base_user_lexicon(model_dir)
     # Set any configuration options here as keyword arguments.

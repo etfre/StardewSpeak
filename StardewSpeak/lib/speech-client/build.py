@@ -212,21 +212,32 @@ def parse_command_line(parser):
     args.zip_includes = zip_includes
     return args
 
-def zipdir(path):
-    file_like_object = io.BytesIO()
-    zipfile_ob = zipfile.ZipFile(file_like_object, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9)
+def zipdir(zipfile_ob, path):
+    prefix = os.path.abspath(os.path.join(path, '..'))
     for root, dirs, files in os.walk(path):
-        for file in files:
-            zipfile_ob.write(os.path.join(root, file))
-    return file_like_object
+        write_base = os.path.relpath(prefix, root)
+        for path in files:
+            write_path = os.path.join(write_base, prefix)
+            zipfile_ob.write(write_path)
 
-def build_release():
+def build_release(app_root):
     msbuild = r"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe"
-    sln = os.path.abspath(os.path.join('..', '..', '..', 'StardewSpeak.sln'))
+    sln = os.path.join(app_root, 'StardewSpeak.sln')
     subprocess.run([msbuild, sln, '/p:Configuration=Release', "/t:Clean;Rebuild"])
-    shutil.rmtree(r'C:\Program Files (x86)\GOG Galaxy\Games\Stardew Valley\Mods\StardewSpeak\lib\speech-client\dist', ignore_errors=True)
-    shutil.copytree(r'C:\Program Files (x86)\GOG Galaxy\Games\Stardew Valley\Mods\StardewSpeak\StardewSpeak\lib\speech-client\dist', r'C:\Program Files (x86)\GOG Galaxy\Games\Stardew Valley\Mods\StardewSpeak\lib\speech-client\dist')
+    python_dist = os.path.join(app_root, 'StardewSpeak', 'lib', 'speech-client', 'dist')
+    top_level_dist = os.path.join(app_root, 'lib', 'speech-client', 'dist')
+    shutil.rmtree(top_level_dist, ignore_errors=True)
+    shutil.copytree(python_dist, top_level_dist)
 
+def build_release_zip(app_root):
+    source_root = os.path.join(app_root, 'StardewSpeak')
+    with open(os.path.join(source_root, 'manifest.json')) as f:
+        manifest = json.load(f)
+    release_dir = os.path.join(app_root, 'StardewSpeak', 'bin', 'release')
+    zip_name = os.path.join(release_dir, f'{manifest["Name"]} {manifest["Version"]}.zip')
+    with zipfile.ZipFile(zip_name, 'w') as myzip:
+        zipdir(myzip, os.path.join(app_root, 'packages'))
+        pass
 def main():
     args = parse_command_line(prepare_parser())
     app_name = 'speech-client'
@@ -251,10 +262,10 @@ def main():
         compress=args.compress,
         optimizeFlag=args.optimize_flag,
         path=None,
-        targetDir=source_root,
+        targetDir=app_root,
         includeFiles=[
             ('Lib\site-packages\webrtcvad_wheels-2.0.10.post2.dist-info', 'lib\webrtcvad_wheels-2.0.10.post2.dist-info'),
-            ("models", "..\\models")
+            ("models", "models")
         ],
         zipIncludes=args.zip_includes,
         silent=args.silent,
@@ -262,7 +273,9 @@ def main():
         zipExcludePackages=args.zip_exclude_packages,
     )
     freezer.Freeze()
-    build_release()
+    app_root = os.path.abspath(os.path.join('..', '..', '..'))
+    build_release(app_root)
+    build_release_zip(app_root)
 
 
 if __name__ == "__main__":

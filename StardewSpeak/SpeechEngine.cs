@@ -49,8 +49,9 @@ namespace StardewSpeak
                 Task.Factory.StartNew(() => RunProcessAsync(fileName, arguments));
 #else
                 ModEntry.Log("Running in release mode", LogLevel.Trace);
-                string exePath = "\"" + Path.Combine(rootDir, @"lib\speech-client\dist\speech-client\speech-client.exe") + "\"";
-                Task.Factory.StartNew(() => RunProcessAsync(exePath, "--main " + exePath));
+                string exePath = "\"" + Path.Combine(rootDir, @"lib\speech-client\dist\speech-client.exe") + "\"";
+                string modelDir = "\"" + Path.Combine(rootDir, @"lib\speech-client\dist\models") + "\"";
+                Task.Factory.StartNew(() => RunProcessAsync(exePath, "--model_dir " + modelDir));
 #endif
         }
 
