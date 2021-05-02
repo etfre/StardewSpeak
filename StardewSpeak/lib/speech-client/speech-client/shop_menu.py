@@ -48,8 +48,8 @@ mapping = {
     "sell <positive_index> [through <positive_index2>]": df_utils.async_action(click_range, "positive_index", 'positive_index2'),
     "item <positive_index>": df_utils.async_action(focus_item, 'positive_index', 'item'),
     "row <positive_index>": df_utils.async_action(focus_item, 'positive_index', 'row'),
-    "(shop | store)": df_utils.async_action(focus_menu_section, 'forSale'),
-    "backpack": df_utils.async_action(focus_menu_section, 'inventory'),
+    "(shop | for sale)": df_utils.async_action(focus_menu_section, 'forSale'),
+    "backpack | (player items)": df_utils.async_action(focus_menu_section, 'inventory'),
     "buy [<positive_num>]": df_utils.async_action(buy_item, 'positive_num'),
     **menu_utils.scroll_commands(),
 }
