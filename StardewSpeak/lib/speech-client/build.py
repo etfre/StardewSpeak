@@ -212,13 +212,14 @@ def parse_command_line(parser):
     args.zip_includes = zip_includes
     return args
 
-def zipdir(zipfile_ob, path):
-    prefix = os.path.abspath(os.path.join(path, '..'))
-    for root, dirs, files in os.walk(path):
-        write_base = os.path.relpath(prefix, root)
+def zipdir(zipfile_ob, folder, prefix=''):
+    parent_dir = os.path.abspath(os.path.join(folder, '..'))
+    for root, dirs, files in os.walk(folder):
+        start_path = os.path.relpath(root, parent_dir)
         for path in files:
-            write_path = os.path.join(write_base, prefix)
-            zipfile_ob.write(write_path)
+            full_path = os.path.join(root, path)
+            arcname = os.path.join(prefix, start_path, path)
+            zipfile_ob.write(full_path, arcname=arcname)
 
 def build_release(app_root):
     msbuild = r"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe"
@@ -231,13 +232,20 @@ def build_release(app_root):
 
 def build_release_zip(app_root):
     source_root = os.path.join(app_root, 'StardewSpeak')
+    lib_root = os.path.join(source_root, 'lib')
+    dist_subpath = os.path.join('lib', 'speech-client', 'dist')
     with open(os.path.join(source_root, 'manifest.json')) as f:
         manifest = json.load(f)
     release_dir = os.path.join(app_root, 'StardewSpeak', 'bin', 'release')
     zip_name = os.path.join(release_dir, f'{manifest["Name"]} {manifest["Version"]}.zip')
-    with zipfile.ZipFile(zip_name, 'w') as myzip:
-        zipdir(myzip, os.path.join(app_root, 'packages'))
-        pass
+    root_folder = 'StardewSpeak'
+    with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as myzip:
+        zipdir(myzip, os.path.join(app_root, 'packages'), prefix=root_folder)
+        zipdir(myzip, os.path.join(source_root, dist_subpath), prefix=os.path.join(root_folder, 'lib', 'speech-client'))
+        myzip.write(os.path.join(source_root, 'manifest.json'), os.path.join(root_folder, 'manifest.json'))
+        myzip.write(os.path.join(release_dir, 'StardewSpeak.dll'), os.path.join(root_folder, 'StardewSpeak.dll'))
+        myzip.write(os.path.join(release_dir, 'StardewSpeak.pdb'), os.path.join(root_folder, 'StardewSpeak.pdb'))
+
 def main():
     args = parse_command_line(prepare_parser())
     app_name = 'speech-client'
