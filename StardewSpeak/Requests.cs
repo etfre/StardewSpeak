@@ -413,6 +413,10 @@ namespace StardewSpeak
                         var locs = Routing.AllGameLocations(includeBuildings: false).Select(x => x.NameOrUniqueName).ToList();
                         return locs;
                     }
+                case "GET_LATEST_GAME_EVENT": 
+                    {
+                        return Serialization.SerializeGameEvent(Game1.CurrentEvent);
+                    }
                 case "CATCH_FISH":
                     {
                         var am = Game1.activeClickableMenu;

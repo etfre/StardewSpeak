@@ -33,6 +33,7 @@ namespace StardewSpeak
         public static List<InputButton[]> ButtonsToCheck = new List<InputButton[]>();
         public static IModHelper helper;
         public static HUDMessage QueuedMessage = null;
+        public static dynamic lastGameEvent = null;
 
         /*********
 ** Public methods
@@ -179,6 +180,7 @@ namespace StardewSpeak
 
         private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)
         {
+            eventHandler.CheckNewInGameEvent();
             RespondToQueuedRequests(speechEngine.UpdateTickedRequestQueue);
             foreach (var pair in ModEntry.Streams)
             {

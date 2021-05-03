@@ -43,22 +43,27 @@ namespace StardewSpeak
             return false;
         }
 
+        public static dynamic RectangleToClickableComponent(Rectangle rect, Point mousePosition) 
+        {
+            bool containsMouse = rect.Contains(mousePosition.X, mousePosition.Y);
+            return new
+            {
+                type = "clickableComponent",
+                bounds = new { x = rect.X, y = rect.Y, width = rect.Width, height = rect.Height },
+                center = new List<int> { rect.Center.X, rect.Center.Y },
+                name = "",
+                containsMouse,
+                visible = true,
+                rect,
+            };
+        }
+
         public static dynamic TileToClickableComponent(int x, int y, Point mousePosition)
         {
             int posX = x * 64 - Game1.viewport.X;
             int posY = y * 64 - Game1.viewport.Y;
-            Rectangle bounds = new Rectangle(posX, posY, 64, 64);
-            bool containsMouse = bounds.Contains(mousePosition.X, mousePosition.Y);
-            return new
-            {
-                type = "clickableComponent",
-                bounds = new { x = bounds.X, y = bounds.Y, width = bounds.Width, height = bounds.Height },
-                center = new List<int> { bounds.Center.X, bounds.Center.Y },
-                name = "",
-                containsMouse,
-                visible = true,
-                rect = bounds,
-            };
+            Rectangle rect = new Rectangle(posX, posY, 64, 64);
+            return RectangleToClickableComponent(rect, mousePosition);
         }
         public static bool GetClosestAnimal(Vector2 positionTile, int acceptableDistanceFromScreenNonTile, GameLocation location = null)
         {
@@ -498,6 +503,28 @@ namespace StardewSpeak
                     languages = SerializeComponentList(lsm.languages, mousePosition),
                 };
             }
+            else if (menu is LevelUpMenu)
+            {
+                var lum = menu as LevelUpMenu;
+                menuTypeObj = new
+                {
+                    menuType = "levelUpMenu",
+                };
+                if (lum.isProfessionChooser) 
+                {
+                    menuTypeObj = Merge(menuTypeObj, new {
+                        leftProfession = SerializeClickableCmp(lum.leftProfession, mousePosition),
+                        rightProfession = SerializeClickableCmp(lum.rightProfession, mousePosition),
+                    });
+                }
+                else
+                {
+                    menuTypeObj = Merge(menuTypeObj, new
+                    {
+                        okButton = SerializeClickableCmp(lum.okButton, mousePosition)
+                    });
+                }
+            }
             else if (menu is LoadGameMenu)
             {
                 var lgm = menu as LoadGameMenu;
@@ -665,9 +692,12 @@ namespace StardewSpeak
         {
             var flags = BindingFlags.Public | BindingFlags.NonPublic |
                          BindingFlags.Static | BindingFlags.Instance;
-            var fi = obj.GetType().GetField(fieldName, flags);
+            var type = obj.GetType();
+            var fi = type.GetField(fieldName, flags);
             if (fi != null) return fi.GetValue(obj);
-            return obj.GetType().GetProperty(fieldName, flags)?.GetValue(obj);
+            var methodFi = type.GetMethod(fieldName, flags);
+            if (methodFi != null) return methodFi;
+            return type.GetProperty(fieldName, flags)?.GetValue(obj);
         }
 
         public static void SetPrivateField(object obj, string fieldName, dynamic value)

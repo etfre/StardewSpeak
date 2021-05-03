@@ -23,12 +23,19 @@ async def on_speech_mimicked(data):
 async def on_save_loaded(data):
     pass
 
+async def on_game_event(data):
+    import game
+    game.set_context_value('GAME_EVENT', data)
+    if data and not data['playerCanMove']:
+        await server.stop_everything()
+
 event_registry = {
     "KEY_PRESSED": on_key_pressed,
     "UPDATE_TICKING": lambda x: None,
     "UPDATE_TICKED": lambda x: None,
     "SPEECH_MIMICKED": on_speech_mimicked,
     "SAVE_LOADED": on_save_loaded,
+    "GAME_EVENT": on_game_event,
 }
 event_futures = collections.defaultdict(lambda: server.loop.create_future())
 

@@ -1,4 +1,5 @@
-﻿using StardewValley;
+﻿using Microsoft.Xna.Framework;
+using StardewValley;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -60,6 +61,20 @@ namespace StardewSpeak
                 position,
                 center,
             };
+        }
+
+        public static dynamic SerializeGameEvent(Event evt) 
+        {
+            dynamic serializedEvent = new { evt.id, playerCanMove = Game1.player.CanMove, evt.skipped, evt.skippable };
+            if (evt.skippable && !evt.skipped)
+            {
+                Point mousePosition = Game1.getMousePosition();
+                dynamic getSkipBounds = Utils.GetPrivateField(evt, "skipBounds");
+                Rectangle skipRect = getSkipBounds.Invoke(evt, new object[] { });
+                dynamic skipBounds = Utils.RectangleToClickableComponent(skipRect, mousePosition);
+                serializedEvent = Utils.Merge(serializedEvent, new { skipBounds });
+            }
+            return serializedEvent;
         }
     }
 }

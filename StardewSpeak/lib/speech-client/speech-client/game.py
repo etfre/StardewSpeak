@@ -48,7 +48,8 @@ tool_for_object = {
 DEBRIS = [constants.WEEDS, constants.TWIG, constants.STONE]
 
 context_variables = {
-    'ACTIVE_MENU': None
+    'ACTIVE_MENU': None,
+    'GAME_EVENT': None,
 }
 
 async def update_held_buttons(to_hold=(), to_release=()):
@@ -125,8 +126,6 @@ class Path:
             if player_status["isMoving"] and facing_tile_center(player_status):
                 return False
             return True
-        if not player_status['canMove'] and player_status['currentEvent']:
-            raise NavigationFailed("Cannot move during cutscene")
         direction_to_move = direction_from_tiles(current_tile, target_tile)
         # Rule out not moving, moving in the same direction as next tile, and moving in the opposite direction
         current_direction = player_status["facingDirection"]
@@ -730,6 +729,13 @@ async def move_mouse_in_direction(direction: int, amount: int):
 
 async def on_menu_changed(new_menu):
     await server.stop_everything()
+
+def get_context_value(key):
+    return context_variables[key]
+
+def set_context_value(key, val):
+    assert key in context_variables
+    context_variables[key] = val
 
 def set_context_menu(menu):
     context_variables['ACTIVE_MENU'] = menu

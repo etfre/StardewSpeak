@@ -17,6 +17,7 @@ namespace StardewSpeak
         public List<string> buttons = new List<string> { "moveUpButton", "moveLeftButton", "moveDownButton", "moveRightButton" };
         private readonly IModHelper modHelper;
         private readonly SpeechEngine speechEngine;
+        private dynamic PreviousEvent = null;
 
         public EventHandler(IModHelper modHelper, SpeechEngine speechEngine) {
             PopulateMapKeysToButtons();
@@ -24,10 +25,27 @@ namespace StardewSpeak
             this.speechEngine = speechEngine;
             this.RegisterEvents();
         }
-
         private void RegisterEvents() 
         {
             modHelper.Events.Input.ButtonPressed += this.OnButtonPressed;
+        }
+
+        public void CheckNewInGameEvent() 
+        {
+            dynamic serializedEvent = null;
+            dynamic evt = Game1.CurrentEvent;
+            bool bothNull = evt == null && PreviousEvent == null;
+            if (bothNull) return;
+            if (PreviousEvent == null || evt == null || PreviousEvent.id != evt.id || PreviousEvent.skippable != evt.skippable || PreviousEvent.skipped != evt.skipped)
+            {
+                if (evt != null) 
+                {
+                    serializedEvent = Serialization.SerializeGameEvent(evt);
+                }
+                this.speechEngine.SendEvent("GAME_EVENT", serializedEvent);
+                PreviousEvent = serializedEvent;
+            }
+            
         }
 
         private void OnButtonPressed(object sender, ButtonPressedEventArgs e)
@@ -72,7 +90,7 @@ namespace StardewSpeak
                 Utils.WriteJson("resourceClumps.json", location.resourceClumps.ToList());
                 Utils.WriteJson("currentTool.json", player.CurrentTool);
                 Utils.WriteJson("serializedResourceClumps.json", GameState.ResourceClumps());
-                }
+            }
         }
         public void PopulateMapKeysToButtons() 
         {
