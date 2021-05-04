@@ -37,7 +37,7 @@ async def get_bed_tile(item):
     return [tile]
 
 async def go_to_bed():
-    await game.navigate_nearest_tile(get_bed_tile)
+    await game.navigate_nearest_tile(get_bed_tile, pathfind_fn=game.pathfind_to_tile)
 
 numrep2 = df.Sequence(
     [df.Choice(None, rules.nonZeroDigitMap), df.Repetition(df.Choice(None, rules.digitMap), min=0, max=10)],

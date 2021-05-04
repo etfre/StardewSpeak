@@ -129,7 +129,7 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
     </tr>
     <tr>
         <td>[open | read] (quests | journal | quest log)</td>
-        <td>Open journal</td>
+        <td>Open journal.</td>
         <td>"read journal"</td>
     </tr>
     <tr>
@@ -157,7 +157,7 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
     </tr>
     <tr>
         <td>stop</td>
-        <td>Stop current actions</td>
+        <td>Stop current actions.</td>
         <td>"stop"</td>
     </tr>
     <tr>
@@ -166,11 +166,11 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
         <td>"item seven"</td>
     </tr>
     <tr>
-        <td>equip &lt;tool&gt;</td>
-        <td>Equip tool if in inventory.</td>
+        <td>equip &lt;item&gt;</td>
+        <td>Equip item if in inventory.</td>
         <td>
             <div>"equip pickaxe"</div>
-            <div>"equip shears"</div>
+            <div>"equip cauliflower seeds"</div>
         </td>
     </tr>
     <tr>
@@ -192,6 +192,11 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
         <td>(next | cycle) toolbar</td>
         <td>Cycle the toolbar.</td>
         <td>"next toolbar"</td>
+    </tr>
+    <tr>
+        <td>skip [cutscene | event]</td>
+        <td>Skip the current cutscene.</td>
+        <td>"skip cutscene"</td>
     </tr>
     <tr>
         <td>[left] click [&lt;n&gt;]</td>

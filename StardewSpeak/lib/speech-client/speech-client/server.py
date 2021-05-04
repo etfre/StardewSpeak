@@ -311,7 +311,10 @@ class RequestBuilder:
     def batch(cls, *reqs):
         batched = []
         for r in reqs:
-            msg = {"type": r.request_type, "data": r.data}
+            if isinstance(r, RequestBuilder):
+                msg = {"type": r.request_type, "data": r.data}
+            else:
+                msg = {"type": msg[0], data: msg[1]}
             batched.append(msg)
         return cls('REQUEST_BATCH', batched)
 

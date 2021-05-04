@@ -61,7 +61,7 @@ def update_held_buttons_nowait(to_hold=(), to_release=()):
 
 class Path:
 
-    def __init__(self, mod_path, location: str, stop_check=None, stop_moving_when_done=True):
+    def __init__(self, mod_path, location: str, stop_check=None, stop_moving_when_done=True, turn_threshold=0.07, last_tile_done_threshold=0.07):
         self._tiles = ()
         tiles = []
         self.tile_indices = {}
@@ -73,6 +73,8 @@ class Path:
         self.location = location
         self.stop_check = stop_check
         self.stop_moving_when_done = stop_moving_when_done
+        self.turn_threshold = turn_threshold
+        self.last_tile_done_threshold = last_tile_done_threshold
 
     @property
     def tiles(self):
@@ -123,16 +125,43 @@ class Path:
             target_tile = self.tiles[current_tile_index + 1]
         except IndexError:
             # Last tile, all done!
-            if player_status["isMoving"] and facing_tile_center(player_status):
+            if player_status["isMoving"] and self.facing_tile_center(player_status, self.last_tile_done_threshold):
                 return False
             return True
         direction_to_move = direction_from_tiles(current_tile, target_tile)
         # Rule out not moving, moving in the same direction as next tile, and moving in the opposite direction
         current_direction = player_status["facingDirection"]
         turn_coming = player_status["isMoving"] and abs(current_direction - direction_to_move) % 2 == 1
-        if turn_coming and facing_tile_center(player_status):
+        if turn_coming and self.facing_tile_center(player_status, self.turn_threshold):
             return False
         start_moving([direction_to_move])
+
+
+    def facing_tile_center(self, player_status, offset_threshold):
+        """Keep moving towards center of tile before a turn for smoother pathfinding"""
+        tile_size = 64  # TODO: get this info from the mod
+        position = player_status["position"]
+        tile_x, tile_y = player_status["tileX"], player_status["tileY"]
+        # x rounds to the nearest tile, y rounds down unless above (or at?) .75, e.g. (21.68, 17.68) becomes (22, 17) and (21.44, 17.77) becomes (21, 18).
+        # Normalize so greater than 0 means right/below the center and less than 0 means left/above
+        x, y, = (
+            position[0] / tile_size - tile_x,
+            position[1] / tile_size - tile_y - 0.25,
+        )
+        assert -0.5 <= x <= 0.5
+        assert -0.5 <= y <= 0.5
+        current_direction = player_status["facingDirection"]
+        # start turning when at least 43% into the tile
+        offset_threshold = offset_threshold
+        if current_direction == constants.NORTH:
+            return y + offset_threshold <= 0
+        if current_direction == constants.EAST:
+            return x + offset_threshold <= 0
+        if current_direction == constants.SOUTH:
+            return y - offset_threshold >= 0
+        if current_direction == constants.WEST:
+            return x - offset_threshold >= 0
+        return False
 
 def distance_between_points(t1, t2):
     # pathfinding doesn't move diagonally for simplicity so just sum differences between x and y
@@ -369,32 +398,6 @@ def direction_from_positions(xy, target_xy):
     if abs(xdiff) > abs(ydiff):
         return constants.EAST if xdiff > 0 else constants.WEST
     return constants.SOUTH if ydiff > 0 else constants.NORTH
-
-def facing_tile_center(player_status):
-    """Keep moving towards center of tile before a turn for smoother pathfinding"""
-    tile_size = 64  # TODO: get this info from the mod
-    position = player_status["position"]
-    tile_x, tile_y = player_status["tileX"], player_status["tileY"]
-    # x rounds to the nearest tile, y rounds down unless above (or at?) .75, e.g. (21.68, 17.68) becomes (22, 17) and (21.44, 17.77) becomes (21, 18).
-    # Normalize so greater than 0 means right/below the center and less than 0 means left/above
-    x, y, = (
-        position[0] / tile_size - tile_x,
-        position[1] / tile_size - tile_y - 0.25,
-    )
-    assert -0.5 <= x <= 0.5
-    assert -0.5 <= y <= 0.5
-    current_direction = player_status["facingDirection"]
-    # start turning when at least 43% into the tile
-    offset_from_mid = 0.07
-    if current_direction == constants.NORTH:
-        return y + offset_from_mid <= 0
-    if current_direction == constants.EAST:
-        return x + offset_from_mid <= 0
-    if current_direction == constants.SOUTH:
-        return y - offset_from_mid >= 0
-    if current_direction == constants.WEST:
-        return x - offset_from_mid >= 0
-    return False
 
 async def press_key(key: str):
     await server.request('PRESS_KEY', {'key': key})
@@ -790,28 +793,35 @@ class NavigationFailed(Exception):
 
 class MoveToCharacter:
 
-    def __init__(self, get_character_builder, tiles_from_target=1, distance=75):
+    def __init__(self, get_character_builder: server.RequestBuilder, tiles_from_target=1, distance=75):
         self.get_character_builder = get_character_builder
         self.tiles_from_target = tiles_from_target
         self.distance = distance
 
     async def move(self):
         import objective
-        npc = await self.get_character(None)
-        if 'pathTiles' in npc:
-            async with server.player_status_stream() as travel_path_stream:
-                path = tiles_to_adjacent_path(npc['pathTiles'], npc['location'], tiles_from_target=self.tiles_from_target)
-                # don't share streams between tasks, otherwise they steal .next() from each other and cause resource starvation issues
-                pathfind_coro = path.travel(travel_path_stream) 
-                pathfind_task_wrapper = objective.active_objective.add_task(pathfind_coro)
-                while not pathfind_task_wrapper.done:
-                    npc = await self.get_character(npc)
-                    if 'pathTiles' in npc:
-                        new_path = tiles_to_adjacent_path(npc['pathTiles'], npc['location'], tiles_from_target=self.tiles_from_target)
-                        path.retarget(new_path)
-                if pathfind_task_wrapper.exception:
-                    raise pathfind_task_wrapper.exception
-        await self.move_directly_to_character(npc, threshold=self.distance)
+        tiles_from_target = self.tiles_from_target
+        while True:
+            npc = await self.get_character(None)
+            if 'pathTiles' in npc:
+                async with server.player_status_stream() as travel_path_stream:
+                    path = tiles_to_adjacent_path(npc['pathTiles'], npc['location'], tiles_from_target=tiles_from_target)
+                    # don't share streams between tasks, otherwise they steal .next() from each other and cause resource starvation issues
+                    pathfind_coro = path.travel(travel_path_stream) 
+                    pathfind_task_wrapper = objective.active_objective.add_task(pathfind_coro)
+                    while not pathfind_task_wrapper.done:
+                        npc = await self.get_character(npc)
+                        if 'pathTiles' in npc:
+                            new_path = tiles_to_adjacent_path(npc['pathTiles'], npc['location'], tiles_from_target=tiles_from_target)
+                            path.retarget(new_path)
+                    if pathfind_task_wrapper.exception:
+                        raise pathfind_task_wrapper.exception
+            try:
+                await self.move_directly_to_character(npc, threshold=self.distance)
+            except asyncio.TimeoutError:
+                tiles_from_target = 1
+            else:
+                break
         npc = await self.get_character(npc, get_path=False)
         npx_x, npc_y = npc['center']
         await server.set_mouse_position(npx_x, npc_y, from_viewport=True)
@@ -896,3 +906,8 @@ async def get_player_status():
     req_builder = server.RequestBuilder('PLAYER_STATUS')
     status = await req_builder.request()
     return status
+
+class HUDMessageException(Exception):
+    def __init__(self, message, errors):            
+        super().__init__(message)
+        show_hud_message(message, 4)

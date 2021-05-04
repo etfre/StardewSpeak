@@ -248,7 +248,10 @@ class TalkToNPCObjective(Objective):
     async def run(self):
         req_data = {"characterType": "npc", "requiredName": self.npc_name}
         req_builder = server.RequestBuilder('GET_NEAREST_CHARACTER', req_data)
-        await game.MoveToCharacter(req_builder).move()
+        try:
+            await game.MoveToCharacter(req_builder, tiles_from_target=2).move()
+        except game.NavigationFailed:
+            game.show_hud_message(f"{self.npc_name} is not in the current location", 2)
         await game.do_action()
 
 async def use_tool_on_animals(tool: str, animal_type=None):
