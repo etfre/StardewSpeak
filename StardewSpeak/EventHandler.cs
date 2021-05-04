@@ -32,16 +32,12 @@ namespace StardewSpeak
 
         public void CheckNewInGameEvent() 
         {
-            dynamic serializedEvent = null;
             dynamic evt = Game1.CurrentEvent;
             bool bothNull = evt == null && PreviousEvent == null;
             if (bothNull) return;
             if (PreviousEvent == null || evt == null || PreviousEvent.id != evt.id || PreviousEvent.skippable != evt.skippable || PreviousEvent.skipped != evt.skipped)
             {
-                if (evt != null) 
-                {
-                    serializedEvent = Serialization.SerializeGameEvent(evt);
-                }
+                dynamic serializedEvent = Serialization.SerializeGameEvent(evt);
                 this.speechEngine.SendEvent("GAME_EVENT", serializedEvent);
                 PreviousEvent = serializedEvent;
             }

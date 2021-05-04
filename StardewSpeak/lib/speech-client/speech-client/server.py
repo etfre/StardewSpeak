@@ -209,6 +209,7 @@ def setup_async_loop():
         l.create_task(menu_changed())
         l.create_task(async_readline())
         l.create_task(heartbeat(300))
+        l.create_task(populate_initial_game_event())
         l.run_forever()
 
     def exception_handler(loop, context):
@@ -257,6 +258,11 @@ def is_same_menu(menu1, menu2):
     if menu1.get('onFarm') != menu2.get('onFarm'): # carpenter menu, likely others
         return False
     return True
+
+async def populate_initial_game_event():
+    import game
+    game_event = await request('GET_LATEST_GAME_EVENT')
+    game.set_context_value('GAME_EVENT', game_event)
 
 async def heartbeat(timeout):
     while True:

@@ -65,6 +65,7 @@ namespace StardewSpeak
 
         public static dynamic SerializeGameEvent(Event evt) 
         {
+            if (evt == null) return null;
             dynamic serializedEvent = new { evt.id, playerCanMove = Game1.player.CanMove, evt.skipped, evt.skippable };
             if (evt.skippable && !evt.skipped)
             {
