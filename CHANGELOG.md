@@ -1,7 +1,8 @@
 # Release notes
 
-## Upcoming release
+## 0.0.3 (May 4, 2021)
 * Skip cutscene command
+* Small tweaks to NPC pathfinding
 
 ## 0.0.2 (April 30, 2021)
 * Co-op menu
