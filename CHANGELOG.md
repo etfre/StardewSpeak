@@ -1,5 +1,8 @@
 # Release notes
 
+## Unreleased
+* Small update to mailbox menu.
+
 ## 0.0.3 (May 4, 2021)
 * Skip cutscene command
 * Small tweaks to NPC pathfinding
@@ -13,4 +16,4 @@
 * Separation of always active vs non-menu commands.
 
 ## 0.0.1 (April 18, 2021)
-Initial test release
+* Initial test release  

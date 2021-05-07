@@ -31,14 +31,12 @@ parser.add_argument('--main', default=__file__,help='Path of main file, needed w
 parser.add_argument('--model_dir', default=None, help='Model directory')
 args = parser.parse_args()
 
-def find_model_dir(from_args):
-    if from_args:
-        return from_args
+def find_model_dir():
     current_dir = os.path.join(os.path.dirname(__file__))
     return os.path.join(current_dir, '..', 'models')
     
 
-MODELS_DIR = find_model_dir(args.model_dir)
+MODELS_DIR = args.model_dir or find_model_dir()
 
 user_lexicon = (
     ('joja', "dZ 'o U dZ 'V"),

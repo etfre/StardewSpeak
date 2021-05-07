@@ -5,7 +5,7 @@ import menu_utils, server, df_utils, game, objective, server, constants
 LETTER_VIEWER_MENU = 'letterViewerMenu'
 
 mapping = {
-    "accept quest": menu_utils.simple_click("acceptQuestButton"),
+    "accept [quest]": menu_utils.simple_click("acceptQuestButton"),
     "previous": menu_utils.simple_click("backButton"),
     "next": menu_utils.simple_click("forwardButton"),
 }
