@@ -19,6 +19,7 @@ DEFAULT_LOCATIONS = ("FarmHouse", "Farm", "FarmCave", "Town", "JoshHouse",
     "CaptainRoom", "IslandShrine", "IslandFarmCave", "Caldera", "LeoTreeHouse", "QiNutRoom")
 
 LOCATION_COMMANDS = {
+    "AnimalShop": ["marnie's house", "animal shop"],
     "BathHouse_Entry": ["bath house"],
     "BathHouse_MensLocker": ["men's locker"],
     "BathHouse_WomensLocker": ["women's locker"],

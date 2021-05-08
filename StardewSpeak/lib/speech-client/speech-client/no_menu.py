@@ -39,6 +39,9 @@ async def get_bed_tile(item):
 async def go_to_bed():
     await game.navigate_nearest_tile(get_bed_tile, pathfind_fn=game.pathfind_to_tile)
 
+async def pet_farm_pet():
+    pass
+
 numrep2 = df.Sequence(
     [df.Choice(None, rules.nonZeroDigitMap), df.Repetition(df.Choice(None, rules.digitMap), min=0, max=10)],
     name="n2",

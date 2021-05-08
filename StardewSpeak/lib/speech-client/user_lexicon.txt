@@ -39,6 +39,7 @@ lamp-post l { m p p o U s t
 largemouth l A r dZ m aU T
 lingcod l I n g k V d
 lunarite l u n V r aI t
+marnie's m A r n i z
 mudstone m V d s t o U n
 nekoite n V k OI t
 neptunite n E p t j V n aI t
