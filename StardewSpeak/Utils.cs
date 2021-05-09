@@ -273,13 +273,27 @@ namespace StardewSpeak
             else if (menu is ShippingMenu)
             {
                 var sm = menu as ShippingMenu;
+                int introTimer = Utils.GetPrivateField(sm, "introTimer");
                 menuTypeObj = new
                 {
                     menuType = "shippingMenu",
                     sm.itemsPerCategoryPage,
-                    okButton = SerializeClickableCmp(sm.okButton, mousePosition),
                     sm.currentPage,
                 };
+                if (sm.currentPage == -1) 
+                {
+                    if (introTimer <= 0)
+                    {
+                        menuTypeObj = Merge(menuTypeObj, new
+                        {
+                            okButton = SerializeClickableCmp(sm.okButton, mousePosition)
+                        });
+                    }
+                    menuTypeObj = Merge(menuTypeObj, new
+                    {
+                        categories = Utils.SerializeComponentList(sm.categories, mousePosition)
+                    });
+                }
             }
             else if (menu is MineElevatorMenu)
             {
