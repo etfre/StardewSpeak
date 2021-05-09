@@ -142,10 +142,11 @@ namespace StardewSpeak
             var menuBarObj = new
             {
                 menu.xPositionOnScreen,
-                menu.yPositionOnScreen,
+                menu.yPositionOnScreen, 
                 upperRightCloseButton = Utils.SerializeClickableCmp(menu.upperRightCloseButton, mousePosition),
                 containsMouse,
                 menuType = "unknown",
+                classType = menu.GetType().ToString(),
             };
             dynamic menuTypeObj = new { };
             if (menu is ShopMenu)

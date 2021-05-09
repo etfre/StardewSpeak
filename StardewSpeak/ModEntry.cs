@@ -43,7 +43,7 @@ namespace StardewSpeak
         public override void Entry(IModHelper helper)
         {
             ModEntry.helper = helper;
-
+            helper.Events.Specialized.UnvalidatedUpdateTicked += GameLoop_UnvalidatedUpdateTicked;
             helper.Events.Display.MenuChanged += this.OnMenuChanged;
             helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
             helper.Events.GameLoop.UpdateTicking += GameLoop_UpdateTicking;
@@ -172,10 +172,16 @@ namespace StardewSpeak
         private void GameLoop_UpdateTicking(object sender, UpdateTickingEventArgs e)
         {
             RespondToQueuedRequests(speechEngine.UpdateTickingRequestQueue);
-            foreach (var btn in Input.Held.Values) {
+            foreach (var btn in Input.Held.Values)
+            {
                 Input.SetDown(btn);
             }
             //this.speechEngine.SendEvent("UPDATE_TICKING");
+        }
+
+        private void GameLoop_UnvalidatedUpdateTicked(object sender, UnvalidatedUpdateTickedEventArgs e)
+        {
+            RespondToQueuedRequests(speechEngine.UpdateTickedRequestQueue);
         }
 
         private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)
