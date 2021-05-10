@@ -2,19 +2,19 @@
 
 Play Stardew Valley by voice.
 
+This mod is primarily made for people with limited use of their hands who want to play Stardew Valley without interacting with the keyboard or mouse.
+
 ## Installation
 
-StardewSpeak can be installed just like [any other SMAPI-based mod](https://stardewvalleywiki.com/Modding:Player_Guide/Getting_Started). 
+StardewSpeak can be installed just like [any other SMAPI-based mod](https://stardewvalleywiki.com/Modding:Player_Guide/Getting_Started). Currently, it is only usable on Windows 10.
 
-Test out your microphone with the Windows 10 voice recorder or some other piece of software to ensure that you are using a microphone that is able to clearly capture your speech.
-
-An internet connection is required to download the language model the first time the game runs. The model is just over a gigabyte in size, so this could take some time depending on your connection. On subsequent launches of Stardew Valley, speech recognition should begin within a few seconds, although this could also vary depending on the speed of your computer. The speech engine uses about 2.5 gigabytes of RAM, so be careful about running it alongside other RAM-intensive applications.
+Test out your microphone to ensure that is able to clearly capture your speech. The speech engine uses about 2.5 gigabytes of RAM, so be careful about running it alongside other RAM-intensive applications.
 
 ## Getting Started
 
 Speech recognition begins automatically when Stardew Valley is launched. If you are playing in windowed mode, the microphone icon in the taskbar indicates that speech recognition is active. Additionally, an in-game notification will appear.
 
-All menus can (or will) be navigated by voice. As an example, to load a saved game from the title menu, say `load` to enter the saved game menu. Then `game` followed by the number of the game you want to play, e.g. `game three` to load the third game. If you have more than four saved games, `scroll down` and `scroll up` will click the up and down arrows. See the [menus file](docs/menus.md) for more information and a list of available menu-specific commands. 
+All menus can (or will) be navigated by voice. As an example, to load a saved game from the title menu, say `load` to enter the saved game menu, then `game` followed by the number of the game you want to play, e.g. `game three` to load the third game. If you have more than four saved games, `scroll down` and `scroll up` will click the up and down arrows. See the [menus file](docs/menus.md) for more information and a list of available menu-specific commands. 
 
 Once in game, try saying `go to farm` to begin walking from your farmhouse interior to your farm. Saying `stop` will stop whatever the farmer is currently doing.
 
@@ -161,7 +161,7 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
         <td>"stop"</td>
     </tr>
     <tr>
-        <td>item &lt;item&gt;</td>
+        <td>item &lt;n&gt;</td>
         <td>Equip the nth item in the toolbar.</td>
         <td>"item seven"</td>
     </tr>
