@@ -136,6 +136,8 @@ namespace StardewSpeak
         }
         public static object SerializeMenu(IClickableMenu menu, Point mousePosition)
         {
+            dynamic serialized = Menus.SerializeMenu(menu, mousePosition);
+            if (serialized != null) return serialized;
             if (menu == null) return null;
             Rectangle menuRect = new Rectangle(menu.xPositionOnScreen, menu.yPositionOnScreen, menu.width, menu.height);
             bool containsMouse = menu.isWithinBounds(mousePosition.X, mousePosition.Y);
@@ -268,31 +270,6 @@ namespace StardewSpeak
 
                         });
                     }
-                }
-            }
-            else if (menu is ShippingMenu)
-            {
-                var sm = menu as ShippingMenu;
-                int introTimer = Utils.GetPrivateField(sm, "introTimer");
-                menuTypeObj = new
-                {
-                    menuType = "shippingMenu",
-                    sm.itemsPerCategoryPage,
-                    sm.currentPage,
-                };
-                if (sm.currentPage == -1) 
-                {
-                    if (introTimer <= 0)
-                    {
-                        menuTypeObj = Merge(menuTypeObj, new
-                        {
-                            okButton = SerializeClickableCmp(sm.okButton, mousePosition)
-                        });
-                    }
-                    menuTypeObj = Merge(menuTypeObj, new
-                    {
-                        categories = Utils.SerializeComponentList(sm.categories, mousePosition)
-                    });
                 }
             }
             else if (menu is MineElevatorMenu)
@@ -713,6 +690,14 @@ namespace StardewSpeak
             var methodFi = type.GetMethod(fieldName, flags);
             if (methodFi != null) return methodFi;
             return type.GetProperty(fieldName, flags)?.GetValue(obj);
+        }
+
+        public static MethodInfo GetStaticMethod(Type type, string methodName) 
+        {
+            MethodInfo info = type.GetMethod(
+                methodName,
+                BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+            return info;
         }
 
         public static void SetPrivateField(object obj, string fieldName, dynamic value)
