@@ -76,7 +76,7 @@ namespace StardewSpeak
                 var viewport = Game1.viewport;
                 ModEntry.Log($"Current tiles: x: {tileX}, y: {tileY}", LogLevel.Trace);
                 ModEntry.Log($"Current mouse position: x: {mouseX}, y: {mouseY}", LogLevel.Trace);
-                var tiles = Utils.VisibleTiles(Game1.player.currentLocation);
+                var isPassable = Pathfinder.Pathfinder.isTileWalkable(location, tileX, tileY);
 
                 var isOccupied = location.isTileOccupiedIgnoreFloors(vec);
                 var rec = new xTile.Dimensions.Location(tileX, tileY);

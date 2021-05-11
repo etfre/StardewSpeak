@@ -155,11 +155,15 @@ namespace StardewSpeak
                         dynamic path = null;
                         while (testX != playerX || testY != playerY) 
                         {
-                            path = Pathfinder.Pathfinder.FindPath(location, playerX, playerY, testX, testY);
-                            if (path != null) 
+                            if (Pathfinder.Pathfinder.isTileWalkable(location, testX, testY))
                             {
-                                break;
-                            };
+                                path = Pathfinder.Pathfinder.FindPath(location, testX, testY, playerX, playerY);
+                                if (path != null)
+                                {
+                                    path.Reverse();
+                                    break;
+                                };
+                            }
                             if (isXAxis) testX += increment;
                             else testY += increment;
 

@@ -107,8 +107,10 @@ namespace StardewSpeak.Pathfinder
 						int nid = PathNode.ComputeHash(nx, ny);
 						if (!closedList.Contains(nid))
 						{
-							//bool isWalkable = isTileWalkable(location, nx, ny);
-							if ((nx != endPoint.X || ny != endPoint.Y) && (nx < 0 || ny < 0 || nx >= layerWidth || ny >= layerHeight))
+							bool isWalkable = isTileWalkable(location, nx, ny);
+							bool isEndPoint = nx == endPoint.X && ny == endPoint.Y;
+							bool isOffMap = nx < 0 || ny < 0 || nx >= layerWidth || ny >= layerHeight;
+							if ((!isEndPoint && isOffMap) || !isWalkable)
 							{
 								closedList.Add(nid);
 							}
@@ -116,17 +118,9 @@ namespace StardewSpeak.Pathfinder
 							{
 								PathNode neighbor = new PathNode(nx, ny, currentNode);
 								neighbor.g = (byte)(currentNode.g + 1);
-								bool isWalkable = isTileWalkable(location, neighbor.x, neighbor.y);
-								if (!isWalkable)
-								{
-									closedList.Add(nid);
-								}
-								else
-								{
-									float f = ng + (Math.Abs(endPoint.X - nx) + Math.Abs(endPoint.Y - ny));
-									closedList.Add(nid);
-									openList.Enqueue(neighbor, f);
-								}
+								float f = ng + (Math.Abs(endPoint.X - nx) + Math.Abs(endPoint.Y - ny));
+								closedList.Add(nid);
+								openList.Enqueue(neighbor, f);
 							}
 						}
 					}
