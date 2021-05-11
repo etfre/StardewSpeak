@@ -39,6 +39,15 @@ async def get_bed_tile(item):
 async def go_to_bed():
     await game.navigate_nearest_tile(get_bed_tile, pathfind_fn=game.pathfind_to_tile)
 
+async def navigate_direction(direction: int):
+    async with server.player_status_stream() as stream:
+        player_status = await stream.next()
+        location = player_status['location']
+        path_tiles = await server.request('PATH_TO_EDGE', {'direction': direction})
+        if path_tiles:
+            path = game.Path(path_tiles, location)  
+            await path.travel(stream)
+
 async def pet_farm_pet():
     pass
 
@@ -84,7 +93,7 @@ mapping = {
     "milk animals": objective.function_objective(objective.use_tool_on_animals, constants.MILK_PAIL),
     "start fishing": objective.function_objective(fishing_menu.start_fishing),
     "catch fish": df_utils.async_action(fishing_menu.catch_fish),
-
+    "navigate <direction_nums>":objective.function_objective(navigate_direction, "direction_nums"),
 }
 
 @menu_utils.valid_menu_test

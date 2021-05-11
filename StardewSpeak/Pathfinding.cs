@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using StardewModdingAPI;
 using StardewValley;
 using StardewValley.TerrainFeatures;
 using System;
@@ -58,11 +59,11 @@ namespace StardewSpeak.Pathfinder
 					-1
 				}
 			};
-		private static PriorityQueue _openList = new PriorityQueue();
+		private static PriorityQueue<float> _openList = new PriorityQueue<float>();
 		private static HashSet<int> _closedList = new HashSet<int>();
 		private static int _counter = 0;
 		public delegate bool isAtEnd(PathNode currentNode, Point endPoint, GameLocation location, Character c);
-		public delegate bool adjustTileScore(PathNode currentNode, Point endPoint, GameLocation location, Character c);
+		public delegate bool adjustTileScore(PathNode currentNode, Point startPoint, GameLocation location, int currentScore);
 		public static dynamic FindPath(GameLocation location, int startX, int startY, int targetX, int targetY, int limit = -1)
 		{
 			var startPoint = new Point(startX, startY);
@@ -79,21 +80,22 @@ namespace StardewSpeak.Pathfinder
 			}
 			try
 			{
+				bool endPointIsFarmer = endPoint.X == Game1.player.getTileX() && endPoint.Y == Game1.player.getTileY();
 				_openList.Clear();
 				_closedList.Clear();
-				PriorityQueue openList = _openList;
+				var openList = _openList;
 				HashSet<int> closedList = _closedList;
 				int iterations = 0;
 				openList.Enqueue(new PathNode(startPoint.X, startPoint.Y, 0, null), Math.Abs(endPoint.X - startPoint.X) + Math.Abs(endPoint.Y - startPoint.Y));
 				int layerWidth = location.map.Layers[0].LayerWidth;
 				int layerHeight = location.map.Layers[0].LayerHeight;
-				bool isFarmer = true;
 				Character character = Game1.player;
 				while (!openList.IsEmpty())
 				{
 					PathNode currentNode = openList.Dequeue();
 					if (endPointFunction(currentNode, endPoint, location, character))
 					{
+						ModEntry.Log(iterations.ToString(), (LogLevel)3);
 						return reconstructPath(currentNode);
 					}
 					closedList.Add(currentNode.id);
@@ -105,6 +107,7 @@ namespace StardewSpeak.Pathfinder
 						int nid = PathNode.ComputeHash(nx, ny);
 						if (!closedList.Contains(nid))
 						{
+							//bool isWalkable = isTileWalkable(location, nx, ny);
 							if ((nx != endPoint.X || ny != endPoint.Y) && (nx < 0 || ny < 0 || nx >= layerWidth || ny >= layerHeight))
 							{
 								closedList.Add(nid);
@@ -113,28 +116,30 @@ namespace StardewSpeak.Pathfinder
 							{
 								PathNode neighbor = new PathNode(nx, ny, currentNode);
 								neighbor.g = (byte)(currentNode.g + 1);
-								if (location.isCollidingPosition(new Rectangle(neighbor.x * 64 + 1, neighbor.y * 64 + 1, 62, 62), Game1.viewport, isFarmer, 0, glider: false, character, pathfinding: true))
+								bool isWalkable = isTileWalkable(location, neighbor.x, neighbor.y);
+								if (!isWalkable)
 								{
 									closedList.Add(nid);
 								}
 								else
 								{
-									int f = ng + (Math.Abs(endPoint.X - nx) + Math.Abs(endPoint.Y - ny));
+									float f = ng + (Math.Abs(endPoint.X - nx) + Math.Abs(endPoint.Y - ny));
 									closedList.Add(nid);
 									openList.Enqueue(neighbor, f);
 								}
 							}
 						}
 					}
+					iterations++;
 					if (limit >= 0)
 					{
-						iterations++;
 						if (iterations >= limit)
 						{
 							return null;
 						}
 					}
 				}
+				ModEntry.Log(iterations.ToString(), (LogLevel)3);
 				return null;
 			}
 			finally
@@ -157,5 +162,100 @@ namespace StardewSpeak.Pathfinder
 			return path;
 		}
 
+		public static bool isTileWalkable(GameLocation location, int x, int y) 
+		{
+			//var layer = location.map.Layers[0];
+			//if (x < 0 || y < 0 || x >= layer.LayerWidth || y >= layer.LayerHeight) return false;
+			var rect = new Rectangle(x * 64 + 1, y * 64 + 1, 62, 62);
+			return !location.isCollidingPosition(rect, Game1.viewport, true, 0, glider: false, Game1.player, pathfinding: true);
+		}
+
+	}
+
+	class PriorityQueue<T>
+	{
+		private int total_size;
+
+		private SortedDictionary<T, Queue<PathNode>> nodes;
+
+		public PriorityQueue()
+		{
+			nodes = new SortedDictionary<T, Queue<PathNode>>();
+			total_size = 0;
+		}
+
+		public bool IsEmpty()
+		{
+			return total_size == 0;
+		}
+
+		public void Clear()
+		{
+			total_size = 0;
+			foreach (KeyValuePair<T, Queue<PathNode>> node in nodes)
+			{
+				node.Value.Clear();
+			}
+		}
+
+		public bool Contains(PathNode p, T priority)
+		{
+			if (!nodes.TryGetValue(priority, out Queue<PathNode> v))
+			{
+				return false;
+			}
+			return v.Contains(p);
+		}
+
+		public PathNode Dequeue()
+		{
+			if (!IsEmpty())
+			{
+				foreach (Queue<PathNode> q in nodes.Values)
+				{
+					if (q.Count > 0)
+					{
+						total_size--;
+						return q.Dequeue();
+					}
+				}
+			}
+			return null;
+		}
+
+		public object Peek()
+		{
+			if (!IsEmpty())
+			{
+				foreach (Queue<PathNode> q in nodes.Values)
+				{
+					if (q.Count > 0)
+					{
+						return q.Peek();
+					}
+				}
+			}
+			return null;
+		}
+
+		public object Dequeue(T priority)
+		{
+			total_size--;
+			return nodes[priority].Dequeue();
+		}
+
+		public void Enqueue(PathNode item, T priority)
+		{
+			if (!nodes.ContainsKey(priority))
+			{
+				nodes.Add(priority, new Queue<PathNode>());
+				Enqueue(item, priority);
+			}
+			else
+			{
+				nodes[priority].Enqueue(item);
+				total_size++;
+			}
+		}
 	}
 }

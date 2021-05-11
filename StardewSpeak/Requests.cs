@@ -16,6 +16,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using StardewValley.Menus;
 using System.Reflection;
+using xTile.Layers;
 
 namespace StardewSpeak
 {
@@ -122,6 +123,47 @@ namespace StardewSpeak
                         int targetY = data.y;
                         int cutoff = data.cutoff;
                         var path = Pathfinder.Pathfinder.FindPath(player.currentLocation, playerX, playerY, targetX, targetY, cutoff);
+                        return path;
+                    }
+                case "PATH_TO_EDGE": 
+                    {
+                        int direction = data.direction;
+                        Layer layer = player.currentLocation.map.Layers[0];
+                        bool isXAxis = false;
+                        int testX = playerX;
+                        int testY = 0;
+                        int increment = 1;
+                        if (direction == 1) 
+                        {
+                            isXAxis = true;
+                            testX = layer.LayerWidth - 1;
+                            testY = playerY;
+                            increment = -1;
+                        }
+                        else if (direction == 2) 
+                        {
+                            testX = playerX;
+                            testY = layer.LayerHeight - 1;
+                            increment = -1;
+                        }
+                        else if (direction == 3) 
+                        {
+                            isXAxis = true;
+                            testX = 0;
+                            testY = playerY;
+                        }
+                        dynamic path = null;
+                        while (testX != playerX || testY != playerY) 
+                        {
+                            path = Pathfinder.Pathfinder.FindPath(location, playerX, playerY, testX, testY);
+                            if (path != null) 
+                            {
+                                break;
+                            };
+                            if (isXAxis) testX += increment;
+                            else testY += increment;
+
+                        }
                         return path;
                     }
                 case "GET_NEAREST_CHARACTER": 
