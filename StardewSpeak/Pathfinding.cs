@@ -95,7 +95,6 @@ namespace StardewSpeak.Pathfinder
 					PathNode currentNode = openList.Dequeue();
 					if (endPointFunction(currentNode, endPoint, location, character))
 					{
-						ModEntry.Log(iterations.ToString(), (LogLevel)3);
 						return reconstructPath(currentNode);
 					}
 					closedList.Add(currentNode.id);
@@ -133,7 +132,6 @@ namespace StardewSpeak.Pathfinder
 						}
 					}
 				}
-				ModEntry.Log(iterations.ToString(), (LogLevel)3);
 				return null;
 			}
 			finally

@@ -52,15 +52,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Actions.cs" />
     <Compile Include="EventHandler.cs" />
     <Compile Include="GameState.cs" />
     <Compile Include="Input.cs" />
     <Compile Include="Menus.cs" />
     <Compile Include="ModEntry.cs" />
-    <Compile Include="Objective.cs" />
-    <Compile Include="Objectives\ObjectiveForage.cs" />
-    <Compile Include="Objectives\ObjectiveSleep.cs" />
     <Compile Include="Page.cs" />
     <Compile Include="Pathfinding.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

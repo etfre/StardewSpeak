@@ -358,7 +358,7 @@ namespace StardewSpeak
                 case "EQUIP_ITEM":
                     {
                         string item = data.item;
-                        return Actions.EquipToolIfOnHotbar(item);
+                        return Utils.EquipToolIfOnHotbar(item);
                     }
                 case "EQUIP_ITEM_INDEX":
                     {

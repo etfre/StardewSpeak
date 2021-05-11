@@ -129,6 +129,31 @@ namespace StardewSpeak
             return items;
         }
 
+        public static bool EquipToolIfOnHotbar(string name)
+        {
+            var t = Game1.player.getToolFromName(name);
+            if (t == null)
+            {
+                //Mod.instance.Monitor.Log("Could not equip tool: " + name + " (not found in inventory)", LogLevel.Info);
+                return false;
+            }
+            for (int index = 0; index < 12; ++index)
+            {
+                if (Game1.player.items.Count > index && Game1.player.items.ElementAt<Item>(index) != null)
+                {
+                    if (Game1.player.items[index] == t)
+                    {
+                        //found it
+                        if (Game1.player.CurrentToolIndex != index)
+                        {
+                            Game1.player.CurrentToolIndex = index;
+                        }
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
         public static object SerializeMenu(IClickableMenu menu)
         {
             Point mousePosition = Game1.getMousePosition();
