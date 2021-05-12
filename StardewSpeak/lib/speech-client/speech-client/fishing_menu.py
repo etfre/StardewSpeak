@@ -1,7 +1,9 @@
-import game, server, menu_utils, constants
+import game, server, menu_utils, constants, df_utils
 import dragonfly as df
 
-async def catch_fish():
+FISHING_MENU = 'fishingMenu'
+
+async def catch_fish(menu):
     await server.request('CATCH_FISH')
 
 async def start_fishing():
@@ -21,4 +23,11 @@ async def wait_for_nibble(tss):
         await game.press_key(constants.USE_TOOL_BUTTON)
         await tss.wait(lambda t: t['isReeling'])
 
+mapping = {
+    "catch fish": df_utils.async_action(catch_fish)
+}
 
+def load_grammar():
+    grammar = menu_utils.build_menu_grammar('fishing', mapping, FISHING_MENU)
+    grammar.load()
+    

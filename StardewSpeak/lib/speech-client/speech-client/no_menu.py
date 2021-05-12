@@ -92,7 +92,6 @@ mapping = {
     "pet animals": objective.function_objective(objective.pet_animals),
     "milk animals": objective.function_objective(objective.use_tool_on_animals, constants.MILK_PAIL),
     "start fishing": objective.function_objective(fishing_menu.start_fishing),
-    "catch fish": df_utils.async_action(fishing_menu.catch_fish),
     "navigate <direction_nums>":objective.function_objective(navigate_direction, "direction_nums"),
 }
 

@@ -53,6 +53,12 @@ namespace StardewSpeak
             }
         }
 
+        public static void Serialize_BobberBar(dynamic menu, BobberBar sm, Point cursorPosition)
+        {
+            menu.menuType = "fishingMenu";
+        }
+
+
         public static dynamic SerializeValue(dynamic val, Point cursorPosition)
         {
             if (val is ClickableComponent || val is ClickableTextureComponent) 

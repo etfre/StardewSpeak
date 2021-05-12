@@ -20,7 +20,7 @@ from srabuilder import sleep, environment
 import srabuilder
 
 import any_context, new_game_menu, shop_menu, container_menu, title_menu, load_game_menu, dialogue_menu, no_menu, any_menu, shipping_bin_menu, carpenter_menu, billboard_menu, geode_menu, museum_menu
-import letter_viewer_menu, quest_log_menu, animal_query_menu, coop_menu, title_text_input_menu, cutscene, level_up_menu, shipped_items_menu
+import letter_viewer_menu, quest_log_menu, animal_query_menu, coop_menu, title_text_input_menu, cutscene, level_up_menu, shipped_items_menu, fishing_menu
 import locations
 from game_menu import game_menu, crafting_page, inventory_page, exit_page
 
@@ -79,7 +79,7 @@ def setup_engine(silence_timeout, model_dir):
     engine = get_engine(
         "kaldi",
         model_dir=model_dir,
-        expected_error_rate_threshold=0.05,
+        expected_error_rate_threshold=0,
         # tmp_dir='kaldi_tmp',  # default for temporary directory
         # vad_aggressiveness=3,  # default aggressiveness of VAD
         vad_padding_start_ms=0,  # default ms of required silence surrounding VAD
@@ -142,6 +142,7 @@ def main(args):
     cutscene.load_grammar()
     level_up_menu.load_grammar()
     shipped_items_menu.load_grammar()
+    fishing_menu.load_grammar()
     if not IS_FROZEN:
         src = os.path.join(model_dir, "user_lexicon.txt")
         dst = os.path.join(os.path.abspath(__file__), "..", "..", "user_lexicon.txt")
