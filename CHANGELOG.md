@@ -4,6 +4,7 @@
 * New command to move in a cardinal direction while navigating around terrain.
 * Small update to mailbox menu.
 * Move catch fish command to fishing menu.
+* Show HUD message on failed attempt to equip item.
 
 ## 0.0.3 (May 4, 2021)
 * Skip cutscene command
