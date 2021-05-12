@@ -1,6 +1,7 @@
 # Release notes
 
 ## Unreleased
+* New command to move in a cardinal direction while navigating around terrain.
 * Small update to mailbox menu.
 
 ## 0.0.3 (May 4, 2021)

@@ -40,6 +40,11 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
         <td>"one two west" - move left 12 tiles</td>
     </tr>
     <tr>
+        <td>navigate &lt;direction&gt;</td>
+        <td>Combines the two above commands. Begin moving in a specific direction while pathfinding around terrain.</td>
+        <td>"navigate east"</td>
+    </tr>
+    <tr>
         <td>clear debris</td>
         <td>Begin clearing weeds, stone, and wood.</td>
         <td>"clear debris"</td>
