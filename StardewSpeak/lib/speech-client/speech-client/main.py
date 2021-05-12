@@ -79,7 +79,7 @@ def setup_engine(silence_timeout, model_dir):
     engine = get_engine(
         "kaldi",
         model_dir=model_dir,
-        expected_error_rate_threshold=0,
+        expected_error_rate_threshold=0.05,
         # tmp_dir='kaldi_tmp',  # default for temporary directory
         # vad_aggressiveness=3,  # default aggressiveness of VAD
         vad_padding_start_ms=0,  # default ms of required silence surrounding VAD
