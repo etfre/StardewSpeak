@@ -486,13 +486,17 @@ async def equip_item(predicate):
 
 async def equip_melee_weapon():
     predicate = lambda x: x['type'] == constants.MELEE_WEAPON
-    await equip_item(predicate)
+    success = await equip_item(predicate)
+    if not success:
+        raise HUDMessageException(f'No melee weapons are currently available')
 
 async def equip_item_by_name(item):
     import items
     name = item.name if isinstance(item, items.Item) else item
     predicate = lambda x: x['netName'] == name
-    return await equip_item(predicate)
+    success = await equip_item(predicate)
+    if not success:
+        raise HUDMessageException(f'{name} is not in inventory')
 
 async def equip_item_by_index(idx: int):
     return await server.request('EQUIP_ITEM_INDEX', {"index": idx})
@@ -908,6 +912,6 @@ async def get_player_status():
     return status
 
 class HUDMessageException(Exception):
-    def __init__(self, message, errors):            
+    def __init__(self, message, level=2):            
         super().__init__(message)
-        show_hud_message(message, 4)
+        show_hud_message(message, level)
