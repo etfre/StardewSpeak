@@ -145,7 +145,7 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
         <td>"go inside"</td>
     </tr>
     <tr>
-        <td>nearest &lt;item&gt; &lt;n&gt;</td>
+        <td>nearest &lt;item&gt; [&lt;n&gt;]</td>
         <td>Move to nearest <a href="./StardewSpeak/lib/speech-client/speech-client/items.py">item</a> by name in current location. If <i>n</i> is specified, go to the nth closest item.</td>
         <td>
             <div>"nearest chest"</div>
