@@ -1,8 +1,8 @@
 # Release notes
 
 ## Unreleased
-    * Add the ability to dictate dialogue responses
-    * Remove unneeded 100ms sleep when clicking components
+* Add the ability to dictate dialogue responses
+* Remove unneeded 100ms sleep when clicking components
 
 ## 0.0.4 (May 12,2021)
 * New command to move in a cardinal direction while navigating around terrain.
