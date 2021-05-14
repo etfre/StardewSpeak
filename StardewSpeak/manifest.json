@@ -1,7 +1,7 @@
 {
   "Name": "StardewSpeak",
   "Author": "evfredericksen",
-  "Version": "0.0.4",
+  "Version": "0.0.5",
   "Description": "Play Stardew Valley by voice",
   "UniqueID": "evfredericksen.StardewSpeak",
   "EntryDll": "StardewSpeak.dll",
