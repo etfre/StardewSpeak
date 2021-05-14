@@ -58,20 +58,19 @@ def find_component_by_field(list_of_components, field_name, field_value):
 
 async def click_component(cmp):
     await focus_component(cmp)
-    await asyncio.sleep(0.1) # TODO some kind of mouse stream
     await server.mouse_click()
 
 async def scroll_up(menu, count=1):
     cmp = menu[constants.UP_ARROW]
     for i in range(count):
         await click_component(cmp)
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.05)
 
 async def scroll_down(menu, count=1):
     cmp = menu[constants.DOWN_ARROW]
     for i in range(count):
         await click_component(cmp)
-        await asyncio.sleep(0.1)
+        await asyncio.sleep(0.05)
 
 async def try_menus(try_fns, *a):
     for fn in try_fns:
