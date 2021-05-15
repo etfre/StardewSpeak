@@ -1,6 +1,6 @@
 # Release notes
 
-## Unreleased
+## 0.0.5 (May 15, 2021)
 * Add the ability to dictate dialogue responses
 * Remove unneeded 100ms sleep when clicking components
 
