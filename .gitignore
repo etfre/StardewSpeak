@@ -364,3 +364,4 @@ StardewSpeak.dll
 .vscode/
 /lib/
 manifest.json
+config.json

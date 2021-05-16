@@ -27,6 +27,7 @@ namespace StardewSpeak
         internal static bool FeedLocation = false;
         SpeechEngine speechEngine;
         EventHandler eventHandler;
+        private ModConfig Config;
 
         public static Action<string, LogLevel> log { get; private set; }
         public static Dictionary<string, Stream> Streams { get; set; } = new Dictionary<string, Stream>();
@@ -43,10 +44,12 @@ namespace StardewSpeak
         public override void Entry(IModHelper helper)
         {
             ModEntry.helper = helper;
+            this.Config = this.Helper.ReadConfig<ModConfig>();
             helper.Events.Specialized.UnvalidatedUpdateTicked += GameLoop_UnvalidatedUpdateTicked;
             helper.Events.Display.MenuChanged += this.OnMenuChanged;
             helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
             helper.Events.GameLoop.UpdateTicking += GameLoop_UpdateTicking;
+            helper.Events.Input.ButtonsChanged += this.OnButtonsChanged;
             helper.Events.Player.Warped += this.OnWarped;
             helper.Events.World.TerrainFeatureListChanged += this.OnTerrainFeatureListChanged;
             helper.Events.World.ObjectListChanged += this.OnObjectListChanged;
@@ -99,7 +102,13 @@ namespace StardewSpeak
             Routing.Reset();
         }
 
-
+        private void OnButtonsChanged(object sender, ButtonsChangedEventArgs e) 
+        {
+            if (this.Config.RestartKey.JustPressed())
+            {
+                this.speechEngine.Exit();
+            }
+        }
         private void OnWarped(object sender, WarpedEventArgs e)
         {
             long milliseconds = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
