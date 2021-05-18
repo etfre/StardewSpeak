@@ -28,6 +28,7 @@ namespace StardewSpeak
         SpeechEngine speechEngine;
         EventHandler eventHandler;
         private ModConfig Config;
+        private bool RestartSpeechClientOnExit = true;
 
         public static Action<string, LogLevel> log { get; private set; }
         public static Dictionary<string, Stream> Streams { get; set; } = new Dictionary<string, Stream>();
@@ -76,10 +77,17 @@ namespace StardewSpeak
         {
             ModEntry.Streams = new Dictionary<string, Stream>();
             Input.ClearHeld();
-            Game1.addHUDMessage(new HUDMessage("Speech engine errored. Attempting to restart...", HUDMessage.error_type));
-            ModEntry.log("Kaldi engine exited. Restarting in 5 seconds...", LogLevel.Debug);
-            System.Threading.Thread.Sleep(5000);
-            this.speechEngine.LaunchProcess();
+            if (RestartSpeechClientOnExit)
+            {
+                Game1.addHUDMessage(new HUDMessage("Restarting speech recognition...", HUDMessage.newQuest_type));
+                ModEntry.log("Kaldi engine exited. Restarting in 5 seconds...", LogLevel.Debug);
+                System.Threading.Thread.Sleep(5000);
+                this.speechEngine.LaunchProcess();
+            }
+            else 
+            {
+                Game1.addHUDMessage(new HUDMessage("Stopped speech recognition", HUDMessage.newQuest_type));
+            }
         }
 
         public static void Log(string msg, LogLevel level) {
@@ -106,6 +114,19 @@ namespace StardewSpeak
         {
             if (this.Config.RestartKey.JustPressed())
             {
+                this.RestartSpeechClientOnExit = true;
+                if (this.speechEngine.Running)
+                {
+                    this.speechEngine.Exit();
+                }
+                else 
+                {
+                    this.speechEngine.LaunchProcess();
+                }
+            }
+            else if (this.Config.StopKey.JustPressed())
+            {
+                this.RestartSpeechClientOnExit = false;
                 this.speechEngine.Exit();
             }
         }

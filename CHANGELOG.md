@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.0.6 (May 18, 2021)
+
+* Add keybindings to stop and restart speech engine
+
 ## 0.0.5 (May 15, 2021)
 * Add the ability to dictate dialogue responses
 * Remove unneeded 100ms sleep when clicking components
