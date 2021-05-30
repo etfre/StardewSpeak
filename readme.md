@@ -6,7 +6,7 @@ This mod is primarily made for people with limited use of their hands who want t
 
 ## Installation
 
-StardewSpeak can be installed just like [any other SMAPI-based mod](https://stardewvalleywiki.com/Modding:Player_Guide/Getting_Started). Download the [latest release](https://github.com/evfredericksen/StardewSpeak/releases/latest/download/StardewSpeak.0.0.6.zip) and unzip its contents into your Stardew Valley Mods folder.
+StardewSpeak can be installed just like [any other SMAPI-based mod](https://stardewvalleywiki.com/Modding:Player_Guide/Getting_Started). Download the [latest release](https://github.com/evfredericksen/StardewSpeak/releases/latest/download/StardewSpeak.0.0.7.zip) and unzip its contents into your Stardew Valley Mods folder.
 
 Test out your microphone to ensure that is able to clearly capture your speech. The speech engine uses about 2.5 gigabytes of RAM, so be careful about running it alongside other RAM-intensive applications.
 
