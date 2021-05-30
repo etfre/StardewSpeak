@@ -149,7 +149,6 @@ namespace StardewSpeak
 
         private void OnMenuChanged(object sender, MenuChangedEventArgs e) 
         {
-            //e.OldMenu.
             var serializedEvent = new
             {
                 oldMenu = Utils.SerializeMenu(e.OldMenu),

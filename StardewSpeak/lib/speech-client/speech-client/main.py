@@ -1,4 +1,7 @@
 import winsound
+import traceback
+import csv
+import tempfile
 import shutil
 import subprocess
 import os.path
@@ -27,16 +30,12 @@ from game_menu import game_menu, crafting_page, inventory_page, exit_page
 IS_FROZEN = getattr(sys, 'frozen', False)
 
 parser = argparse.ArgumentParser(description='Process some integers.')
-parser.add_argument('--main', default=__file__,help='Path of main file, needed when script is invoked by Stardew Valley')
-parser.add_argument('--model_dir', default=None, help='Model directory')
+parser.add_argument('--python_root', default=None, help='Root python directory')
 args = parser.parse_args()
+if args.python_root is None:
+    args.python_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 
-def find_model_dir():
-    current_dir = os.path.join(os.path.dirname(__file__))
-    return os.path.join(current_dir, '..', 'models')
-    
-
-MODELS_DIR = args.model_dir or find_model_dir()
+MODELS_DIR = os.path.abspath(os.path.join(args.python_root, 'models'))
 
 user_lexicon = (
     ('joja', "dZ 'o U dZ 'V"),
@@ -87,7 +86,22 @@ def setup_engine(silence_timeout, model_dir):
     )
     # Call connect() now that the engine configuration is set.
     engine.connect()
-    return engine   
+    return engine
+
+def ensure_exclusive_mode_disabled_for_default_mic():
+    fd, path = tempfile.mkstemp()
+    with open(fd, 'w') as f:
+        pass
+    svv_path = os.path.join(args.python_root, "bin", "SoundVolumeView", "SoundVolumeView.exe")
+    subprocess.run((svv_path, "/scomma", path))
+    with open(path) as f:
+        reader = csv.DictReader(f, delimiter=',')
+        for row in reader:
+            if row['Default'] == 'Capture': # found our default audio device
+                device_id = row['Command-Line Friendly ID']
+                subprocess.run((svv_path, '/SetAllowExclusive', device_id, '0'))
+                break
+    os.remove(path)
 
 def run_engine():
     import game
@@ -102,6 +116,10 @@ def run_engine():
 def main(args):
     import server
     logging.basicConfig(level=logging.INFO)
+    try:
+        ensure_exclusive_mode_disabled_for_default_mic()
+    except Exception as e:
+        server.log(f"Unable to disable exclusive mode for default audio device: {traceback.format_exc()}", level=2)
     model_dir = os.path.join(MODELS_DIR, "kaldi_model")
     engine = setup_engine(300, model_dir)
 
@@ -110,10 +128,10 @@ def main(args):
     observer.register()
 
     sleep.load_sleep_wake_grammar(True)
-    startdew_context = AppContext(title="stardew")
+    stardew_context = AppContext(title="stardew")
     server.setup_async_loop()
     map_contexts_to_builder = {
-        (startdew_context,): any_context.rule_builder(),
+        (stardew_context,): any_context.rule_builder(),
     }
     srabuilder.load_environment_grammars(map_contexts_to_builder)
     new_game_menu.load_grammar()

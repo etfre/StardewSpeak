@@ -1,5 +1,7 @@
 # Release notes
 
+## Unreleased
+* Disable exclusive audio mode for default input device on launch using SoundVolumeView.exe
 ## 0.0.7 (May 30, 2021)
 * Limit request handling when unvalidated update event runs
 * Clear grass command

@@ -49,15 +49,17 @@ namespace StardewSpeak
             string rootDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             #if DEBUG
                 ModEntry.Log("Running Python client in debug mode", LogLevel.Trace);
-                var fileName = "\"" + Path.Combine(rootDir, @"StardewSpeak\lib\speech-client\Scripts\python.exe") + "\"";
-                var arguments = "\"" + Path.Combine(rootDir, @"StardewSpeak\lib\speech-client\speech-client\main.py") + "\"";
-                Task.Factory.StartNew(() => RunProcessAsync(fileName, arguments));
+                string pythonRoot = Path.Combine(rootDir, @"StardewSpeak\lib\speech-client");
+                string executable = "\"" + Path.Combine(pythonRoot, @"Scripts\python.exe") + "\"";
+                string main = Path.Combine(pythonRoot, @"speech-client\main.py");
+                string arguments = $"\"{main}\" --python_root \"{pythonRoot}\"";
 #else
-                ModEntry.Log("Running in release mode", LogLevel.Trace);
-                string exePath = "\"" + Path.Combine(rootDir, @"lib\speech-client\dist\speech-client.exe") + "\"";
-                string modelDir = "\"" + Path.Combine(rootDir, @"lib\speech-client\dist\models") + "\"";
-                Task.Factory.StartNew(() => RunProcessAsync(exePath, "--model_dir " + modelDir));
+                ModEntry.Log("Running Python client in release mode", LogLevel.Trace);
+                string pythonRoot = Utils.PathJoin(rootDir, @"lib\speech-client\dist");
+                string executable = Utils.PathJoin(pythonRoot, @"speech-client.exe");
+                string arguments = $"--python_root {pythonRoot}";
 #endif
+            Task.Factory.StartNew(() => RunProcessAsync(executable, arguments));
         }
 
         public async Task<int> RunProcessAsync(string fileName, string args)

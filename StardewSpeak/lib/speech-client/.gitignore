@@ -3,6 +3,7 @@ lib/
 scripts/
 debug/
 dist/
+!bin/
 pyvenv.cfg
 *.pyc
 cx_Logging-doc/

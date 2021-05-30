@@ -762,7 +762,11 @@ namespace StardewSpeak
             int xdiff = Math.Abs(x1 - x2);
             int ydiff = Math.Abs(y1 - y2);
             return xdiff + ydiff;
+        }
 
+        public static string PathJoin(params string[] pathPieces) 
+        {
+            return "\"" + Path.Combine(pathPieces) + "\"";
         }
 
         public static object SerializeItem(Item i) 
