@@ -52,6 +52,11 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
         <td>"clear debris"</td>
     </tr>
     <tr>
+        <td>clear grass</td>
+        <td>Begin clearing grass.</td>
+        <td>"clear grass"</td>
+    </tr>
+    <tr>
         <td>chop trees</td>
         <td>Begin chopping down nearby trees.</td>
         <td>"chop trees"</td>

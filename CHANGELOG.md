@@ -1,5 +1,11 @@
 # Release notes
 
+## Unreleased
+* Limit request handling when unvalidated update event runs
+* Clear grass command
+* Debug field for ModConfig
+* Bugfixes for shop menu
+
 ## 0.0.6 (May 18, 2021)
 * Add keybindings to stop and restart speech engine
 

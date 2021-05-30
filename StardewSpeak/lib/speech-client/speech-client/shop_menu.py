@@ -33,11 +33,6 @@ async def buy_item_index(menu, idx: int):
     await menu_utils.focus_component(buttons[idx])
 
 async def buy_item(menu, n: int):
-    # five_count, remainder = divmod(n, 5)
-    # if five_count:
-    #     pydirectinput.keyDown('shift')
-    #     await server.mouse_click(count=five_count)
-    #     pydirectinput.keyUp('shift')
     await server.mouse_click(count=n)
 
 
