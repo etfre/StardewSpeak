@@ -334,9 +334,9 @@ namespace StardewSpeak
                         }
                         return didUseTool;
                     }
-                case "GET_TREES":
+                case "GET_TERRAIN_FEATURES":
                     {
-                        return GameState.Trees();
+                        return GameState.TerrainFeatures();
                     }
                 case "GET_DEBRIS":
                     {

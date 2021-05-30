@@ -200,6 +200,12 @@ class ClearDebrisObjective(Objective):
     async def run(self):
         async for debris in game.navigate_tiles(self.get_debris, game.next_debris_key):
             await self.at_tile(debris)
+class ClearGrassObjective(Objective):
+
+    async def run(self):
+        await game.equip_item_by_name(constants.SCYTHE)
+        async for debris in game.navigate_tiles(game.get_grass, game.next_debris_key, items_ok=lambda prev, items: True):
+            await game.swing_tool()
 
 class PlantSeedsOrFertilizerObjective(Objective):
 

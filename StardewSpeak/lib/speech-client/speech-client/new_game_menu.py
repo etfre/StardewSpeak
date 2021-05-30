@@ -41,7 +41,7 @@ arrow_fields = {
     "direction": "Direction",  
     "hair": "Hair",  
     "pants": "Pants Style",
-    "(pet | animal)": "Pet",
+    "(pet | animal) [preference]": "Pet",
     "shirt": "Shirt",
     "skin": "Skin",
     "(wallets | money style)": "Wallets",

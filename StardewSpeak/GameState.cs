@@ -1,4 +1,5 @@
-﻿using StardewValley;
+﻿using Microsoft.Xna.Framework;
+using StardewValley;
 using StardewValley.TerrainFeatures;
 using StardewValley.Tools;
 using System;
@@ -125,7 +126,7 @@ namespace StardewSpeak
             return Utils.SerializeItem(tool);
         }
 
-        public static object Trees() 
+        public static object TerrainFeatures() 
         {
             var features = new List<dynamic>();
             foreach (var tf in Game1.currentLocation.terrainFeatures.Values) 
@@ -142,6 +143,20 @@ namespace StardewSpeak
                         tapped = tree.tapped.Value, 
                         stump = tree.stump.Value,
                         growthStage = tree.growthStage.Value,
+                    });
+                }
+                else if (tf is Grass)
+                {
+                    var grass = tf as Grass;
+                    Vector2 tileLocation = grass.currentTileLocation;
+                    int numberOfWeeds = grass.numberOfWeeds.Value;
+                    features.Add(new
+                    {
+                        type = "grass",
+                        grassType = grass.grassType.Value,
+                        numberOfWeeds,
+                        tileX = (int)tileLocation.X,
+                        tileY = (int)tileLocation.Y,
                     });
                 }
                 else 

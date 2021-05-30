@@ -28,6 +28,11 @@ namespace StardewSpeak
         public ConcurrentQueue<dynamic> UpdateTickedRequestQueue;
         public ConcurrentQueue<dynamic> UpdateTickingRequestQueue;
         public readonly Action<Process, TaskCompletionSource<int>> OnExit;
+        public HashSet<string> UnvalidatedModeAllowableMessageTypes = new HashSet<string> { 
+            "HEARTBEAT", "REQUEST_BATCH", "NEW_STREAM", "STOP_STREAM", "GET_ACTIVE_MENU", "GET_MOUSE_POSITION",
+            "SET_MOUSE_POSITION", "SET_MOUSE_POSITION_RELATIVE", "MOUSE_CLICK", "UPDATE_HELD_BUTTONS", "RELEASE_ALL_KEYS",
+            "PRESS_KEY"
+        };
         public bool Running = false;
 
         public SpeechEngine(Action<Process, TaskCompletionSource<int>> onExit)
@@ -143,12 +148,17 @@ namespace StardewSpeak
             }
         }
 
-        public void RespondToMessage(dynamic msg) 
+        public void RespondToMessage(dynamic msg, string gameLoopContext) 
         {   
             dynamic resp;
+            bool unvalidatedGameContext = gameLoopContext == "UnvalidatedUpdateTicked";
             try
             {
                 string msgType = msg.type;
+                if (unvalidatedGameContext && !UnvalidatedModeAllowableMessageTypes.Contains(msgType))
+                {
+                    throw new InvalidOperationException($"Unsafe message type during unvalidated game context: {msgType}");
+                }
                 dynamic msgData = msg.data;
                 resp = Requests.HandleRequest(msg);
             }

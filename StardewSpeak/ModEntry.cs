@@ -27,7 +27,7 @@ namespace StardewSpeak
         internal static bool FeedLocation = false;
         SpeechEngine speechEngine;
         EventHandler eventHandler;
-        private ModConfig Config;
+        public static ModConfig Config;
         private bool RestartSpeechClientOnExit = true;
 
         public static Action<string, LogLevel> log { get; private set; }
@@ -45,7 +45,7 @@ namespace StardewSpeak
         public override void Entry(IModHelper helper)
         {
             ModEntry.helper = helper;
-            this.Config = this.Helper.ReadConfig<ModConfig>();
+            ModEntry.Config = this.Helper.ReadConfig<ModConfig>();
             helper.Events.Specialized.UnvalidatedUpdateTicked += GameLoop_UnvalidatedUpdateTicked;
             helper.Events.Display.MenuChanged += this.OnMenuChanged;
             helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
@@ -112,7 +112,7 @@ namespace StardewSpeak
 
         private void OnButtonsChanged(object sender, ButtonsChangedEventArgs e) 
         {
-            if (this.Config.RestartKey.JustPressed())
+            if (ModEntry.Config.RestartKey.JustPressed())
             {
                 this.RestartSpeechClientOnExit = true;
                 if (this.speechEngine.Running)
@@ -124,7 +124,7 @@ namespace StardewSpeak
                     this.speechEngine.LaunchProcess();
                 }
             }
-            else if (this.Config.StopKey.JustPressed())
+            else if (ModEntry.Config.StopKey.JustPressed())
             {
                 this.RestartSpeechClientOnExit = false;
                 this.speechEngine.Exit();
@@ -188,20 +188,20 @@ namespace StardewSpeak
         {
 
         }
-        private void RespondToQueuedRequests(ConcurrentQueue<dynamic> queue, int timeLimit = 5) 
+        private void RespondToQueuedRequests(ConcurrentQueue<dynamic> queue, string gameLoopContext, int timeLimit = 5) 
         {
-            var sw = Stopwatch.StartNew();
+            Stopwatch sw = Stopwatch.StartNew();
             while (!queue.IsEmpty)
             {
                 if (!queue.TryDequeue(out dynamic msg)) continue;
-                speechEngine.RespondToMessage(msg);
+                speechEngine.RespondToMessage(msg, gameLoopContext);
                 if (sw.ElapsedMilliseconds >= timeLimit) return;
             }
         }
 
         private void GameLoop_UpdateTicking(object sender, UpdateTickingEventArgs e)
         {
-            RespondToQueuedRequests(speechEngine.UpdateTickingRequestQueue);
+            RespondToQueuedRequests(speechEngine.UpdateTickingRequestQueue, "UpdateTicking");
             foreach (var btn in Input.Held.Values)
             {
                 Input.SetDown(btn);
@@ -211,13 +211,16 @@ namespace StardewSpeak
 
         private void GameLoop_UnvalidatedUpdateTicked(object sender, UnvalidatedUpdateTickedEventArgs e)
         {
-            RespondToQueuedRequests(speechEngine.UpdateTickedRequestQueue);
+            if (Game1.activeClickableMenu is ShippingMenu)
+            {
+                RespondToQueuedRequests(speechEngine.UpdateTickedRequestQueue, "UnvalidatedUpdateTicked");
+            }
         }
 
         private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)
         {
             eventHandler.CheckNewInGameEvent();
-            RespondToQueuedRequests(speechEngine.UpdateTickedRequestQueue);
+            RespondToQueuedRequests(speechEngine.UpdateTickedRequestQueue, "UpdateTicked");
             foreach (var pair in ModEntry.Streams)
             {
                 var id = pair.Key;

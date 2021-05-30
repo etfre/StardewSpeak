@@ -9,14 +9,14 @@ async def focus_menu_section(menu, submenu_name: str):
     assert submenu_name in ('inventory', 'forSale')
     for_sale_focused = any(x['containsMouse'] for x in menu['forSaleButtons'])
     if submenu_name == 'forSale' and not for_sale_focused:
-        await focus_for_sale_index(prev_for_sale_index)
+        await focus_for_sale_index(mmenu, prev_for_sale_index)
     elif submenu_name == 'inventory':
         await inventory_wrapper.focus_previous(menu['inventory'])
 
 async def focus_item(menu, idx, key):
     inventory = menu['inventory']
     if not inventory['containsMouse'] and key == 'item':
-        await focus_for_sale_index(idx)
+        await focus_for_sale_index(menu, idx)
         return
     row, col = (idx, None) if key == 'row' else (None, idx)
     await inventory_wrapper.focus_box(inventory, row, col)
@@ -33,12 +33,12 @@ async def buy_item_index(menu, idx: int):
     await menu_utils.focus_component(buttons[idx])
 
 async def buy_item(menu, n: int):
-    five_count, remainder = divmod(n, 5)
-    if five_count:
-        pydirectinput.keyDown('shift')
-        await server.mouse_click(count=five_count)
-        pydirectinput.keyUp('shift')
-    await server.mouse_click(count=remainder)
+    # five_count, remainder = divmod(n, 5)
+    # if five_count:
+    #     pydirectinput.keyDown('shift')
+    #     await server.mouse_click(count=five_count)
+    #     pydirectinput.keyUp('shift')
+    await server.mouse_click(count=n)
 
 
 async def click_range(menu, start, end):

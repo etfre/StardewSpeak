@@ -179,8 +179,12 @@ def score_objects_by_distance(start_tile, current_tile, obj_tile, start_weight=0
     return start_weight * distance_from_start  + current_weight * distance_from_current
 
 async def get_trees(location: str):
-    trees = await server.request('GET_TREES', {"location": location})
-    return trees
+    terrain_features = await server.request('GET_TERRAIN_FEATURES', {"location": location})
+    return [tf for tf in terrain_features if tf['type'] == 'tree']
+
+async def get_grass(location: str):
+    terrain_features = await server.request('GET_TERRAIN_FEATURES', {"location": location})
+    return [tf for tf in terrain_features if tf['type'] == 'grass']
 
 async def get_fully_grown_trees_and_stumps(location: str):
     trees = await get_trees(location)
@@ -558,20 +562,22 @@ async def pathfind_to_adjacent_tile_from_current(stream):
             continue
     raise NavigationFailed
 
-async def navigate_tiles(get_items, sort_items=generic_next_item_key, pathfind_fn=pathfind_to_adjacent, allow_action_on_same_tile=True, index=None):
+async def navigate_tiles(get_items, sort_items=generic_next_item_key, pathfind_fn=pathfind_to_adjacent,
+    items_ok=lambda prev, curr: len(prev) != len(curr),
+    allow_action_on_same_tile=True, index=None):
     import events
     async with server.player_status_stream() as stream:
         player_status = await stream.next()
         start_tile = player_status["tileX"], player_status["tileY"]
-        previous_item_count = -1
+        previous_items = []
         while True:
             current_tile = player_status["tileX"], player_status["tileY"]
             items = await get_items(player_status['location'])
             if not items:
                 return
-            if previous_item_count == len(items):
+            if not items_ok(previous_items, items):
                 raise RuntimeError('Unable to modify current tile')
-            previous_item_count = len(items)
+            previous_items = items
             item_path = None
             sorted_items = sorted(items, key=lambda t: sort_items(start_tile, current_tile, t, player_status))
             if index is not None:

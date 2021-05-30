@@ -79,6 +79,7 @@ mapping = {
     "chop trees": objective.objective_action(objective.ChopTreesObjective),
     "start planting": objective.objective_action(objective.PlantSeedsOrFertilizerObjective),
     "clear debris": objective.objective_action(objective.ClearDebrisObjective),
+    "clear grass": objective.objective_action(objective.ClearGrassObjective),
     "attack": objective.objective_action(objective.AttackObjective),
     "defend": objective.objective_action(objective.DefendObjective),
     "(hoe | dig) <n> by <n2>": objective.objective_action(objective.HoePlotObjective, "n", "n2"),
