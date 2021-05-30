@@ -1,6 +1,6 @@
 # Dialogue menu
 
-<img src="./images/dialogue-menu.png" width="100" />
+<img src="./images/dialogue-menu.png" width="500" />
 
 <table>
     <tr>
