@@ -46,6 +46,10 @@ namespace StardewSpeak
         {
             ModEntry.helper = helper;
             ModEntry.Config = this.Helper.ReadConfig<ModConfig>();
+            this.speechEngine = new SpeechEngine(OnSpeechEngineExited);
+            this.eventHandler = new EventHandler(helper, this.speechEngine);
+            ModEntry.log = this.Monitor.Log;
+            this.speechEngine.LaunchProcess();
             helper.Events.Specialized.UnvalidatedUpdateTicked += GameLoop_UnvalidatedUpdateTicked;
             helper.Events.Display.MenuChanged += this.OnMenuChanged;
             helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
@@ -57,10 +61,6 @@ namespace StardewSpeak
             helper.Events.World.LargeTerrainFeatureListChanged += this.OnLargeTerrainFeatureListChanged;
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.World.LocationListChanged += this.OnLocationListChanged;
-            ModEntry.log = this.Monitor.Log;
-            this.speechEngine = new SpeechEngine(OnSpeechEngineExited);
-            this.speechEngine.LaunchProcess();
-            this.eventHandler = new EventHandler(helper, this.speechEngine);
             helper.ConsoleCommands.Add("mimic", "Mimic speech recognition after three second delay, e.g. \"mimic load game\"", Command_MimicSpeech);
         }
 

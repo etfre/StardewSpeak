@@ -97,7 +97,7 @@ def ensure_exclusive_mode_disabled_for_default_mic():
     with open(path) as f:
         reader = csv.DictReader(f, delimiter=',')
         for row in reader:
-            if row['Default'] == 'Capture': # found our default audio device
+            if row['Default'] == 'Capture': # found our default audio input device
                 device_id = row['Command-Line Friendly ID']
                 subprocess.run((svv_path, '/SetAllowExclusive', device_id, '0'))
                 break

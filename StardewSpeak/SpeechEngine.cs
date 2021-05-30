@@ -50,16 +50,16 @@ namespace StardewSpeak
             #if DEBUG
                 ModEntry.Log("Running Python client in debug mode", LogLevel.Trace);
                 string pythonRoot = Path.Combine(rootDir, @"StardewSpeak\lib\speech-client");
-                string executable = "\"" + Path.Combine(pythonRoot, @"Scripts\python.exe") + "\"";
+                string executable = Path.Combine(pythonRoot, @"Scripts\python.exe");
                 string main = Path.Combine(pythonRoot, @"speech-client\main.py");
                 string arguments = $"\"{main}\" --python_root \"{pythonRoot}\"";
 #else
                 ModEntry.Log("Running Python client in release mode", LogLevel.Trace);
                 string pythonRoot = Utils.PathJoin(rootDir, @"lib\speech-client\dist");
                 string executable = Utils.PathJoin(pythonRoot, @"speech-client.exe");
-                string arguments = $"--python_root {pythonRoot}";
+                string arguments = $"--python_root \"{pythonRoot}\"";
 #endif
-            Task.Factory.StartNew(() => RunProcessAsync(executable, arguments));
+            Task.Factory.StartNew(() => RunProcessAsync("\"" + executable + "\"", arguments));
         }
 
         public async Task<int> RunProcessAsync(string fileName, string args)
