@@ -14,6 +14,7 @@ Some menus, like the new game menu, contain text boxes for <a href="../StardewSp
     <li> <a href="./load-game-menu.md">Load Game Menu</a> </li>
 </ul>
 <ul>
+    <li> <a href="./dialogue-menu.md">Dialogue Menu</a> </li>
     <li> <a href="./shipping-bin.md">Shipping Bin</a> </li>
     <li> <a href="./shop-menu.md">Shop Menu</a> </li>
 </ul>
