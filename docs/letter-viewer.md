@@ -1,4 +1,4 @@
-# Letter
+# Letter Viewer
 <table>
     <tr>
         <th>Command</th>
