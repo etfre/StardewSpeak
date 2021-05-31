@@ -114,7 +114,7 @@ def parse_numrep(rep):
 
 
 positive_digits = df.Sequence(
-    [df.Choice(None, nonZeroDigitMap), df.Repetition(df.Choice(None, digitMap), min=0, max=10)],
+    [df.Choice(None, nonZeroDigitMap), df.Repetition(df.Choice(None, digitMap), min=0, max=2)],
     name="positive_digits",
 )
 positive_num = df.Alternative([df.Modifier(positive_digits, parse_numrep), df.Choice(None, ten_through_twelve)], name="positive_num")

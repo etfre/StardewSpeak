@@ -58,6 +58,12 @@ namespace StardewSpeak
             menu.menuType = "fishingMenu";
         }
 
+        public static void Serialize_MineElevatorMenu(dynamic menu, MineElevatorMenu mem, Point cursorPosition)
+        {
+            menu.menuType = "mineElevatorMenu";
+            menu.elevators = mem.elevators;
+        }
+
 
         public static dynamic SerializeValue(dynamic val, Point cursorPosition)
         {

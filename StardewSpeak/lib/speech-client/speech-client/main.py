@@ -23,7 +23,7 @@ from srabuilder import sleep, environment
 import srabuilder
 
 import any_context, new_game_menu, shop_menu, container_menu, title_menu, load_game_menu, dialogue_menu, no_menu, any_menu, shipping_bin_menu, carpenter_menu, billboard_menu, geode_menu, museum_menu
-import letter_viewer_menu, quest_log_menu, animal_query_menu, coop_menu, title_text_input_menu, cutscene, level_up_menu, shipped_items_menu, fishing_menu
+import letter_viewer_menu, quest_log_menu, animal_query_menu, coop_menu, title_text_input_menu, cutscene, level_up_menu, shipped_items_menu, fishing_menu, mine_elevator_menu
 import locations
 from game_menu import game_menu, crafting_page, inventory_page, exit_page
 
@@ -161,6 +161,7 @@ def main(args):
     level_up_menu.load_grammar()
     shipped_items_menu.load_grammar()
     fishing_menu.load_grammar()
+    mine_elevator_menu.load_grammar()
     if not IS_FROZEN:
         src = os.path.join(model_dir, "user_lexicon.txt")
         dst = os.path.join(os.path.abspath(__file__), "..", "..", "user_lexicon.txt")
