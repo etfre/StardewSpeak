@@ -191,6 +191,21 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
         <td>"equip weapon"</td>
     </tr>
     <tr>
+        <td>go to ladder</td>
+        <td>Move to the ladder up in the mines and press the action key.</td>
+        <td>"go to ladder"</td>
+    </tr>
+    <tr>
+        <td>go to elevator</td>
+        <td>Move to the elevator in the mines and press the action key.</td>
+        <td>"go to elevator"</td>
+    </tr>
+    <tr>
+        <td>ladder down</td>
+        <td>Move to the nearest ladder down in the mines or skull cavern if at least one has been revealed and press the action key.</td>
+        <td>"ladder down"</td>
+    </tr>
+    <tr>
         <td>attack</td>
         <td>Move to the nearest monster in the current location and begin swinging melee weapon. Continue until there are no more monsters in the current location.</td>
         <td>"attack"</td>
