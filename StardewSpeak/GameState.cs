@@ -1,5 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using StardewValley;
+using StardewValley.Buildings;
+using StardewValley.Locations;
 using StardewValley.TerrainFeatures;
 using StardewValley.Tools;
 using System;
@@ -126,6 +128,26 @@ namespace StardewSpeak
             return Utils.SerializeItem(tool);
         }
 
+        public static object LocationBuildings(GameLocation location) 
+        {
+            var buildings = new List<dynamic>();
+            if (location is BuildableGameLocation)
+            {
+                var buildableLocation = location as BuildableGameLocation;
+                foreach (Building building in buildableLocation.buildings)
+                {
+                    var serializedBuilding = new
+                    {
+                        tileX = building.tileX.Value,
+                        tileY = building.tileY.Value,
+                        buildingType = building.buildingType.Value,
+                        humanDoor = building.humanDoor.Value
+                    };
+                    buildings.Add(serializedBuilding);
+                }
+            }
+            return buildings;
+        }
         public static object TerrainFeatures() 
         {
             var features = new List<dynamic>();

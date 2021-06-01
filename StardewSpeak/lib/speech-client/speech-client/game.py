@@ -766,6 +766,9 @@ def get_context_menu(menu_type=None):
 async def get_location_connections():
     return await server.request('GET_LOCATION_CONNECTIONS')
 
+async def get_location_buildings():
+    return await server.request('GET_LOCATION_BUILDINGS')
+
 async def go_inside():
     indoors_connections = [x for x in (await get_location_connections()) if not x['TargetIsOutdoors']]
     if indoors_connections:

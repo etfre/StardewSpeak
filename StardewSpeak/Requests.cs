@@ -271,6 +271,31 @@ namespace StardewSpeak
                         GameLocation fromLocation = player.currentLocation;
                         return Routing.MapConnections[fromLocation.NameOrUniqueName];
                     }
+                case "GET_LADDERS_DOWN": 
+                    {
+                        var ladders = new List<dynamic>();
+                        xTile.Tiles.TileArray tiles = location.Map.GetLayer("Buildings").Tiles;
+                        var buildingsLayer = location.Map.GetLayer("Buildings");
+                        for (int y = 0; y < buildingsLayer.LayerHeight; y++)
+                        {
+                            for (int x = 0; x < buildingsLayer.LayerWidth; x++)
+                            {
+                                if (buildingsLayer.Tiles[x, y] != null)
+                                {
+                                    int currentTileIndex = buildingsLayer.Tiles[x, y].TileIndex;
+                                    if (currentTileIndex == 173) 
+                                    {
+                                        ladders.Add(new { tileX = x, tileY = y });
+                                    }
+                                }
+                            }
+                        }
+                        return ladders;
+                    }
+                case "GET_LOCATION_BUILDINGS":
+                    {
+                        return GameState.LocationBuildings(location);
+                    }
                 case "GET_ElEVATOR_TILE":
                     {
                         if (player.currentLocation is StardewValley.Locations.MineShaft)

@@ -26,10 +26,10 @@ floors_map = {
     "(ninety | nine zero)": 90,
     "(ninety | nine) five": 95,
     "one (hundred | zero zero)": 100,
-    "(one (hundred [and] | (oh | zero))) five": 105,
-    "(one [hundred [and]]) (ten | one zero)": 110,
-    "(one [hundred [and]]) (fifteen | one five)": 115,
-    "(one [(hundred [and]]) (twenty | too zero)": 120,
+    "one (hundred [and] | (oh | zero)) five": 105,
+    "one [hundred [and]] (ten | one zero)": 110,
+    "one [hundred [and]] (fifteen | one five)": 115,
+    "one [hundred [and]] (twenty | too zero)": 120,
 }
 
 async def select_floor(menu, floor: int):
@@ -41,7 +41,7 @@ mapping = {
 }
 
 def load_grammar():
-    extras = [df.Choice("mine_elevator_floors", df_utils.floors_map)]
+    extras = [df.Choice("mine_elevator_floors", floors_map)]
     grammar = menu_utils.build_menu_grammar('mine_elevator_menu', mapping, MINE_ELEVATOR_MENU, extras=extras)
     grammar.load()
     

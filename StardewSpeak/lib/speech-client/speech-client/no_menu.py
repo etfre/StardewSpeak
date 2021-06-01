@@ -39,6 +39,13 @@ async def get_bed_tile(item):
 async def go_to_bed():
     await game.navigate_nearest_tile(get_bed_tile, pathfind_fn=game.pathfind_to_tile)
 
+async def get_ladders_down(item):
+    return await server.request('GET_LADDERS_DOWN')
+
+async def ladder_down():
+    await game.navigate_nearest_tile(get_ladders_down)
+    await game.do_action()
+
 async def navigate_direction(direction: int):
     async with server.player_status_stream() as stream:
         player_status = await stream.next()
@@ -82,6 +89,7 @@ mapping = {
     "clear grass": objective.objective_action(objective.ClearGrassObjective),
     "attack": objective.objective_action(objective.AttackObjective),
     "defend": objective.objective_action(objective.DefendObjective),
+    "ladder down": objective.function_objective(ladder_down),
     "(hoe | dig) <n> by <n2>": objective.objective_action(objective.HoePlotObjective, "n", "n2"),
     "talk to <npcs>": objective.objective_action(objective.TalkToNPCObjective, "npcs"),
     "refill watering can": objective.function_objective(game.refill_watering_can),
