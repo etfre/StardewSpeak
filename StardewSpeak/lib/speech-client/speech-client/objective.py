@@ -350,7 +350,13 @@ class AttackObjective(Objective):
         async with server.player_status_stream() as player_stream:
             player_position = (await player_status_builder.request())['position']
             while True:
-                target = await game.MoveToCharacter(req_builder, tiles_from_target=2, distance=100).move()
+                try:
+                    target = await game.MoveToCharacter(req_builder, tiles_from_target=2, distance=100).move()
+                except game.NavigationFailed:
+                    await asyncio.sleep(0.1)
+                    continue
+                if target is None:
+                    return
                 distance_from_monster = 0
                 while distance_from_monster < 110:
                     player_status, target = await batched_request_builder.request()
@@ -374,7 +380,6 @@ class AttackObjective(Objective):
         key = lambda x: (x['isInvisible'], game.distance_between_points_diagonal(player_status['position'], (x['tileX'], x['tileY'])))
         closest_monster = min(monsters, key=key)
         return closest_monster
-
 
 
 async def cancel_active_objective():
