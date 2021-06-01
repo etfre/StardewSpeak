@@ -2,6 +2,8 @@
 
 ## Unreleased
 * Disable exclusive audio mode for default input device on launch using SoundVolumeView.exe
+* Add "ladder down" command for mines and skull cavern
+* Continue attack objective even if pathfinding towards a monster fails. This is primarily for flying monsters like bats and cave flies
 ## 0.0.7 (May 30, 2021)
 * Limit request handling when unvalidated update event runs
 * Clear grass command
