@@ -18,7 +18,7 @@ Speech recognition begins automatically when Stardew Valley is launched. If you 
 
 All menus can (or will) be navigated by voice. As an example, to load a saved game from the title menu, say `load` to enter the saved game menu, then `game` followed by the number of the game you want to play, e.g. `game three` to load the third game. If you have more than four saved games, `scroll down` and `scroll up` will click the up and down arrows. See the [menus file](docs/menus.md) for more information and a list of available menu-specific commands. 
 
-Once in game, try saying `go to farm` to begin walking from your farmhouse interior to your farm. Saying `stop` will stop whatever the farmer is currently doing.
+Once in game, try saying `go to farm` to begin walking from your farmhouse interior to your farm. Saying `stop` will stop whatever your farmer is currently doing.
 
 ## Commands
 
@@ -227,17 +227,17 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
     </tr>
     <tr>
         <td>[left] click [&lt;n&gt;]</td>
-        <td>Left click <i>n</i> times.</td>
+        <td>Left click <i>n</i> times (default one).</td>
         <td>"click"</td>
     </tr>
     <tr>
         <td>right click [&lt;n&gt;]</td>
-        <td>Right click <i>n</i> times.</td>
+        <td>Right click <i>n</i> times (default one).</td>
         <td>"right click"</td>
     </tr>
     <tr>
         <td>mouse &lt;direction&gt; [&lt;n&gt;]</td>
-        <td>Move the mouse <i>n</i> tiles (64 pixels).</td>
+        <td>Move the mouse <i>n</i> tiles (64 pixels). Ideally, this command and the one below will only be used sparingly when more specific commands are unavailable.</td>
         <td>"mouse down"</td>
     </tr>
     <tr>
