@@ -47,6 +47,11 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
         <td>"navigate east"</td>
     </tr>
     <tr>
+        <td>Face &lt;direction&gt;</td>
+        <td>Face direction.</td>
+        <td>"face east"</td>
+    </tr>
+    <tr>
         <td>clear debris</td>
         <td>Begin clearing weeds, stone, and wood.</td>
         <td>"clear debris"</td>
