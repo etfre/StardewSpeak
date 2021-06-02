@@ -764,11 +764,6 @@ namespace StardewSpeak
             return xdiff + ydiff;
         }
 
-        public static string PathJoin(params string[] pathPieces) 
-        {
-            return "\"" + Path.Combine(pathPieces) + "\"";
-        }
-
         public static object SerializeItem(Item i) 
         {
             if (i == null) return null;

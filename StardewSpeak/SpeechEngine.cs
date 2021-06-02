@@ -55,8 +55,8 @@ namespace StardewSpeak
                 string arguments = $"\"{main}\" --python_root \"{pythonRoot}\"";
 #else
                 ModEntry.Log("Running Python client in release mode", LogLevel.Trace);
-                string pythonRoot = Utils.PathJoin(rootDir, @"lib\speech-client\dist");
-                string executable = Utils.PathJoin(pythonRoot, @"speech-client.exe");
+                string pythonRoot = Path.Combine(rootDir, @"lib\speech-client\dist");
+                string executable = Path.Combine(pythonRoot, @"speech-client.exe");
                 string arguments = $"--python_root \"{pythonRoot}\"";
 #endif
             Task.Factory.StartNew(() => RunProcessAsync("\"" + executable + "\"", arguments));

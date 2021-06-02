@@ -273,7 +273,8 @@ def main():
         targetDir=app_root,
         includeFiles=[
             ('Lib\site-packages\webrtcvad_wheels-2.0.10.post2.dist-info', 'lib\webrtcvad_wheels-2.0.10.post2.dist-info'),
-            ("models", "models")
+            ("models", "models"),
+            ("bin", "bin")
         ],
         zipIncludes=args.zip_includes,
         silent=args.silent,
