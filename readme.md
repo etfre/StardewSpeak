@@ -47,7 +47,7 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
         <td>"navigate east"</td>
     </tr>
     <tr>
-        <td>Face &lt;direction&gt;</td>
+        <td>face &lt;direction&gt;</td>
         <td>Face direction.</td>
         <td>"face east"</td>
     </tr>
