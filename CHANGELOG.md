@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.0.9 (June 4, 2021)
+
+* Fix issues with moving cursor and changing items while performing certain commands like chopping trees and clearing debris
+* Use virtual keyboard buttons rather than internal game method for changing items to avoid occasional glitches
 ## 0.0.8 (June 1, 2021)
 First public release!
 
