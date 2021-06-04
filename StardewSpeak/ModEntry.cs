@@ -168,13 +168,11 @@ namespace StardewSpeak
         }
 
         private void OnTerrainFeatureListChanged(object sender, TerrainFeatureListChangedEventArgs e)
-
         {
             var removed = e.Removed.Select(x => new { x.Value.currentTileLocation });
             var changedEvent = new { location = e.Location.NameOrUniqueName, removed };
-            this.MessageStreams("ON_TERRAIN_FEATURE_LIST_CHANGED", changedEvent);
+            this.speechEngine.SendEvent("TERRAIN_FEATURE_LIST_CHANGED", changedEvent);
         }
-
 
         private void OnObjectListChanged(object sender, ObjectListChangedEventArgs e)
 

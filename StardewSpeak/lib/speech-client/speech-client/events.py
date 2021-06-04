@@ -36,6 +36,7 @@ event_registry = {
     "SPEECH_MIMICKED": on_speech_mimicked,
     "SAVE_LOADED": on_save_loaded,
     "GAME_EVENT": on_game_event,
+    "TERRAIN_FEATURE_LIST_CHANGED": lambda x: None
 }
 event_futures = collections.defaultdict(lambda: server.loop.create_future())
 

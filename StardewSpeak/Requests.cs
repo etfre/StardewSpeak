@@ -380,17 +380,6 @@ namespace StardewSpeak
                         List<dynamic> testTiles = data.tiles.ToObject<List<dynamic>>();
                         return testTiles.Where(tile => Utils.IsTileHoeable(Game1.player.currentLocation, (int)tile.tileX, (int)tile.tileY));
                     }
-                case "EQUIP_ITEM":
-                    {
-                        string item = data.item;
-                        return Utils.EquipToolIfOnHotbar(item);
-                    }
-                case "EQUIP_ITEM_INDEX":
-                    {
-                        int index = data.index;
-                        Game1.player.CurrentToolIndex = index;
-                        return true;
-                    }
                 case "GET_WATER_TILES":
                     {
                         bool[,] allTiles = Game1.player.currentLocation.waterTiles;

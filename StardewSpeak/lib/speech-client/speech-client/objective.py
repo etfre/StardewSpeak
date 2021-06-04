@@ -137,7 +137,9 @@ class ChopTreesObjective(Objective):
     async def run(self):
         await game.equip_item_by_name(constants.AXE)
         async for tree in game.navigate_tiles(game.get_fully_grown_trees_and_stumps, game.generic_next_item_key):
+            await game.equip_item_by_name(constants.AXE)
             await game.chop_tree_and_gather_resources(tree)
+
 class WaterCropsObjective(Objective):
 
     def __init__(self):
@@ -151,6 +153,7 @@ class WaterCropsObjective(Objective):
     async def run(self):
         await game.equip_item_by_name(constants.WATERING_CAN)
         async for crop in game.navigate_tiles(self.get_unwatered_crops, game.generic_next_item_key, allow_action_on_same_tile=False):
+            await game.equip_item_by_name(constants.WATERING_CAN)
             await game.swing_tool()
 
 class HarvestCropsObjective(Objective):
@@ -190,10 +193,10 @@ class ClearDebrisObjective(Objective):
         needed_tool = game.tool_for_object[obj['name']]
         await game.equip_item_by_name(needed_tool['name'])
         if obj['type'] == 'object':
-            await game.clear_object(obj, self.get_debris_objects)
+            await game.clear_object(obj, self.get_debris_objects, needed_tool['name'])
         else:
             assert obj['type'] == 'resource_clump'
-            await game.clear_object(obj, game.get_resource_clump_pieces)
+            await game.clear_object(obj, game.get_resource_clump_pieces, needed_tool['name'])
         if obj['type'] == 'resource_clump':
             await game.gather_items_on_ground(6)
 
@@ -205,6 +208,7 @@ class ClearGrassObjective(Objective):
     async def run(self):
         await game.equip_item_by_name(constants.SCYTHE)
         async for debris in game.navigate_tiles(game.get_grass, game.next_debris_key, items_ok=lambda prev, items: True):
+            await game.equip_item_by_name(constants.SCYTHE)
             await game.swing_tool()
 
 class PlantSeedsOrFertilizerObjective(Objective):
@@ -243,6 +247,7 @@ class HoePlotObjective(Objective):
                 plot_tiles.add((x, y))
         get_next_diggable = functools.partial(game.get_diggable_tiles, plot_tiles)
         async for hdt in game.navigate_tiles(get_next_diggable, game.generic_next_item_key, allow_action_on_same_tile=False):
+            await game.equip_item_by_name(constants.HOE)
             await game.swing_tool()
 
 

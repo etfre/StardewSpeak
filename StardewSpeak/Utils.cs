@@ -129,31 +129,6 @@ namespace StardewSpeak
             return items;
         }
 
-        public static bool EquipToolIfOnHotbar(string name)
-        {
-            var t = Game1.player.getToolFromName(name);
-            if (t == null)
-            {
-                //Mod.instance.Monitor.Log("Could not equip tool: " + name + " (not found in inventory)", LogLevel.Info);
-                return false;
-            }
-            for (int index = 0; index < 12; ++index)
-            {
-                if (Game1.player.items.Count > index && Game1.player.items.ElementAt<Item>(index) != null)
-                {
-                    if (Game1.player.items[index] == t)
-                    {
-                        //found it
-                        if (Game1.player.CurrentToolIndex != index)
-                        {
-                            Game1.player.CurrentToolIndex = index;
-                        }
-                        return true;
-                    }
-                }
-            }
-            return false;
-        }
         public static object SerializeMenu(IClickableMenu menu)
         {
             Point mousePosition = Game1.getMousePosition();
@@ -780,6 +755,10 @@ namespace StardewSpeak
             if (i is Tool) 
             {
                 var tool = i as Tool;
+                var toolLocation = player.GetToolLocation();
+                int tileX = (int)toolLocation.X / 64;
+                int tileY = (int)toolLocation.Y / 64;
+
                 obj = Utils.Merge(obj, new 
                 { 
                     isTool = true,
@@ -787,6 +766,9 @@ namespace StardewSpeak
                     power = player.toolPower,
                     baseName = tool.BaseName,
                     inUse = player.UsingTool,
+                    tileX,
+                    tileY,
+
                 });
             }
             if (i is MeleeWeapon)

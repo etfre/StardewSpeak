@@ -470,7 +470,7 @@ async def face_direction(direction: int, stream: server.Stream, move_cursor=Fals
 async def equip_item(predicate):
     matched_index = None
     row_size = 12
-    with server.player_items_stream(ticks=10) as stream, server.async_timeout.timeout(5):
+    with server.player_items_stream() as stream, server.async_timeout.timeout(5):
         while True:
             items_info = await stream.next()
             items = items_info['items']
@@ -486,7 +486,8 @@ async def equip_item(predicate):
                 if matched_index >= row_size:
                     await press_key(constants.TOOLBAR_SWAP)
                 else:
-                    return await server.request('EQUIP_ITEM_INDEX', {"index": matched_index})
+                    await equip_item_by_index(matched_index)
+                    return True
 
 async def equip_melee_weapon():
     predicate = lambda x: x['type'] == constants.MELEE_WEAPON
@@ -503,7 +504,9 @@ async def equip_item_by_name(item):
         raise HUDMessageException(f'{name} is not in inventory')
 
 async def equip_item_by_index(idx: int):
-    return await server.request('EQUIP_ITEM_INDEX', {"index": idx})
+    assert 0 <= idx <= 11
+    btn = f'inventorySlot{idx + 1}'
+    await press_key(btn)
 
 def show_hud_message(msg: str, msg_type: int):
     server.send_message("SHOW_HUD_MESSAGE", {'message': msg, 'msgType': msg_type})
@@ -563,7 +566,7 @@ async def pathfind_to_adjacent_tile_from_current(stream):
     raise NavigationFailed
 
 async def navigate_tiles(get_items, sort_items=generic_next_item_key, pathfind_fn=pathfind_to_adjacent,
-    items_ok=lambda prev, curr: len(prev) != len(curr),
+    items_ok=lambda prev, curr: True,
     allow_action_on_same_tile=True, index=None):
     import events
     async with server.player_status_stream() as stream:
@@ -624,19 +627,25 @@ def next_tile(current_tile, direction: int):
         return x - 1, y
 
 async def chop_tree_and_gather_resources(tree):
-    async with server.on_terrain_feature_list_changed_stream() as terrain_stream:
-        async with press_and_release(constants.USE_TOOL_BUTTON):
-            event = await terrain_stream.next()
+    evt = events.wait_for_event("TERRAIN_FEATURE_LIST_CHANGED")
+    tree_tile = tree['tileX'], tree['tileY']
+    async with press_and_release(constants.USE_TOOL_BUTTON), server.tool_status_stream(ticks=1) as tss:
+        while not evt.done():
+            tool_status = await tss.next()
+            if tool_status is None or tool_status['baseName'] != 'Axe' or tree_tile != (tool_status['tileX'], tool_status['tileY']):
+                return
     await gather_items_on_ground(10)
 
-async def clear_object(obj, obj_getter):
-    tile_x, tile_y = obj['tileX'], obj['tileY']
-    async with press_and_release(constants.USE_TOOL_BUTTON):
+async def clear_object(obj, obj_getter, tool_name):
+    obj_tile = obj['tileX'], obj['tileY']
+    async with server.tool_status_stream(ticks=1) as tss, press_and_release(constants.USE_TOOL_BUTTON):
         while True:
-            clumps = await obj_getter('')
+            clumps, tool_status = await asyncio.gather(obj_getter(''), tss.next())
+            if obj_tile != (tool_status['tileX'], tool_status['tileY']) or tool_name != tool_status['baseName']:
+                return
             target = None
             for c in clumps:
-                if (tile_x, tile_y) == (c['tileX'], c['tileY']):
+                if obj_tile == (c['tileX'], c['tileY']):
                     target = c
                     break
             if not target:
