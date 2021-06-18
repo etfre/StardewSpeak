@@ -170,8 +170,8 @@ class HarvestCropsObjective(Objective):
 
 class ClearDebrisObjective(Objective):
 
-    def __init__(self):
-        pass
+    def __init__(self, debris_type):
+        self.debris_type = debris_type
 
     async def get_debris(self, location):
         debris_objects, resource_clumps, tools = await asyncio.gather(self.get_debris_objects(location), game.get_resource_clump_pieces(location), game.get_tools(), loop=server.loop)
@@ -182,6 +182,12 @@ class ClearDebrisObjective(Objective):
             tool = tools.get(required_tool['name'])
             if tool and tool['upgradeLevel'] >= required_tool['level']:
                 clearable_debris.append(d)
+        if self.debris_type == constants.STONE:
+            clearable_debris = [x for x in clearable_debris if x['name'] in (constants.STONE, constants.BOULDER)]
+        elif self.debris_type == constants.TWIG:
+            clearable_debris = [x for x in clearable_debris if x['name'] in (constants.TWIG, constants.HOLLOW_LOG, constants.STUMP)]
+        elif self.debris_type == constants.WEEDS:
+            clearable_debris = [x for x in clearable_debris if x['name'] == constants.WEEDS]
         return clearable_debris
 
     async def get_debris_objects(self, location):
@@ -227,7 +233,7 @@ class PlantSeedsOrFertilizerObjective(Objective):
 class HoePlotObjective(Objective):
 
     def __init__(self, n1, n2):
-        self.n1 = n1
+        self.n1 = n1f
         self.n2 = n2
 
     async def run(self):

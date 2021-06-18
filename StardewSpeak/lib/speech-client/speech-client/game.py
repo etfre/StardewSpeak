@@ -45,7 +45,7 @@ tool_for_object = {
     # constants.METEORITE: {'name': constants.AXE, 'level': 3},
 }
 
-DEBRIS = [constants.WEEDS, constants.TWIG, constants.STONE]
+DEBRIS = (constants.WEEDS, constants.TWIG, constants.STONE)
 
 context_variables = {
     'ACTIVE_MENU': None,

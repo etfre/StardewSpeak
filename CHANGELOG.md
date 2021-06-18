@@ -1,5 +1,9 @@
 # Release notes
 
+## Unreleased
+
+* Add the ability to specify types of debris in the clear debris command
+
 ## 0.0.9 (June 4, 2021)
 
 * Fix issues with moving cursor and changing items while performing certain commands like chopping trees and clearing debris

@@ -52,9 +52,12 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
         <td>"face east"</td>
     </tr>
     <tr>
-        <td>clear debris</td>
-        <td>Begin clearing weeds, stone, and wood.</td>
-        <td>"clear debris"</td>
+        <td>clear (debris | stones | rocks | twigs | wood | weeds)</td>
+        <td>Begin clearing weeds, stone, or wood. Saying clear debris will clear all types.</td>
+        <td>
+            <div>"clear debris"</div>
+            <div>"clear wood"</div>
+        </td>
     </tr>
     <tr>
         <td>clear grass</td>

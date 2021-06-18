@@ -64,6 +64,13 @@ numrep2 = df.Sequence(
 )
 num2 = df.Modifier(numrep2, rules.parse_numrep)
 
+debris = {
+    '(stones | rocks)': constants.STONE,
+    '(wood | twigs)': constants.TWIG,
+    'weeds': constants.WEEDS,
+    'debris': 'debris'
+}
+
 mapping = {
     "<direction_keys>": objective.objective_action(objective.HoldKeyObjective, "direction_keys"),
     "<direction_nums> <n>": objective.objective_action(objective.MoveNTilesObjective, "direction_nums", "n"),
@@ -85,7 +92,7 @@ mapping = {
     "<points>": objective.function_objective(objective.move_to_point, "points"),
     "chop trees": objective.objective_action(objective.ChopTreesObjective),
     "start planting": objective.objective_action(objective.PlantSeedsOrFertilizerObjective),
-    "clear debris": objective.objective_action(objective.ClearDebrisObjective),
+    "clear <debris>": objective.objective_action(objective.ClearDebrisObjective, 'debris'),
     "clear grass": objective.objective_action(objective.ClearGrassObjective),
     "attack": objective.objective_action(objective.AttackObjective),
     "defend": objective.objective_action(objective.DefendObjective),
@@ -121,6 +128,7 @@ def load_grammar():
             num2,
             df.Choice("direction_keys", game.direction_keys),
             df.Choice("direction_nums", game.direction_nums),
+            df.Choice("debris", debris),
             items.items_choice,
             df.Choice("points", locations.commands(locations.points)),
         ],
