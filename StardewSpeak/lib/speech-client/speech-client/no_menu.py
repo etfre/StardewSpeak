@@ -94,6 +94,7 @@ mapping = {
     "start planting": objective.objective_action(objective.PlantSeedsOrFertilizerObjective),
     "clear <debris>": objective.objective_action(objective.ClearDebrisObjective, 'debris'),
     "clear grass": objective.objective_action(objective.ClearGrassObjective),
+    "(clear | mine) ore": objective.objective_action(objective.ClearOreObjective),
     "attack": objective.objective_action(objective.AttackObjective),
     "defend": objective.objective_action(objective.DefendObjective),
     "ladder down": objective.function_objective(ladder_down),

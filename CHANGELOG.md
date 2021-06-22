@@ -3,6 +3,7 @@
 ## Unreleased
 
 * Add the ability to specify types of debris in the clear debris command
+* Add mine ore command
 
 ## 0.0.9 (June 4, 2021)
 

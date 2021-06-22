@@ -58,6 +58,10 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
             <div>"clear debris"</div>
             <div>"clear wood"</div>
         </td>
+    <tr>
+        <td>(clear | mine) ore</td>
+        <td>Begin mining ore and gem nodes.</td>
+        <td>"clear ore"</td>
     </tr>
     <tr>
         <td>clear grass</td>

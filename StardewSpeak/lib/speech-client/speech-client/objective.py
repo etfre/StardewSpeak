@@ -168,6 +168,22 @@ class HarvestCropsObjective(Objective):
             await game.do_action()
 
 
+class ClearOreObjective(Objective):
+
+    async def get_debris(self, location):
+        ore_types = set((95, 843, 844, 25, 75, 76, 77, 816, 817, 818, 819, 8, 10, 12, 14, 6, 4, 2, 751, 849, 290, 850, 764, 765))
+        objs = await game.get_location_objects(location)
+        ores = [x for x in objs if x['name'] == 'Stone' and x['parentSheetIndex'] in ore_types]
+        return ores
+
+    async def at_tile(self, obj):
+        await game.equip_item_by_name(constants.PICKAXE)
+        await game.clear_object(obj, game.get_location_objects, constants.PICKAXE)
+
+    async def run(self):
+        async for debris in game.navigate_tiles(self.get_debris, game.next_debris_key):
+            await self.at_tile(debris)
+            
 class ClearDebrisObjective(Objective):
 
     def __init__(self, debris_type):
