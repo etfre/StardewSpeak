@@ -485,6 +485,7 @@ async def equip_item(predicate):
                     return True
                 if matched_index >= row_size:
                     await press_key(constants.TOOLBAR_SWAP)
+                    await asyncio.sleep(0.1)
                 else:
                     await equip_item_by_index(matched_index)
                     return True
