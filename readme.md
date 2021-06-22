@@ -180,6 +180,11 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
         <td>"swing"</td>
     </tr>
     <tr>
+        <td>start swinging [tool]</td>
+        <td>Hold down use tool button (default c)</td>
+        <td>"start swinging"</td>
+    </tr>
+    <tr>
         <td>stop</td>
         <td>Stop current actions.</td>
         <td>"stop"</td>
