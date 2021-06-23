@@ -8,6 +8,9 @@ import traceback
 import dragonfly as df
 import server
 
+def dictation_rule(default=None):
+    return df.Dictation('dictation', default=default)
+
 class AsyncFunction(df.ActionBase):
     def __init__(self, async_fn, format_args=None):
         super().__init__()
