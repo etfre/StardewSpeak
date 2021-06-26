@@ -89,7 +89,7 @@ class Point:
 
 
 async def get_elevator_tiles(item):
-    tile = await server.request('GET_ElEVATOR_TILE')
+    tile = await server.request('GET_ELEVATOR_TILE')
     return [tile]
 
 async def get_ladder_up_tiles(item):

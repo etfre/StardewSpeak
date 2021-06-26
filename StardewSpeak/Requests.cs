@@ -296,7 +296,7 @@ namespace StardewSpeak
                     {
                         return GameState.LocationBuildings(location);
                     }
-                case "GET_ElEVATOR_TILE":
+                case "GET_ELEVATOR_TILE":
                     {
                         if (player.currentLocation is StardewValley.Locations.MineShaft)
                         {
