@@ -352,24 +352,6 @@ namespace StardewSpeak
                     });
                 }
             }
-            else if (menu is ItemGrabMenu)
-            {
-                var igm = menu as ItemGrabMenu;
-                var lastShippedHolder = igm.shippingBin ? Utils.SerializeClickableCmp(igm.lastShippedHolder, mousePosition) : null;
-                var itemsToGrabMenu = igm.showReceivingMenu ? Utils.SerializeMenu(igm.ItemsToGrabMenu, mousePosition) : null;
-                menuTypeObj = new
-                {
-                    menuType = "itemsToGrabMenu",
-                    trashCan = Utils.SerializeClickableCmp(igm.trashCan, mousePosition),
-                    inventoryMenu = Utils.SerializeMenu(igm.inventory, mousePosition),
-                    itemsToGrabMenu,
-                    okButton = Utils.SerializeClickableCmp(igm.okButton, mousePosition),
-                    organizeButton = Utils.SerializeClickableCmp(igm.organizeButton, mousePosition),
-                    shippingBin = igm.shippingBin,
-                    lastShippedHolder,
-                };
-
-            }
             else if (menu is TitleMenu)
             {
                 var tm = menu as TitleMenu;

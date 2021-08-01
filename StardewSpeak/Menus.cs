@@ -64,12 +64,33 @@ namespace StardewSpeak
             menu.elevators = mem.elevators;
         }
 
+        public static void Serialize_ItemGrabMenu(dynamic menu, ItemGrabMenu igm, Point cursorPosition)
+        {
+            var lastShippedHolder = igm.shippingBin ? igm.lastShippedHolder : null;
+            var itemsToGrabMenu = igm.showReceivingMenu ? igm.ItemsToGrabMenu : null;
+            menu.menuType = "itemsToGrabMenu";
+            menu.trashCan = igm.trashCan;
+            menu.inventoryMenu = igm.inventory;
+            menu.itemsToGrabMenu = itemsToGrabMenu;
+            menu.okButton = igm.okButton;
+            menu.organizeButton = igm.organizeButton;
+            menu.shippingBin = igm.shippingBin;
+            menu.lastShippedHolder = lastShippedHolder;
+            menu.colorPickerToggleButton = igm.colorPickerToggleButton;
+            menu.discreteColorPickerCC = igm.discreteColorPickerCC;
+            menu.fillStacksButton = igm.fillStacksButton;
+            menu.junimoNoteIcon = igm.junimoNoteIcon;
+        }
 
         public static dynamic SerializeValue(dynamic val, Point cursorPosition)
         {
-            if (val is ClickableComponent || val is ClickableTextureComponent) 
+            if (val is ClickableComponent || val is ClickableTextureComponent)
             {
                 return Utils.SerializeClickableCmp(val, cursorPosition);
+            }
+            if (val is IClickableMenu) 
+            {
+                return Utils.SerializeMenu(val);
             }
             if (val is IList && val.GetType().IsGenericType)
             {

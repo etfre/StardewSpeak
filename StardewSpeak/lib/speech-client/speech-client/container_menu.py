@@ -54,6 +54,10 @@ mapping = {
     "container": df_utils.async_action(set_item_grab_submenu, 'itemsToGrabMenu'),
     "ok": df_utils.async_action(click_button, 'okButton'),
     "(trash | garbage) can": df_utils.async_action(click_button, 'trashCan'),
+    "[add to] existing stacks": df_utils.async_action(click_button, 'fillStacksButton'),
+    "[toggle] color picker": df_utils.async_action(click_button, 'colorPickerToggleButton'),
+    "organize": df_utils.async_action(click_button, 'organizeButton'),
+    "community center": df_utils.async_action(click_button, 'junimoNoteIcon'),
 }
 
 @menu_utils.valid_menu_test

@@ -22,8 +22,28 @@ Any menu that involves transfers between player items and another container, suc
         <td>"ok"</td>
     </tr>
     <tr>
-        <td>trash can</td>
+        <td>(trash | garbage) can</td>
         <td>Click the trash can. Will discard any selected item.</td>
         <td>"trash can"</td>
+    </tr>
+    <tr>
+        <td>[add to] existing stacks</td>
+        <td>Click the add to existing stacks button.</td>
+        <td>"existing stacks"</td>
+    </tr>
+    <tr>
+        <td>[toggle] color picker</td>
+        <td>Click the color picker.</td>
+        <td>"color picker"</td>
+    </tr>
+    <tr>
+        <td>organize</td>
+        <td>Click the organize button.</td>
+        <td>"organize"</td>
+    </tr>
+    <tr>
+        <td>community center</td>
+        <td>Click the community center/jumino button.</td>
+        <td>"community center"</td>
     </tr>
 </table>
