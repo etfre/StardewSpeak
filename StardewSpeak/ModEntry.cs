@@ -61,7 +61,7 @@ namespace StardewSpeak
             helper.Events.World.LargeTerrainFeatureListChanged += this.OnLargeTerrainFeatureListChanged;
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.World.LocationListChanged += this.OnLocationListChanged;
-            helper.ConsoleCommands.Add("mimic", "Mimic speech recognition after three second delay, e.g. \"mimic load game\"", Command_MimicSpeech);
+            helper.ConsoleCommands.Add("mimic", "Mimic speech recognition, e.g. \"mimic load game\"", Command_MimicSpeech);
         }
 
         private void Command_MimicSpeech(string name, string[] actions) 

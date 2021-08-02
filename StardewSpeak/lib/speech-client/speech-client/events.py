@@ -13,7 +13,6 @@ def on_key_pressed(data):
         game.set_last_faced_direction(direction)
 
 async def on_speech_mimicked(data):
-    await asyncio.sleep(3)
     engine = get_engine()
     try:
         engine.mimic(data['said'].lower())

@@ -17,6 +17,7 @@ namespace StardewSpeak
 
         public static void Speak(string text) 
         {
+            Synth.SpeakAsyncCancelAll();
             Synth.SpeakAsync(text);
         }
 
