@@ -1,4 +1,7 @@
 # Containers
+
+<img src="./images/container-menu.png" width="600" />
+
 Any menu that involves transfers between player items and another container, such as chests.
 <table>
     <tr>
