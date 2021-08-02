@@ -409,6 +409,12 @@ namespace StardewSpeak
                     {
                         return new List<int> { Game1.getMouseX(), Game1.getMouseY() };
                     }
+                case "TTS_SPEAK": 
+                    {
+                        string text = data.text;
+                        TTS.Speak(text);
+                        return true;
+                    }
                 case "SET_MOUSE_POSITION":
                     {
                         int x = data.x;

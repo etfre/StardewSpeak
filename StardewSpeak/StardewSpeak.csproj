@@ -43,6 +43,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.IO.Compression" />
+    <Reference Include="System.Speech" />
     <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -66,6 +67,7 @@
     <Compile Include="Serialization.cs" />
     <Compile Include="SpeechEngine.cs" />
     <Compile Include="Stream.cs" />
+    <Compile Include="TTS.cs" />
     <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
