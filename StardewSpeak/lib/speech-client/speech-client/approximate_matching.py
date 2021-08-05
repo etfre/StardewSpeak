@@ -1,6 +1,8 @@
 import os
 import dragonfly as df
 
+map_word_to_phenomes = {}
+
 def do_match(text: str, options, threshold=0.1):
     text_phenomes = get_phenomes(text.lower())
     phenomes = [get_phenomes(x.lower()) for x in options]
@@ -77,7 +79,7 @@ def string_similarity(str1, str2):
     pairs2 = get_bigrams(str2)
     return (2.0 * len(pairs1 & pairs2)) / (len(pairs1) + len(pairs2))
 
-map_word_to_phenomes = {}
-for line in load_lexicons():
-    spl = line.split()
-    map_word_to_phenomes[spl[0]] = tuple(spl[1:])
+def initialize():
+    for line in load_lexicons():
+        spl = line.split()
+        map_word_to_phenomes[spl[0]] = tuple(spl[1:])

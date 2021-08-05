@@ -22,10 +22,11 @@ from dragonfly.log import setup_log
 from srabuilder import sleep, environment
 import srabuilder
 
+import approximate_matching
 import any_context, new_game_menu, shop_menu, container_menu, title_menu, load_game_menu, dialogue_menu, no_menu, any_menu, shipping_bin_menu, carpenter_menu, billboard_menu, geode_menu, museum_menu
+from game_menu import game_menu, crafting_page, inventory_page, exit_page
 import letter_viewer_menu, quest_log_menu, animal_query_menu, coop_menu, title_text_input_menu, cutscene, level_up_menu, shipped_items_menu, fishing_menu, mine_elevator_menu
 import locations
-from game_menu import game_menu, crafting_page, inventory_page, exit_page
 
 IS_FROZEN = getattr(sys, 'frozen', False)
 
@@ -107,6 +108,7 @@ def run_engine():
     import game
     engine = get_engine()
     engine.prepare_for_recognition()
+    approximate_matching.initialize()
     game.show_hud_message('Speech recognition is ready', 4)
     try:
         engine.do_recognition()
