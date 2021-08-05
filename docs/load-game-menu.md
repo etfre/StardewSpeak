@@ -1,5 +1,7 @@
 # Load Game Menu
 
+<img src="./images/load-game-menu.png" width="600" />
+
 <table>
     <tr>
         <th>Command</th>
