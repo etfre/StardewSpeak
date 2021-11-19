@@ -158,41 +158,6 @@ def create_stream_next_task(awaitable):
     return loop.create_task(to_call(awaitable))
 
 
-
-class AsyncFunction(ActionBase):
-    def __init__(self, async_fn, format_args=None):
-        super().__init__()
-        self.async_fn = async_fn
-        self.format_args = format_args
-
-    async def to_call(self, *a, **kw):
-        try:
-            await self.async_fn(*a, **kw)
-        except (Exception, asyncio.CancelledError, asyncio.TimeoutError) as e:
-            log(traceback.format_exc(), level=1)
-
-    def execute(self, data=None):
-        assert isinstance(data, dict)
-        kwargs = {k: v for k, v in data.items() if not k.startswith("_")}
-        if self.format_args:
-            args = self.format_args(**kwargs)
-            return call_soon(self.to_call, *args)
-        return call_soon(self.to_call, **kwargs)
-
-class SyncFunction(ActionBase):
-    def __init__(self, fn, format_args=None):
-        super().__init__()
-        self.fn = fn
-        self.format_args = format_args
-
-    def execute(self, data=None):
-        assert isinstance(data, dict)
-        kwargs = {k: v for k, v in data.items() if not k.startswith("_")}
-        if self.format_args:
-            args = self.format_args(**kwargs)
-            return self.fn(*args)
-        return self.fn(**kwargs)
-
 def call_soon(awaitable, *args, **kw):
     loop.call_soon_threadsafe(_do_create_task, awaitable, *args, **kw)
 

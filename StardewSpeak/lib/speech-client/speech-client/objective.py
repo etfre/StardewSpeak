@@ -429,11 +429,11 @@ async def new_active_objective(new_objective: Objective):
 
 def objective_action(objective_cls, *args):
     format_args = lambda **kw: [objective_cls(*[kw.get(a, a) for a in args])]
-    return server.AsyncFunction(new_active_objective, format_args=format_args)
+    return df_utils.AsyncFunction(new_active_objective, format_args=format_args)
 
 def function_objective(async_fn, *args):
     format_args = lambda **kw: [FunctionObjective(async_fn, *[kw.get(a, a) for a in args])]
-    return server.AsyncFunction(new_active_objective, format_args=format_args)
+    return df_utils.AsyncFunction(new_active_objective, format_args=format_args)
 
 def format_args(args, **kw):
     formatted_args = []

@@ -4,6 +4,8 @@ import asyncio
 import functools
 import inspect
 
+MENU_GRAMMAR_COUNT = 0
+
 async def focus_component(cmp):
     if not cmp['visible']:
         raise InvalidMenuOption('Cannot focus non-visible component')   
@@ -197,18 +199,21 @@ async def ensure_awaited(obj):
         return await obj
     return obj
 
-def build_menu_grammar(name: str, mapping, menu_validator, extras=(), defaults=None):
+def build_menu_grammar(mapping, menu_validator, extras=(), defaults=None):
+    global MENU_GRAMMAR_COUNT
     import df_utils, game, server
     mgb = MenuGrammarBuilder(mapping, menu_validator)
     defaults = {'positive_num': 1} if defaults is None else defaults
-    grammar = df.Grammar(f"{name}_menu")
+    n = MENU_GRAMMAR_COUNT + 1
+    MENU_GRAMMAR_COUNT = n
+    grammar = df.Grammar(f"menu_grammar_{n}")
     new_mapping = {}
     for cmd, v in mapping.items():
         if isinstance(v, df_utils.AsyncFunction) and v.format_args: # insert active menu as first arg
             v.format_args = mgb.format_args_menu_provider(v.format_args)
         new_mapping[cmd] = v
     main_rule = df.MappingRule(
-        name=f"{name}_menu_rule",
+        name=f"menu_grammar_rule_{n}",
         mapping=new_mapping,
         extras=extras,
         defaults=defaults,

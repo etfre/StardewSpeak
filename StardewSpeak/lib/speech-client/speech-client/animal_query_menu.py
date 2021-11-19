@@ -18,6 +18,6 @@ mapping = {
 
 def load_grammar():
     extras = [df.Choice("direction_keys", game.direction_keys), letters.letters_and_keys, df.Dictation("dictation")]
-    grammar = menu_utils.build_menu_grammar('animal_query_menu', mapping, ANIMAL_QUERY_MENU, extras=extras)
+    grammar = menu_utils.build_menu_grammar(mapping, ANIMAL_QUERY_MENU, extras=extras)
     grammar.load()
     

@@ -4,17 +4,19 @@ import dragonfly as df
 from srabuilder import rules
 import title_menu, menu_utils, server, df_utils, game, container_menu, objective, constants, carpenter_menu
 
+
 def validate_any_menu(menu):
     if menu is None:
         return False
+
 
 async def move_cursor_to_next_component(menu, direction, n=1):
     current_position = None
     target_components = []
     clickable = list(menu_utils.yield_clickable_components(menu))
     for cmp in menu_utils.yield_clickable_components(menu):
-        center = cmp['center']
-        if cmp['containsMouse']:
+        center = cmp["center"]
+        if cmp["containsMouse"]:
             current_position = center
         else:
             target_components.append(center)
@@ -31,14 +33,19 @@ async def move_cursor_to_next_component(menu, direction, n=1):
     elif direction == constants.WEST:
         direction_index, multiplier = 0, -1
     for i in range(n):
-        sort_key = functools.partial(sort_fn, current_position, direction_index, multiplier)
+        sort_key = functools.partial(
+            sort_fn, current_position, direction_index, multiplier
+        )
         res = min(target_components, key=sort_key)
-        right_direction = sort_fn(current_position, direction_index, multiplier, res)[0] == 0
+        right_direction = (
+            sort_fn(current_position, direction_index, multiplier, res)[0] == 0
+        )
         if not right_direction:
             break
         current_position = res
     x, y = current_position
     await server.set_mouse_position(x, y)
+
 
 def sort_fn(current_position, direction_index, multiplier, x):
     val, target_val = current_position[direction_index], x[direction_index]
@@ -50,8 +57,11 @@ def sort_fn(current_position, direction_index, multiplier, x):
 
 
 mapping = {
-    "<direction_nums> [<positive_num>]": df_utils.async_action(move_cursor_to_next_component, "direction_nums", "positive_num"),
+    "<direction_nums> [<positive_num>]": df_utils.async_action(
+        move_cursor_to_next_component, "direction_nums", "positive_num"
+    ),
 }
+
 
 def load_grammar():
     extras = [
@@ -60,6 +70,5 @@ def load_grammar():
         df_utils.positive_num,
         df.Choice("direction_nums", game.direction_nums),
     ]
-    grammar = menu_utils.build_menu_grammar("any", mapping, validate_any_menu, extras=extras)
+    grammar = menu_utils.build_menu_grammar(mapping, validate_any_menu, extras=extras)
     grammar.load()
-    

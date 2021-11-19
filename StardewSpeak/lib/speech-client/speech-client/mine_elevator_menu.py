@@ -42,6 +42,6 @@ mapping = {
 
 def load_grammar():
     extras = [df.Choice("mine_elevator_floors", floors_map)]
-    grammar = menu_utils.build_menu_grammar('mine_elevator_menu', mapping, MINE_ELEVATOR_MENU, extras=extras)
+    grammar = menu_utils.build_menu_grammar(mapping, MINE_ELEVATOR_MENU, extras=extras)
     grammar.load()
     

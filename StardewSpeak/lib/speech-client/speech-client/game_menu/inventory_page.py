@@ -44,5 +44,5 @@ def load_grammar():
         items.craftable_items_choice,
         df.Choice('equipment_icons', equipment_icons)
     ]
-    grammar = menu_utils.build_menu_grammar('inventory_page', mapping, get_inventory_page, extras=extras)
+    grammar = menu_utils.build_menu_grammar(mapping, get_inventory_page, extras=extras)
     grammar.load()

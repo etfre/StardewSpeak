@@ -20,6 +20,6 @@ mapping = {
 }
 
 def load_grammar():
-    grammar = menu_utils.build_menu_grammar('shipped_items', mapping, LEVEL_UP_MENU, extras=[df.Choice('category', categories)])
+    grammar = menu_utils.build_menu_grammar(mapping, LEVEL_UP_MENU, extras=[df.Choice('category', categories)])
     grammar.load()
     

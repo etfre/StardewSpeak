@@ -28,19 +28,15 @@ from game_menu import game_menu, crafting_page, inventory_page, exit_page
 import letter_viewer_menu, quest_log_menu, animal_query_menu, coop_menu, title_text_input_menu, cutscene, level_up_menu, shipped_items_menu, fishing_menu, mine_elevator_menu
 import locations
 
-IS_FROZEN = getattr(sys, 'frozen', False)
+IS_FROZEN = getattr(sys, "frozen", False)
 
-parser = argparse.ArgumentParser(description='Process some integers.')
-parser.add_argument('--python_root', default=None, help='Root python directory')
+parser = argparse.ArgumentParser(description="Process some integers.")
+parser.add_argument("--python_root", default=None, help="Root python directory")
 args = parser.parse_args()
 if args.python_root is None:
-    args.python_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    args.python_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-MODELS_DIR = os.path.abspath(os.path.join(args.python_root, 'models'))
-
-user_lexicon = (
-    ('joja', "dZ 'o U dZ 'V"),
-)
+MODELS_DIR = os.path.abspath(os.path.join(args.python_root, "models"))
 
 
 class Observer(RecognitionObserver):
@@ -49,20 +45,27 @@ class Observer(RecognitionObserver):
 
     def on_recognition(self, words):
         import server
+
         server.log("Recognized:", " ".join(words), level=1)
 
     def on_failure(self):
         pass
 
+
 def add_base_user_lexicon(model_dir: str):
     import df_utils
+
     dst = os.path.join(model_dir, "user_lexicon.txt")
     shutil.copyfile(df_utils.lexicon_source_path(), dst)
 
+
 def download_model(write_dir):
     import game
-    model_url = 'https://github.com/daanzu/kaldi-active-grammar/releases/download/v1.8.0/kaldi_model_daanzu_20200905_1ep-biglm.zip'
-    game.show_hud_message(f'Downloading speech recognition model. This may take a few minutes...', 2)
+
+    model_url = "https://github.com/daanzu/kaldi-active-grammar/releases/download/v1.8.0/kaldi_model_daanzu_20200905_1ep-biglm.zip"
+    game.show_hud_message(
+        f"Downloading speech recognition model. This may take a few minutes...", 2
+    )
     url_open = urllib.request.urlopen(model_url)
     with ZipFile(BytesIO(url_open.read())) as my_zip_file:
         my_zip_file.extractall(write_dir)
@@ -72,9 +75,11 @@ def download_model(write_dir):
 def setup_engine(silence_timeout, model_dir):
     if not os.path.isdir(model_dir):
         if IS_FROZEN:
-            raise RuntimeError(f"Cannot find kaldi model at {os.path.abspath(model_dir)} using executable path {__file__}")
+            raise RuntimeError(
+                f"Cannot find kaldi model at {os.path.abspath(model_dir)} using executable path {__file__}"
+            )
         download_model(MODELS_DIR)
-        add_base_user_lexicon(model_dir)
+    add_base_user_lexicon(model_dir)
     # Set any configuration options here as keyword arguments.
     engine = get_engine(
         "kaldi",
@@ -89,39 +94,50 @@ def setup_engine(silence_timeout, model_dir):
     engine.connect()
     return engine
 
+
 def ensure_exclusive_mode_disabled_for_default_mic():
     fd, path = tempfile.mkstemp()
-    with open(fd, 'w') as f:
+    with open(fd, "w") as f:
         pass
-    svv_path = os.path.join(args.python_root, "bin", "SoundVolumeView", "SoundVolumeView.exe")
+    svv_path = os.path.join(
+        args.python_root, "bin", "SoundVolumeView", "SoundVolumeView.exe"
+    )
     subprocess.run((svv_path, "/scomma", path))
     with open(path) as f:
-        reader = csv.DictReader(f, delimiter=',')
+        reader = csv.DictReader(f, delimiter=",")
         for row in reader:
-            if row['Default'] == 'Capture': # found our default audio input device
-                device_id = row['Command-Line Friendly ID']
-                subprocess.run((svv_path, '/SetAllowExclusive', device_id, '0'))
+            if row["Default"] == "Capture":  # found our default audio input device
+                device_id = row["Command-Line Friendly ID"]
+                subprocess.run((svv_path, "/SetAllowExclusive", device_id, "0"))
                 break
     os.remove(path)
 
+
 def run_engine():
+
     import game
+
     engine = get_engine()
     engine.prepare_for_recognition()
     approximate_matching.initialize()
-    game.show_hud_message('Speech recognition is ready', 4)
+    game.show_hud_message("Speech recognition is ready", 4)
     try:
         engine.do_recognition()
     except KeyboardInterrupt:
         pass
 
+
 def main(args):
     import server
+
     logging.basicConfig(level=logging.INFO)
     try:
         ensure_exclusive_mode_disabled_for_default_mic()
     except Exception as e:
-        server.log(f"Unable to disable exclusive mode for default audio device: {traceback.format_exc()}", level=2)
+        server.log(
+            f"Unable to disable exclusive mode for default audio device: {traceback.format_exc()}",
+            level=2,
+        )
     model_dir = os.path.join(MODELS_DIR, "kaldi_model")
     engine = setup_engine(300, model_dir)
 
@@ -143,10 +159,10 @@ def main(args):
     crafting_page.load_grammar()
     inventory_page.load_grammar()
     exit_page.load_grammar()
-    title_menu.load_grammar()   
-    load_game_menu.load_grammar()   
-    dialogue_menu.load_grammar()   
-    no_menu.load_grammar()   
+    title_menu.load_grammar()
+    load_game_menu.load_grammar()
+    dialogue_menu.load_grammar()
+    no_menu.load_grammar()
     any_menu.load_grammar()
     shipping_bin_menu.load_grammar()
     carpenter_menu.load_grammar()
@@ -164,9 +180,11 @@ def main(args):
     shipped_items_menu.load_grammar()
     fishing_menu.load_grammar()
     mine_elevator_menu.load_grammar()
+    # copy back user lexicon to speech-client root. May want to rethink this approach.
     if not IS_FROZEN:
         src = os.path.join(model_dir, "user_lexicon.txt")
-        dst = os.path.join(os.path.abspath(__file__), "..", "..", "user_lexicon.txt")
+        dst = os.path.abspath(os.path.join(os.path.abspath(__file__), "..", "..", "user_lexicon.txt"))
+        server.log(src, dst) 
         shutil.copyfile(src, dst)
     run_engine()
 

@@ -28,6 +28,6 @@ mapping = {
 }
 
 def load_grammar():
-    grammar = menu_utils.build_menu_grammar('fishing', mapping, FISHING_MENU)
+    grammar = menu_utils.build_menu_grammar(mapping, FISHING_MENU)
     grammar.load()
     
