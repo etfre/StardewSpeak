@@ -103,6 +103,7 @@ namespace StardewSpeak
         public static Dictionary<string, List<LocationConnection>> BuildRouteCache()
         {
             var routeCache = new Dictionary<string, List<LocationConnection>>();
+            MapNamesToLocations.Clear();
             var locations = AllGameLocations();
             foreach (var gl in locations)
             {
