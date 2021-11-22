@@ -30,7 +30,7 @@ import locations
 
 IS_FROZEN = getattr(sys, "frozen", False)
 
-parser = argparse.ArgumentParser(description="Process some integers.")
+parser = argparse.ArgumentParser()
 parser.add_argument("--python_root", default=None, help="Root python directory")
 args = parser.parse_args()
 if args.python_root is None:
@@ -63,9 +63,7 @@ def download_model(write_dir):
     import game
 
     model_url = "https://github.com/daanzu/kaldi-active-grammar/releases/download/v1.8.0/kaldi_model_daanzu_20200905_1ep-biglm.zip"
-    game.show_hud_message(
-        f"Downloading speech recognition model. This may take a few minutes...", 2
-    )
+    game.show_hud_message(f"Downloading speech recognition model. This may take a few minutes...", 2)
     url_open = urllib.request.urlopen(model_url)
     with ZipFile(BytesIO(url_open.read())) as my_zip_file:
         my_zip_file.extractall(write_dir)
@@ -99,9 +97,7 @@ def ensure_exclusive_mode_disabled_for_default_mic():
     fd, path = tempfile.mkstemp()
     with open(fd, "w") as f:
         pass
-    svv_path = os.path.join(
-        args.python_root, "bin", "SoundVolumeView", "SoundVolumeView.exe"
-    )
+    svv_path = os.path.join(args.python_root, "bin", "SoundVolumeView", "SoundVolumeView.exe")
     subprocess.run((svv_path, "/scomma", path))
     with open(path) as f:
         reader = csv.DictReader(f, delimiter=",")
@@ -184,7 +180,7 @@ def main(args):
     if not IS_FROZEN:
         src = os.path.join(model_dir, "user_lexicon.txt")
         dst = os.path.abspath(os.path.join(os.path.abspath(__file__), "..", "..", "user_lexicon.txt"))
-        server.log(src, dst) 
+        server.log(src, dst)
         shutil.copyfile(src, dst)
     run_engine()
 
