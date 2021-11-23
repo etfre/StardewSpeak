@@ -8,10 +8,6 @@ async def get_game_menu():
 async def focus_box(cmp_name):
     await menu_utils.click_menu_button(cmp_name, menu_getter=get_game_menu)
 
-async def focus_name_box():
-    menu = await get_new_game_menu()
-    await menu_utils.click_component(menu['nameBoxCC'])
-
 def get_page_by_name(menu, page_type):
     current_page = menu['currentPage']
     is_active = page_type == current_page['type']

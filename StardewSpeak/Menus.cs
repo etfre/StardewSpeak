@@ -53,7 +53,21 @@ namespace StardewSpeak
             }
         }
 
-        public static void Serialize_BobberBar(dynamic menu, BobberBar sm, Point cursorPosition)
+        public static void Serialize_PurchaseAnimalsMenu(dynamic menu, PurchaseAnimalsMenu pam, Point cursorPosition)
+        {
+            menu.menuType = "purchaseAnimalsMenu";
+            menu.animalsToPurchase = pam.animalsToPurchase;
+            menu.okButton = pam.okButton;
+            menu.namingAnimal = Utils.GetPrivateField(pam, "namingAnimal");
+            if (menu.namingAnimal)
+            {
+                menu.randomButton = pam.randomButton;
+                menu.doneNamingButton = pam.doneNamingButton;
+            }
+            menu.onFarm = Utils.GetPrivateField(pam, "onFarm");
+        }
+
+        public static void Serialize_BobberBar(dynamic menu, BobberBar bb, Point cursorPosition)
         {
             menu.menuType = "fishingMenu";
         }
