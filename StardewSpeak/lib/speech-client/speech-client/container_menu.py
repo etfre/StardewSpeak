@@ -1,6 +1,5 @@
-import game, server, menu_utils, df_utils, items
+import game, menu_utils, df_utils
 from srabuilder import rules
-import functools
 import dragonfly as df
 
 item_grab = {
@@ -70,7 +69,7 @@ def load_grammar():
     main_rule = df.MappingRule(
         name="items_to_grab_menu_rule",
         mapping=mapping,
-        extras=[rules.num, df_utils.positive_index, df_utils.positive_index2],
+        extras=[df_utils.positive_index, df_utils.positive_index2],
         context=is_active
     )
     grammar.add_rule(main_rule)

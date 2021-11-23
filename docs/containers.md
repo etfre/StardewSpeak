@@ -20,6 +20,21 @@ Any menu that involves transfers between player items and another container, suc
         <td>"row three"</td>
     </tr>
     <tr>
+        <td>deposit &lt;n&gt;</td>
+        <td>Place the nth item in the current row (first by default) of your backpack into the container</td>
+        <td>"deposit five"</td>
+    </tr>
+    <tr>
+        <td>deposit &lt;n&gt; through &lt;n2&gt;</td>
+        <td>Place the nth through n2th item in the current row (first by default) of your backpack into the container</td>
+        <td>"deposit five through nine"</td>
+    </tr>
+    <tr>
+        <td>row &lt;n&gt;</td>
+        <td>Move the cursor to the nth row</td>
+        <td>"row three"</td>
+    </tr>
+    <tr>
         <td>ok</td>
         <td>Click the ok button</td>
         <td>"ok"</td>

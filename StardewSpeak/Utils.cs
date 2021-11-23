@@ -79,14 +79,6 @@ namespace StardewSpeak
         }
         public static void WriteJson(string fname, object obj)
         {
-            //var settings = new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
-            //settings.Error = (serializer, err) => err.ErrorContext.Handled = true;
-            //string objStr = JsonConvert.SerializeObject(obj, Formatting.None, settings);
-            //string path = @"C:\Program Files (x86)\GOG Galaxy\Games\Stardew Valley\Mods\StardewSpeak\StardewSpeak\lib\speech-client\debug\" + fname;
-            //using (var writetext = new StreamWriter(path))
-            //{
-            //    writetext.WriteLine(objStr);
-            //}
         }
         public static dynamic Merge(object item1, object item2)
         {

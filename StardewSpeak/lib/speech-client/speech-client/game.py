@@ -68,7 +68,15 @@ def update_held_buttons_nowait(to_hold=(), to_release=()):
 
 
 class Path:
-    def __init__(self, mod_path, location: str, stop_check=None, stop_moving_when_done=True, turn_threshold=0.07, last_tile_done_threshold=0.07):
+    def __init__(
+        self,
+        mod_path,
+        location: str,
+        stop_check=None,
+        stop_moving_when_done=True,
+        turn_threshold=0.07,
+        last_tile_done_threshold=0.07,
+    ):
         self._tiles = ()
         tiles = []
         self.tile_indices = {}
@@ -361,10 +369,7 @@ async def path_to_player(x, y, location, cutoff=-1):
     return Path(reversed(path), location)
 
 
-async def pathfind_to_next_location(
-    next_location: str,
-    status_stream: server.Stream,
-):
+async def pathfind_to_next_location(next_location: str, status_stream: server.Stream):
     path, door_direction = await path_to_next_location(next_location, status_stream)
     await path.travel(status_stream, next_location)
     if door_direction is not None:
@@ -690,7 +695,11 @@ async def chop_tree_and_gather_resources(tree):
     async with press_and_release(constants.USE_TOOL_BUTTON), server.tool_status_stream(ticks=1) as tss:
         while not evt.done():
             tool_status = await tss.next()
-            if tool_status is None or tool_status["baseName"] != "Axe" or tree_tile != (tool_status["tileX"], tool_status["tileY"]):
+            if (
+                tool_status is None
+                or tool_status["baseName"] != "Axe"
+                or tree_tile != (tool_status["tileX"], tool_status["tileY"])
+            ):
                 return
     await gather_items_on_ground(10)
 
@@ -918,14 +927,18 @@ class MoveToCharacter:
             npc = await self.get_character(None)
             if "pathTiles" in npc:
                 async with server.player_status_stream() as travel_path_stream:
-                    path = tiles_to_adjacent_path(npc["pathTiles"], npc["location"], tiles_from_target=tiles_from_target)
+                    path = tiles_to_adjacent_path(
+                        npc["pathTiles"], npc["location"], tiles_from_target=tiles_from_target
+                    )
                     # don't share streams between tasks, otherwise they steal .next() from each other and cause resource starvation issues
                     pathfind_coro = path.travel(travel_path_stream)
                     pathfind_task_wrapper = objective.active_objective.add_task(pathfind_coro)
                     while not pathfind_task_wrapper.done:
                         npc = await self.get_character(npc)
                         if "pathTiles" in npc:
-                            new_path = tiles_to_adjacent_path(npc["pathTiles"], npc["location"], tiles_from_target=tiles_from_target)
+                            new_path = tiles_to_adjacent_path(
+                                npc["pathTiles"], npc["location"], tiles_from_target=tiles_from_target
+                            )
                             path.retarget(new_path)
                     if pathfind_task_wrapper.exception:
                         raise pathfind_task_wrapper.exception

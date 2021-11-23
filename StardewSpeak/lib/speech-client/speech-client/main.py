@@ -123,7 +123,7 @@ def run_engine():
         pass
 
 
-def main(args):
+def main():
     import server
 
     logging.basicConfig(level=logging.INFO)
@@ -144,10 +144,7 @@ def main(args):
     sleep.load_sleep_wake_grammar(True)
     stardew_context = AppContext(title="stardew")
     server.setup_async_loop()
-    map_contexts_to_builder = {
-        (stardew_context,): any_context.rule_builder(),
-    }
-    srabuilder.load_environment_grammars(map_contexts_to_builder)
+    any_context.load_grammar()
     new_game_menu.load_grammar()
     shop_menu.load_grammar()
     container_menu.load_grammar()
@@ -186,4 +183,4 @@ def main(args):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()
