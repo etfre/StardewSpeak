@@ -14,7 +14,14 @@ Some menus, like the new game menu, contain text boxes for <a href="../StardewSp
     <li> <a href="./load-game-menu.md">Load Game Menu</a> </li>
 </ul>
 <ul>
+    <li> <a href="./inventory-page.md">Inventory Page</a> </li>
+    <li> <a href="./skills-page.md">Skills Page</a> </li>
+    <li> <a href="./social-page.md">Social Page</a> </li>
+    <li> <a href="./map.md">Map</a> </li>
     <li> <a href="./crafting-page.md">Crafting Page</a> </li>
+    <li> <a href="./collections-page.md">Collections Page</a> </li>
+    <li> <a href="./options-page.md">Options Page</a> </li>
+    <li> <a href="./crafting-page.md">Exit Game Page</a> </li>
 </ul>
 <ul>
     <li> <a href="./dialogue-menu.md">Dialogue Menu</a> </li>

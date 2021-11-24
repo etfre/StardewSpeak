@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using StardewValley;
 using StardewValley.Menus;
 using System;
 using System.Collections;
@@ -25,8 +26,8 @@ namespace StardewSpeak
             menuProps.upperRightCloseButton = Utils.SerializeClickableCmp(menu.upperRightCloseButton, mousePosition);
             menuProps.containsMouse = containsMouse;
             menuProps.classType = menuName;
-            _ = toCall.Invoke(null, new object[] { menuProps, menu, mousePosition }) as IDictionary<String, Object>;
-            var serialized = new Dictionary<String, Object>();
+            _ = toCall.Invoke(null, new object[] { menuProps, menu, mousePosition }) as IDictionary<String, System.Object>;
+            var serialized = new Dictionary<String, System.Object>();
             foreach (var property in menuProps)
             {
                 serialized[property.Key] = SerializeValue(property.Value, mousePosition);
@@ -56,7 +57,8 @@ namespace StardewSpeak
         public static void Serialize_PurchaseAnimalsMenu(dynamic menu, PurchaseAnimalsMenu pam, Point cursorPosition)
         {
             menu.menuType = "purchaseAnimalsMenu";
-            menu.animalsToPurchase = pam.animalsToPurchase;
+            menu.onFarm = Utils.GetPrivateField(pam, "onFarm");
+            if (!menu.onFarm) menu.animalsToPurchase = pam.animalsToPurchase;
             menu.okButton = pam.okButton;
             menu.namingAnimal = Utils.GetPrivateField(pam, "namingAnimal");
             if (menu.namingAnimal)
@@ -64,7 +66,6 @@ namespace StardewSpeak
                 menu.randomButton = pam.randomButton;
                 menu.doneNamingButton = pam.doneNamingButton;
             }
-            menu.onFarm = Utils.GetPrivateField(pam, "onFarm");
         }
 
         public static void Serialize_BobberBar(dynamic menu, BobberBar bb, Point cursorPosition)
@@ -96,7 +97,81 @@ namespace StardewSpeak
             menu.junimoNoteIcon = igm.junimoNoteIcon;
         }
 
-        public static dynamic SerializeValue(dynamic val, Point cursorPosition)
+        public static void Serialize_GameMenu(dynamic menu, GameMenu gm, Point cursorPosition)
+        {
+            menu.menuType = "gameMenu";
+            menu.currentPage = gm.pages[gm.currentTab];
+            menu.tabs = gm.tabs;
+        }
+        public static void Serialize_SkillsPage(dynamic menu, SkillsPage page, Point mousePosition)
+        {
+            menu.menuType = "skillsPage";
+            menu.skillAreas = page.skillAreas.Where(x => x.hoverText.Length > 0).ToList();
+            menu.skillBars = page.skillBars.Where(x => x.hoverText.Length > 0 && !x.name.Equals("-1")).ToList();
+            menu.specialItems = page.specialItems;
+        }
+        public static void Serialize_CataloguePage(dynamic menu, CataloguePage page, Point mousePosition)
+        {
+            menu.menuType = "cataloguePage";
+        }
+
+        public static void Serialize_SocialPage(dynamic menu, SocialPage page, Point mousePosition)
+        {
+            menu.menuType = "socialPage";
+            menu.downArrow = (ClickableTextureComponent)Utils.GetPrivateField(page, "downButton");
+            menu.upArrow = (ClickableTextureComponent)Utils.GetPrivateField(page, "upButton");
+            menu.slotPosition = (int)Utils.GetPrivateField(page, "slotPosition");
+            //menu.sprites = ((List<ClickableTextureComponent>)Utils.GetPrivateField(page, "sprites")).Skip(menu.slotPosition).Take(5).ToList();
+            menu.characterSlots = page.characterSlots.GetRange(menu.slotPosition, 5);
+        }
+
+        public static void Serialize_InventoryPage(dynamic menu, InventoryPage page, Point mousePosition)
+        {
+            var equipmentIcons = Utils.SerializeComponentList(page.equipmentIcons, mousePosition);
+            menu.menuType = "inventoryPage";
+            menu.equipmentIcons = page.equipmentIcons;
+            menu.inventory = page.inventory;
+            menu.trashCan = page.trashCan;
+        }
+        public static void Serialize_CraftingPage(dynamic menu, CraftingPage page, Point mousePosition)
+        {
+            int currentCraftingPageIndex = (int)Utils.GetPrivateField(page, "currentCraftingPage");
+            var recipePage = page.pagesOfCraftingRecipes[currentCraftingPageIndex];
+            var currentRecipePage = new List<List<dynamic>>();
+            foreach (var pair in recipePage)
+            {
+                var r = pair.Value;
+                var cmp = Utils.SerializeClickableCmp(pair.Key, mousePosition);
+                var recipe = new { r.name, r.description, itemType = r.ItemType };
+                currentRecipePage.Add(new List<dynamic> { cmp, recipe });
+            }
+            menu.menuType = "craftingPage";
+            menu.currentCraftingPageIndex = currentCraftingPageIndex;
+            menu.downArrow = page.downButton;
+            menu.currentRecipePage = currentRecipePage;
+            menu.inventory = page.inventory;
+            menu.trashCan = page.trashCan;
+            menu.upArrow = page.upButton;
+        }
+        public static void Serialize_CollectionsPage(dynamic menu, CollectionsPage page, Point mousePosition)
+        {
+            menu.menuType = "collectionsPage";
+            menu.backButton = page.backButton;
+            menu.forwardButton = page.forwardButton;
+        }
+
+        public static void Serialize_FarmInfoPage(dynamic menu, FarmInfoPage page, Point mousePosition)
+        {
+            menu.menuType = "farmInfoPage";
+        }
+        public static void Serialize_ExitPage(dynamic menu, ExitPage page, Point mousePosition)
+        {
+            menu.menuType = "exitPage";
+            menu.exitToTitle = page.exitToDesktop;
+            menu.exitToTitle = page.exitToTitle;
+        }
+
+    public static dynamic SerializeValue(dynamic val, Point cursorPosition)
         {
             if (val is ClickableComponent || val is ClickableTextureComponent)
             {

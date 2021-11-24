@@ -19,8 +19,7 @@ import argparse
 
 from dragonfly import RecognitionObserver, get_engine, AppContext
 from dragonfly.log import setup_log
-from srabuilder import sleep, environment
-import srabuilder
+from srabuilder import sleep
 
 import approximate_matching
 import any_context, purchase_animals_menu, new_game_menu, shop_menu, container_menu, title_menu, load_game_menu, dialogue_menu, no_menu, any_menu, shipping_bin_menu, carpenter_menu, billboard_menu, geode_menu, museum_menu

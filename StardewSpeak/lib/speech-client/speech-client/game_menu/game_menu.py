@@ -10,7 +10,7 @@ async def focus_box(cmp_name):
 
 def get_page_by_name(menu, page_type):
     current_page = menu['currentPage']
-    is_active = page_type == current_page['type']
+    is_active = page_type == current_page['menuType']
     if not is_active:
         raise menu_utils.InvalidMenuOption()
     return current_page

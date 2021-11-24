@@ -290,19 +290,6 @@ namespace StardewSpeak
                     itemsToGrab,
                 };
             }
-            else if (menu is GameMenu) 
-            {
-                var gm = menu as GameMenu;
-                var tabs = Utils.SerializeComponentList(gm.tabs, mousePosition);
-                var currentPage = Page.SerializePage(gm.pages[gm.currentTab]);
-                var pages = gm.pages.Select(x => Page.SerializePage(x)).ToList();
-                menuTypeObj = new
-                {
-                    menuType = "gameMenu",
-                    currentPage,
-                    tabs,   
-                };
-            }
             else if (menu is InventoryMenu)
             {
                 var im = menu as InventoryMenu;
