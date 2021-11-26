@@ -1,3 +1,4 @@
+import args
 import winsound
 import traceback
 import csv
@@ -29,13 +30,9 @@ import locations
 
 IS_FROZEN = getattr(sys, "frozen", False)
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--python_root", default=None, help="Root python directory")
-args = parser.parse_args()
-if args.python_root is None:
-    args.python_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
-MODELS_DIR = os.path.abspath(os.path.join(args.python_root, "models"))
+
+MODELS_DIR = os.path.abspath(os.path.join(args.args.python_root, "models"))
 
 
 class Observer(RecognitionObserver):
@@ -96,7 +93,7 @@ def ensure_exclusive_mode_disabled_for_default_mic():
     fd, path = tempfile.mkstemp()
     with open(fd, "w") as f:
         pass
-    svv_path = os.path.join(args.python_root, "bin", "SoundVolumeView", "SoundVolumeView.exe")
+    svv_path = os.path.join(args.args.python_root, "bin", "SoundVolumeView", "SoundVolumeView.exe")
     subprocess.run((svv_path, "/scomma", path))
     with open(path) as f:
         reader = csv.DictReader(f, delimiter=",")

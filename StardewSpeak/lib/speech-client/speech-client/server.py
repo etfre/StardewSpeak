@@ -1,4 +1,7 @@
 import time
+import logging
+import args
+import struct
 import async_timeout
 import traceback
 import weakref
@@ -14,14 +17,32 @@ from srabuilder import rules
 
 import constants
 
+if args.args.named_pipe:
+    try:
+        named_pipe_file = open(rf"\\.\pipe\{args.args.named_pipe}", "r+b", 0)
+    except FileNotFoundError:
+        logging.error(f"--named_pipe {args.args.named_pipe} is not running")
+        named_pipe_file = None
+    except OSError:
+        logging.error(f"--named_pipe {args.args.named_pipe} already in use by another Python process")
+        named_pipe_file = None
+else:
+    logging.error(f"--named_pipe argument not set")
+    named_pipe_file = None
+if not named_pipe_file:
+    logging.error("this process will not send messages to C#")
+
+
 loop = None
 streams = {}
 mod_requests = {}
 
-ongoing_tasks = {} # not connected to an objective, slide mouse, swing sword etc
+ongoing_tasks = {}  # not connected to an objective, slide mouse, swing sword etc
+
 
 async def start_ongoing_task(name, str, async_fn):
     await stop_ongoing_task(name)
+
     async def to_call(awaitable):
         try:
             await awaitable
@@ -29,26 +50,31 @@ async def start_ongoing_task(name, str, async_fn):
             raise
         finally:
             del ongoing_tasks[name]
+
     wrapped_coro = async_fn()
     coro = to_call(wrapped_coro)
     task_wrapper = TaskWrapper(coro)
     ongoing_tasks[task_wrapper]
-    
+
 
 async def stop_ongoing_task(name):
     task = ongoing_tasks.get(name)
     if task:
         await task.cancel()
 
+
 async def stop_all_ongoing_tasks():
     cancel_awaitables = [t.cancel() for t in ongoing_tasks.values()]
     await asyncio.gather(*cancel_awaitables)
 
+
 async def stop_everything():
     import game
     import objective
+
     await asyncio.gather(stop_all_ongoing_tasks(), objective.cancel_active_objective())
     await game.release_all_keys()
+
 
 class Stream:
     def __init__(self, name, data=None):
@@ -113,7 +139,6 @@ class Stream:
         self.future = loop.create_future()
         return self.latest_value
 
-
     async def wait(self, condition, timeout=None):
         async with async_timeout.timeout(timeout):
             item = await self.current()
@@ -121,32 +146,42 @@ class Stream:
                 item = await self.next()
             return item
 
+
 class StreamClosedError(Exception):
     pass
+
 
 def player_status_stream(ticks=1):
     return Stream("UPDATE_TICKED", data={"type": "PLAYER_STATUS", "ticks": ticks})
 
+
 def tool_status_stream(ticks=1):
     return Stream("UPDATE_TICKED", data={"type": "TOOL_STATUS", "ticks": ticks})
+
 
 def characters_at_location_stream(ticks=1):
     return Stream("UPDATE_TICKED", data={"type": "CHARACTERS_AT_LOCATION", "ticks": ticks})
 
+
 def animals_at_location_stream(ticks=1):
     return Stream("UPDATE_TICKED", data={"type": "ANIMALS_AT_LOCATION", "ticks": ticks})
+
 
 def player_items_stream(ticks=1):
     return Stream("UPDATE_TICKED", data={"type": "PLAYER_ITEMS", "ticks": ticks})
 
+
 def on_warped_stream(ticks=1):
     return Stream("ON_WARPED", data={"type": "PLAYER_STATUS", "ticks": ticks})
+
 
 def on_terrain_feature_list_changed_stream():
     return Stream("ON_TERRAIN_FEATURE_LIST_CHANGED", data={})
 
+
 def on_menu_changed_stream():
     return Stream("ON_MENU_CHANGED", data={})
+
 
 def create_stream_next_task(awaitable):
     async def to_call(awaitable):
@@ -169,6 +204,7 @@ def _do_create_task(awaitable, *args, **kw):
 def setup_async_loop():
     global loop
     loop = asyncio.new_event_loop()
+
     def async_setup(l):
         l.set_exception_handler(exception_handler)
         l.create_task(menu_changed())
@@ -186,48 +222,57 @@ def setup_async_loop():
     async_thread = threading.Thread(target=async_setup, daemon=True, args=(loop,))
     async_thread.start()
 
+
 async def request_active_menu_with_delay():
     import menu_utils
+
     await asyncio.sleep(1)
     menu = await menu_utils.get_active_menu()
     return menu
 
+
 async def menu_changed():
     import game
-    
+
     async with on_menu_changed_stream() as mcs:
         while True:
             changed_event_coro, active_menu_coro = mcs.next(), request_active_menu_with_delay()
-            done, pending = await asyncio.wait([changed_event_coro, active_menu_coro], return_when=asyncio.FIRST_COMPLETED)
+            done, pending = await asyncio.wait(
+                [changed_event_coro, active_menu_coro], return_when=asyncio.FIRST_COMPLETED
+            )
             done_task = list(done)[0]
             done_coro = done_task.get_coro()
             if done_coro == changed_event_coro:
-                new_menu = done_task.result()['newMenu']
+                new_menu = done_task.result()["newMenu"]
             else:
                 new_menu = done_task.result()
-            current_menu = game.context_variables['ACTIVE_MENU']
+            current_menu = game.context_variables["ACTIVE_MENU"]
             is_new_menu = not is_same_menu(current_menu, new_menu)
             game.set_context_menu(new_menu)
             if is_new_menu:
                 await stop_everything()
+
 
 def is_same_menu(menu1, menu2):
     if (menu1, menu2) == (None, None):
         return True
     if (menu1, menu2).count(None) == 1:
         return False
-    if menu1['menuType'] != menu2['menuType']:
+    if menu1["menuType"] != menu2["menuType"]:
         return False
-    if menu1['menuType'] == 'titleMenu':
-        return is_same_menu(menu1['subMenu'], menu2['subMenu'])
-    if menu1.get('onFarm') != menu2.get('onFarm'): # carpenter menu, likely others
+    if menu1["menuType"] == "titleMenu":
+        return is_same_menu(menu1["subMenu"], menu2["subMenu"])
+    if menu1.get("onFarm") != menu2.get("onFarm"):  # carpenter menu, likely others
         return False
     return True
 
+
 async def populate_initial_game_event():
     import game
-    game_event = await request('GET_LATEST_GAME_EVENT')
-    game.set_context_value('GAME_EVENT', game_event)
+
+    game_event = await request("GET_LATEST_GAME_EVENT")
+    game.set_context_value("GAME_EVENT", game_event)
+
 
 async def heartbeat(timeout):
     while True:
@@ -256,8 +301,8 @@ async def async_readline():
         line = await fut
         on_message(line)
 
-class RequestBuilder:
 
+class RequestBuilder:
     def __init__(self, request_type: str, data=None):
         self.request_type = request_type
         self.data = {} if data is None else data
@@ -281,25 +326,34 @@ class RequestBuilder:
             else:
                 msg = {"type": msg[0], data: msg[1]}
             batched.append(msg)
-        return cls('REQUEST_BATCH', batched)
+        return cls("REQUEST_BATCH", batched)
 
 
 def request_batch(messages):
-    msg_type = 'REQUEST_BATCH'
+    msg_type = "REQUEST_BATCH"
     return request(msg_type, messages)
+
 
 def request(msg_type, msg=None):
     return RequestBuilder(msg_type, msg).request()
 
-def send_message(msg_type, msg=None):
+
+def send_message(msg_type: str, msg=None):
     msg_id = str(uuid.uuid4())
     full_msg = {"type": msg_type, "id": msg_id, "data": msg}
-    print(json.dumps(full_msg), flush=True)
+    msg_str = json.dumps(full_msg)
+    # print(msg_str, flush=True)
+    if named_pipe_file:
+        named_pipe_file.write(struct.pack("I", len(msg_str)) + msg_str.encode("utf8"))  # Write str length and str
+        named_pipe_file.seek(0)
+    else:
+        print(msg_str)
     return full_msg
 
 
 def on_message(msg_str):
     import events
+
     try:
         msg = json.loads(msg_str)
     except json.JSONDecodeError:
@@ -344,28 +398,35 @@ def on_message(msg_str):
     else:
         raise RuntimeError(f"Unhandled message type from mod: {msg_type}")
 
+
 async def set_mouse_position(x: int, y: int, from_viewport=False):
-    await request('SET_MOUSE_POSITION', {'x': x, 'y': y, 'from_viewport': from_viewport})
+    await request("SET_MOUSE_POSITION", {"x": x, "y": y, "from_viewport": from_viewport})
+
 
 async def get_mouse_position():
-    return await request('GET_MOUSE_POSITION')
+    return await request("GET_MOUSE_POSITION")
+
 
 async def set_mouse_position_relative(x: int, y: int):
-    await request('SET_MOUSE_POSITION_RELATIVE', {'x': x, 'y': y})
+    await request("SET_MOUSE_POSITION_RELATIVE", {"x": x, "y": y})
 
-async def mouse_click(btn='left', count=1):
+
+async def mouse_click(btn="left", count=1):
     for i in range(count):
-        await request('MOUSE_CLICK', {'btn': btn})
+        await request("MOUSE_CLICK", {"btn": btn})
         if i + 1 < count:
             await asyncio.sleep(0.1)
 
-def log(*a, sep=' ', level=1):
+
+def log(*a, sep=" ", level=1):
     to_send = [x if isinstance(x, str) else json.dumps(x) for x in a]
-    return send_message("LOG", {'value': sep.join(to_send), 'level': level})
+    return send_message("LOG", {"value": sep.join(to_send), "level": level})
+
 
 async def sleep_forever():
     while True:
         await asyncio.sleep(3600)
+
 
 async def cancel_task(task):
     task.cancel()
@@ -376,7 +437,6 @@ async def cancel_task(task):
 
 
 class TaskWrapper:
-
     def __init__(self, coro):
         self.result = None
         self.exception = None

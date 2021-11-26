@@ -25,6 +25,8 @@ namespace StardewSpeak
     public class ModEntry : Mod
     {
         internal static bool FeedLocation = false;
+        public static ConcurrentQueue<dynamic> UpdateTickedRequestQueue;
+        public static ConcurrentQueue<dynamic> UpdateTickingRequestQueue;
         SpeechEngine speechEngine;
         EventHandler eventHandler;
         public static ModConfig Config;
@@ -46,7 +48,9 @@ namespace StardewSpeak
         {
             ModEntry.helper = helper;
             ModEntry.Config = this.Helper.ReadConfig<ModConfig>();
-            this.speechEngine = new SpeechEngine(OnSpeechEngineExited);
+            ModEntry.UpdateTickedRequestQueue = new ConcurrentQueue<dynamic>();
+            ModEntry.UpdateTickingRequestQueue = new ConcurrentQueue<dynamic>();
+            this.speechEngine = new SpeechEngine(OnSpeechEngineInput, OnSpeechEngineExited);
             this.eventHandler = new EventHandler(helper, this.speechEngine);
             ModEntry.log = this.Monitor.Log;
             this.speechEngine.LaunchProcess();
@@ -62,6 +66,25 @@ namespace StardewSpeak
             helper.Events.GameLoop.SaveLoaded += this.OnSaveLoaded;
             helper.Events.World.LocationListChanged += this.OnLocationListChanged;
             helper.ConsoleCommands.Add("mimic", "Mimic speech recognition, e.g. \"mimic load game\"", Command_MimicSpeech);
+        }
+
+        private void OnSpeechEngineInput(dynamic msg) 
+        {
+            string msgType = msg.type;
+            if (msgType == "LOG")
+            {
+                string toLog = msg.data.value;
+                LogLevel logLevel = msg.data.level;
+                ModEntry.Log($"Speech engine message: {toLog}", logLevel);
+            }
+            //else if (msgType == "UPDATE_HELD_BUTTONS" || msgType == "PRESS_KEY") 
+            //{
+            //    UpdateTickedRequestQueue.Enqueue(msg);
+            //}
+            else
+            {
+                UpdateTickedRequestQueue.Enqueue(msg);
+            }
         }
 
         private void Command_MimicSpeech(string name, string[] actions) 
@@ -198,7 +221,7 @@ namespace StardewSpeak
 
         private void GameLoop_UpdateTicking(object sender, UpdateTickingEventArgs e)
         {
-            RespondToQueuedRequests(speechEngine.UpdateTickingRequestQueue, "UpdateTicking");
+            RespondToQueuedRequests(ModEntry.UpdateTickingRequestQueue, "UpdateTicking");
             foreach (var btn in Input.Held.Values)
             {
                 Input.SetDown(btn);
@@ -210,14 +233,14 @@ namespace StardewSpeak
         {
             if (Game1.activeClickableMenu is ShippingMenu)
             {
-                RespondToQueuedRequests(speechEngine.UpdateTickedRequestQueue, "UnvalidatedUpdateTicked");
+                RespondToQueuedRequests(UpdateTickedRequestQueue, "UnvalidatedUpdateTicked");
             }
         }
 
         private void GameLoop_UpdateTicked(object sender, UpdateTickedEventArgs e)
         {
             eventHandler.CheckNewInGameEvent();
-            RespondToQueuedRequests(speechEngine.UpdateTickedRequestQueue, "UpdateTicked");
+            RespondToQueuedRequests(UpdateTickedRequestQueue, "UpdateTicked");
             foreach (var pair in ModEntry.Streams)
             {
                 var id = pair.Key;

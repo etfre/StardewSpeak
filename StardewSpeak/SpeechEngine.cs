@@ -25,8 +25,7 @@ namespace StardewSpeak
         Process Proc;
         private readonly object StandardInLock;
         public readonly object RequestQueueLock;
-        public ConcurrentQueue<dynamic> UpdateTickedRequestQueue;
-        public ConcurrentQueue<dynamic> UpdateTickingRequestQueue;
+        public readonly Action<dynamic> OnMessage;
         public readonly Action<Process, TaskCompletionSource<int>> OnExit;
         public HashSet<string> UnvalidatedModeAllowableMessageTypes = new HashSet<string> { 
             "HEARTBEAT", "REQUEST_BATCH", "NEW_STREAM", "STOP_STREAM", "GET_ACTIVE_MENU", "GET_MOUSE_POSITION",
@@ -34,30 +33,34 @@ namespace StardewSpeak
             "PRESS_KEY"
         };
         public bool Running = false;
+        public SpeechProcessNamedPipe NamedPipe;
 
-        public SpeechEngine(Action<Process, TaskCompletionSource<int>> onExit)
+
+        public SpeechEngine(Action<dynamic> onMessage, Action<Process, TaskCompletionSource<int>> onExit)
         {
+            this.OnMessage = onMessage;
             this.OnExit = onExit;
             this.StandardInLock = new object();
             this.RequestQueueLock = new object();
-            this.UpdateTickedRequestQueue = new ConcurrentQueue<dynamic>();
-            this.UpdateTickingRequestQueue = new ConcurrentQueue<dynamic>();
+            this.NamedPipe = new SpeechProcessNamedPipe(this.OnNamedPipeInput);
+
         }
 
         public void LaunchProcess()
         {
             string rootDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string namedPipe = this.NamedPipe.FileName;
             #if DEBUG
                 ModEntry.Log("Running Python client in debug mode", LogLevel.Trace);
                 string pythonRoot = Path.Combine(rootDir, @"StardewSpeak\lib\speech-client");
                 string executable = Path.Combine(pythonRoot, @"Scripts\python.exe");
                 string main = Path.Combine(pythonRoot, @"speech-client\main.py");
-                string arguments = $"\"{main}\" --python_root \"{pythonRoot}\"";
+                string arguments = $"\"{main}\" --python_root \"{pythonRoot}\" --named_pipe \"{namedPipe}\"";
 #else
                 ModEntry.Log("Running Python client in release mode", LogLevel.Trace);
                 string pythonRoot = Path.Combine(rootDir, @"lib\speech-client\dist");
                 string executable = Path.Combine(pythonRoot, @"speech-client.exe");
-                string arguments = $"--python_root \"{pythonRoot}\"";
+                string arguments = $"--python_root \"{pythonRoot}\" --named_pipe \"{namedPipe}\"";
 #endif
             Task.Factory.StartNew(() => RunProcessAsync("\"" + executable + "\"", arguments));
         }
@@ -106,7 +109,6 @@ namespace StardewSpeak
             var tcs = new TaskCompletionSource<int>();
 
             process.Exited += (s, ea) => HandleExited(process, tcs);
-            process.OutputDataReceived += (s, ea) => this.OnMessage(ea.Data);
             process.ErrorDataReceived += (s, ea) => this.onError("ERR: " + ea.Data);
 
             bool started = process.Start();
@@ -120,34 +122,6 @@ namespace StardewSpeak
             process.BeginOutputReadLine();
             process.BeginErrorReadLine();
             return tcs.Task;
-        }
-
-        void OnMessage(string messageText)
-        {
-            dynamic msg;
-            try
-            {
-                msg = JsonConvert.DeserializeObject(messageText);
-            }
-            catch
-            {
-                return;
-            }
-                string msgType = msg.type;
-            if (msgType == "LOG")
-            {
-                string toLog = msg.data.value;
-                LogLevel logLevel = msg.data.level;
-                ModEntry.Log($"Speech engine message: {toLog}", logLevel);
-            }
-            //else if (msgType == "UPDATE_HELD_BUTTONS" || msgType == "PRESS_KEY") 
-            //{
-            //    UpdateTickedRequestQueue.Enqueue(msg);
-            //}
-            else
-            {
-                UpdateTickedRequestQueue.Enqueue(msg);
-            }
         }
 
         public void RespondToMessage(dynamic msg, string gameLoopContext) 
@@ -174,7 +148,19 @@ namespace StardewSpeak
             this.SendResponse(msgId, resp.body, resp.error);
         }
 
-         
+        void OnNamedPipeInput(string messageText) 
+        {
+            dynamic msg;
+            try
+            {
+                msg = JsonConvert.DeserializeObject(messageText);
+            }
+            catch
+            {
+                return;
+            }
+            this.OnMessage(msg);
+        }
 
         void onError(string data)
         {
@@ -199,6 +185,7 @@ namespace StardewSpeak
             {
                 try
                 {
+                    //ModEntry.NamedPipe.Send(msgStr);
                     this.Proc.StandardInput.WriteLine(msgStr);
                 }
                 catch (System.InvalidOperationException e) 
