@@ -21,6 +21,7 @@ namespace StardewSpeak
         public SpeechProcessNamedPipe(Action<string> onMessage)
         {
             this.OnMessage = onMessage;
+            this.FileName = System.Guid.NewGuid().ToString();
             this.OpenStream();
             Task.Factory.StartNew(() => this.Run());
         }
@@ -53,8 +54,6 @@ namespace StardewSpeak
 
         void OpenStream() 
         {
-            this.FileName = System.Guid.NewGuid().ToString();
-            this.FileName = "a";
             // Open the named pipe.
             this.Stream = new NamedPipeServerStream(this.FileName);
             this.Reader = new BinaryReader(this.Stream);

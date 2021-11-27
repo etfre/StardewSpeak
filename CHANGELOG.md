@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+* Add compatibility for SMAPI >= 3.12.0
+
+
 ## 0.0.10 (August 2, 2021)
 
 * Add the ability to specify types of debris in the clear debris command
