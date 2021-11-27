@@ -185,8 +185,7 @@ namespace StardewSpeak
             {
                 try
                 {
-                    //ModEntry.NamedPipe.Send(msgStr);
-                    this.Proc.StandardInput.WriteLine(msgStr);
+                    this.NamedPipe.SendQueue.Add(msgStr);
                 }
                 catch (System.InvalidOperationException e) 
                 {
