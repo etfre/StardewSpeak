@@ -1,4 +1,5 @@
-﻿using StardewModdingAPI;
+﻿using Microsoft.Xna.Framework;
+using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Buildings;
@@ -68,19 +69,26 @@ namespace StardewSpeak
             foreach (var warp in from.warps)
             {
                 if (!MapNamesToLocations.ContainsKey(warp.TargetName)) continue;
-                var targetLoc = MapNamesToLocations[warp.TargetName];
-                var lc = new LocationConnection(warp.TargetName, warp.X, warp.Y, false, targetLoc.IsOutdoors);
-                connections.Add(lc);
+                GameLocation targetLoc = Game1.getLocationFromName(warp.TargetName);
+                if (targetLoc != null)
+                {
+                    var lc = new LocationConnection(warp.TargetName, warp.X, warp.Y, false, targetLoc.IsOutdoors);
+                    connections.Add(lc);
+                }
             }
             foreach (var doorDict in from.doors)
             {
                 foreach (var door in doorDict)
                 {
-                    var point = door.Key;
-                    var locName = door.Value;
-                    var targetLoc = MapNamesToLocations[locName];
-                    var lc = new LocationConnection(locName, point.X, point.Y, true, targetLoc.IsOutdoors);
-                    connections.Add(lc);
+                    Point point = door.Key;
+                    string locName = door.Value;
+                   // var targetLoc = MapNamesToLocations[locName];
+                    GameLocation targetLoc = Game1.getLocationFromName(locName);
+                    if (targetLoc != null)
+                    {
+                        var lc = new LocationConnection(locName, point.X, point.Y, true, targetLoc.IsOutdoors);
+                        connections.Add(lc);
+                    }
                 }
             }
             if (from is StardewValley.Locations.BuildableGameLocation)
