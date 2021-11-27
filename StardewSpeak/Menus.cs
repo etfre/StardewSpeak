@@ -156,8 +156,13 @@ namespace StardewSpeak
         public static void Serialize_CollectionsPage(dynamic menu, CollectionsPage page, Point mousePosition)
         {
             menu.menuType = "collectionsPage";
-            menu.backButton = page.backButton;
-            menu.forwardButton = page.forwardButton;
+            int currentPageNumber = page.currentPage;
+            var currentCollection = page.collections[page.currentTab];
+            var currentPage = currentCollection[currentPageNumber];
+            if (currentPageNumber > 0) menu.backButton = page.backButton;
+            if (currentPageNumber < currentCollection.Count - 1) menu.forwardButton = page.forwardButton;
+            menu.currentPage = currentPage;
+            menu.tabs = page.sideTabs.Values.ToList();
         }
 
         public static void Serialize_FarmInfoPage(dynamic menu, FarmInfoPage page, Point mousePosition)
