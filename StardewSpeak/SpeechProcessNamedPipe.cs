@@ -7,6 +7,7 @@ using System.IO;
 using System.IO.Pipes;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace StardewSpeak
@@ -21,6 +22,7 @@ namespace StardewSpeak
         public Action<string> OnMessage;
         public bool Connected = false;
         public BlockingCollection<string> SendQueue = new BlockingCollection<string>();
+        public CancellationTokenSource WriteCancel = new CancellationTokenSource();
         public SpeechProcessNamedPipe(Action<string> onMessage)
         {
             this.OnMessage = onMessage;
@@ -64,7 +66,19 @@ namespace StardewSpeak
                 this.WriterStream.WaitForConnection();
                 while (true)
                 {
-                    if (next == null) next = this.SendQueue.Take();
+                    if (next == null)
+                    {
+                        try
+                        {
+                            next = this.SendQueue.Take(this.WriteCancel.Token);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                            this.RestartWriter();
+                            this.WriteCancel = new CancellationTokenSource();
+                            break;
+                        }
+                    }
                     try
                     {
                         this.SendMessage(next);
@@ -72,10 +86,7 @@ namespace StardewSpeak
                     catch (EndOfStreamException)
                     {
                         Console.WriteLine("Client disconnected.");
-                        this.WriterStream.Close();
-                        this.WriterStream.Dispose();
-                        this.WriterStream = new NamedPipeServerStream(this.FileName + "Writer");
-                        this.Writer = new BinaryWriter(this.WriterStream);
+                        this.RestartWriter();
                         break;
                     }
                     next = null;
@@ -90,14 +101,25 @@ namespace StardewSpeak
             this.Reader = new BinaryReader(this.Stream);
         }
 
-        public string ReadNext() 
+        void RestartWriter()
+        {
+            if (this.WriterStream != null)
+            {
+                this.WriterStream.Close();
+                this.WriterStream.Dispose();
+            }
+            this.WriterStream = new NamedPipeServerStream(this.FileName + "Writer");
+            this.Writer = new BinaryWriter(this.WriterStream);
+        }
+
+        string ReadNext() 
         {
             var len = (int)this.Reader.ReadUInt32();            // Read string length
             var str = new string(this.Reader.ReadChars(len));    // Read string
             return str;
         }
 
-        public void SendMessage(string message) 
+        void SendMessage(string message) 
         {
             var buf = Encoding.UTF8.GetBytes(message);     // Get ASCII byte array     
             this.Writer.Write((uint)buf.Length);                // Write string length

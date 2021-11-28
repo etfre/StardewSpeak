@@ -17,21 +17,7 @@ from srabuilder import rules
 
 import constants
 
-if args.args.named_pipe:
-    try:
-        named_pipe_file = open(rf"\\.\pipe\{args.args.named_pipe}Reader", "r+b", 0)
-    except FileNotFoundError:
-        logging.error(f"--named_pipe {args.args.named_pipe} is not running")
-        named_pipe_file = None
-    except OSError:
-        logging.error(f"--named_pipe {args.args.named_pipe} already in use by another Python process")
-        named_pipe_file = None
-else:
-    logging.error(f"--named_pipe argument not set")
-    named_pipe_file = None
-if not named_pipe_file:
-    logging.error("this process will not send messages to C#")
-
+named_pipe_file = open(rf"\\.\pipe\{args.args.named_pipe}Reader", "r+b", 0)
 named_pipe_file_read = open(rf"\\.\pipe\{args.args.named_pipe}Writer", "r+b", 0)
 
 loop = None
@@ -295,7 +281,6 @@ async def async_readline():
             n = struct.unpack("I", named_pipe_file_read.read(4))[0]  # Read str length
             line = named_pipe_file_read.read(n).decode("utf8")  # Read str
             named_pipe_file_read.seek(0)
-            # line = sys.stdin.readline()
             loop.call_soon_threadsafe(fut.set_result, line)
 
     threading.Thread(target=_run, daemon=True, args=(q,)).start()
@@ -303,8 +288,7 @@ async def async_readline():
         fut = loop.create_future()
         q.put(fut)
         line = await fut
-        if line != "ping":
-            on_message(line)
+        on_message(line)
 
 
 class RequestBuilder:

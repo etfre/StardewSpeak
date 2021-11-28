@@ -105,7 +105,7 @@ namespace StardewSpeak
                 Game1.addHUDMessage(new HUDMessage("Restarting speech recognition...", HUDMessage.newQuest_type));
                 ModEntry.log("Kaldi engine exited. Restarting in 5 seconds...", LogLevel.Debug);
                 System.Threading.Thread.Sleep(5000);
-                this.speechEngine.LaunchProcess();
+                this.speechEngine.Restart();
             }
             else 
             {
@@ -144,7 +144,7 @@ namespace StardewSpeak
                 }
                 else 
                 {
-                    this.speechEngine.LaunchProcess();
+                    this.speechEngine.Restart();
                 }
             }
             else if (ModEntry.Config.StopKey.JustPressed())

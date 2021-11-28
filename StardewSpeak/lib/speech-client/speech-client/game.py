@@ -47,7 +47,7 @@ tool_for_object = {
     constants.BOULDER: {"name": constants.PICKAXE, "level": 2},
     constants.HOLLOW_LOG: {"name": constants.AXE, "level": 2},
     constants.STUMP: {"name": constants.AXE, "level": 1},
-    # constants.METEORITE: {'name': constants.AXE, 'level': 3},
+    constants.METEORITE: {'name': constants.PICKAXE, 'level': 3},
 }
 
 DEBRIS = (constants.WEEDS, constants.TWIG, constants.STONE)
@@ -318,6 +318,7 @@ async def pathfind_to_resource(tiles, location, stream, cutoff=-1):
 
 
 async def move_to_location(location: str, stream: server.Stream):
+    server.log(f"moving to {location}")
     await ensure_not_moving()
     route = await request_route(location)
     for i, location in enumerate(route[:-1]):

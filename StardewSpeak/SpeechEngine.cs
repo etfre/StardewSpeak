@@ -43,7 +43,13 @@ namespace StardewSpeak
             this.StandardInLock = new object();
             this.RequestQueueLock = new object();
             this.NamedPipe = new SpeechProcessNamedPipe(this.OnNamedPipeInput);
+        }
 
+        public void Restart() 
+        {
+            this.NamedPipe.WriteCancel.Cancel();
+            Thread.Sleep(1000);
+            this.LaunchProcess();
         }
 
         public void LaunchProcess()
