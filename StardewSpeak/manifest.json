@@ -5,6 +5,6 @@
   "Description": "Play Stardew Valley by voice",
   "UniqueID": "evfredericksen.StardewSpeak",
   "EntryDll": "StardewSpeak.dll",
-  "MinimumApiVersion": "3.9.1",
+  "MinimumApiVersion": "3.13.2",
   "UpdateKeys": ["GitHub:evfredericksen/StardewSpeak"]
 }

@@ -23,7 +23,6 @@ namespace StardewSpeak
     public class SpeechEngine
     {
         Process Proc;
-        private readonly object StandardInLock;
         public readonly object RequestQueueLock;
         public readonly Action<dynamic> OnMessage;
         public readonly Action<Process, TaskCompletionSource<int>> OnExit;
@@ -40,15 +39,14 @@ namespace StardewSpeak
         {
             this.OnMessage = onMessage;
             this.OnExit = onExit;
-            this.StandardInLock = new object();
             this.RequestQueueLock = new object();
             this.NamedPipe = new SpeechProcessNamedPipe(this.OnNamedPipeInput);
         }
 
         public void Restart() 
         {
-            this.NamedPipe.WriteCancel.Cancel();
-            Thread.Sleep(1000);
+            this.NamedPipe.StartShutdown();
+            this.NamedPipe = new SpeechProcessNamedPipe(this.OnNamedPipeInput);
             this.LaunchProcess();
         }
 
@@ -115,7 +113,6 @@ namespace StardewSpeak
             var tcs = new TaskCompletionSource<int>();
 
             process.Exited += (s, ea) => HandleExited(process, tcs);
-            process.ErrorDataReceived += (s, ea) => this.onError("ERR: " + ea.Data);
 
             bool started = process.Start();
             if (!started)
@@ -168,14 +165,8 @@ namespace StardewSpeak
             this.OnMessage(msg);
         }
 
-        void onError(string data)
-        {
-            ModEntry.Log($"Speech engine error: {data}", LogLevel.Debug);
-        }
-
         void SendResponse(string id, object value = null, object error = null) 
         {
-            //var respData = new ResponseData(id, value);
             var respData = new { id, value, error };
             this.SendMessage("RESPONSE", respData);
         }
@@ -187,17 +178,7 @@ namespace StardewSpeak
             var settings = new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
             settings.Error = (serializer, err) => err.ErrorContext.Handled = true;
             string msgStr = JsonConvert.SerializeObject(message, Formatting.None, settings);
-            lock (this.StandardInLock) 
-            {
-                try
-                {
-                    this.NamedPipe.SendQueue.Add(msgStr);
-                }
-                catch (System.InvalidOperationException e) 
-                {
-                    this.Running = false;
-                }
-            }
+            this.NamedPipe.SendQueue.Add(msgStr);
             return true;
         }
 
@@ -206,24 +187,9 @@ namespace StardewSpeak
             this.SendMessage("EVENT", msg);
         }
     }
-    class MessageToEngine 
-    {
-        public string type;
-        public object data;
-        public MessageToEngine(string type, object data) 
-        {
-            this.type = type;
-            this.data = data;
-        }
-    }
-    class ResponseData
-    {
-        public string id;
-        public object value;
-        public ResponseData(string id, object value)
-        {
-            this.id = id;
-            this.value = value;
-        }
-    }
+
+    public record MessageToEngine(string type, object data);
+
+    public record ResponseData(string id, object value);
+
 }

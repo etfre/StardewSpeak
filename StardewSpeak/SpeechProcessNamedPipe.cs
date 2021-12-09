@@ -15,19 +15,22 @@ namespace StardewSpeak
     public class SpeechProcessNamedPipe
     {
         public string FileName;
-        BinaryReader Reader;
-        BinaryWriter Writer;
-        NamedPipeServerStream Stream;
-        NamedPipeServerStream WriterStream;
-        public Action<string> OnMessage;
-        public bool Connected = false;
-        public BlockingCollection<string> SendQueue = new BlockingCollection<string>();
-        public CancellationTokenSource WriteCancel = new CancellationTokenSource();
+        readonly BinaryReader Reader;
+        readonly BinaryWriter Writer;
+        readonly NamedPipeServerStream ReaderStream;
+        readonly NamedPipeServerStream WriterStream;
+        readonly Action<string> OnMessage;
+        public bool DoShutdown = false;
+        bool ReadClosed = false;
+        bool WriteClosed = false;
+        public BlockingCollection<string> SendQueue = new();
+        readonly CancellationTokenSource WriteCancel = new();
         public SpeechProcessNamedPipe(Action<string> onMessage)
         {
             this.OnMessage = onMessage;
             this.FileName = System.Guid.NewGuid().ToString();
-            this.OpenStream();
+            this.ReaderStream = new NamedPipeServerStream(this.FileName + "Reader");
+            this.Reader = new BinaryReader(this.ReaderStream);
             this.WriterStream = new NamedPipeServerStream(this.FileName + "Writer");
             this.Writer = new BinaryWriter(this.WriterStream);
             Task.Factory.StartNew(() => this.RunReader());
@@ -35,82 +38,94 @@ namespace StardewSpeak
 
         }
 
-        public void RunReader()
+        void RunReader()
         {
+            this.ReaderStream.WaitForConnection();
+            if (this.DoShutdown) return;
             while (true)
             {
-                this.Stream.WaitForConnection();
-                while (true)
+                try
                 {
-                    try
-                    {
-                        string msg = this.ReadNext();
-                        this.OnMessage(msg);
-                    }
-                    catch (EndOfStreamException)
-                    {
-                        Console.WriteLine("Client disconnected.");
-                        this.Stream.Close();
-                        this.Stream.Dispose();
-                        this.OpenStream();
-                        break;
-                    }
+                    string msg = this.ReadNext();
+                    this.OnMessage(msg);
+                }
+                catch (EndOfStreamException)
+                {
+                    this.ReaderStream.Close();
+                    this.ReaderStream.Dispose();
+                    break;
                 }
             }
+            this.ReadClosed = true;
+            this.StartShutdown();
         }
-        public void RunWriter()
+        void RunWriter()
         {
             string next = null;
+            this.WriterStream.WaitForConnection();
+            if (this.DoShutdown) return;
             while (true)
             {
-                this.WriterStream.WaitForConnection();
-                while (true)
+                if (next == null)
                 {
-                    if (next == null)
-                    {
-                        try
-                        {
-                            next = this.SendQueue.Take(this.WriteCancel.Token);
-                        }
-                        catch (OperationCanceledException)
-                        {
-                            this.RestartWriter();
-                            this.WriteCancel = new CancellationTokenSource();
-                            break;
-                        }
-                    }
                     try
                     {
-                        this.SendMessage(next);
+                        next = this.SendQueue.Take(this.WriteCancel.Token);
                     }
-                    catch (EndOfStreamException)
+                    catch (OperationCanceledException)
                     {
-                        Console.WriteLine("Client disconnected.");
-                        this.RestartWriter();
                         break;
                     }
-                    next = null;
+                }
+                try
+                {
+                    this.SendMessage(next);
+                }
+                catch (Exception ex)
+                {
+                    if (ex is EndOfStreamException || ex is IOException)
+                    {
+                        Console.WriteLine("Client disconnected.");
+                        break;
+                    }
+                    throw;
+                }
+                next = null;
+            }
+            this.WriteClosed = true;
+            this.StartShutdown();
+        }
+
+        public void StartShutdown() 
+        {
+            if (this.DoShutdown) return;
+            ModEntry.Log("Shutting down StardewSpeak named pipe", LogLevel.Debug);
+            this.DoShutdown = true;
+            if (!this.ReadClosed) this.ConnectToPipeServer(this.ReaderStream, this.FileName + "Reader");
+            if (!this.WriteClosed)
+            {
+                this.WriteCancel.Cancel();
+                this.ConnectToPipeServer(this.WriterStream, this.FileName + "Writer");
+            }
+        }
+
+        void ConnectToPipeServer(NamedPipeServerStream stream, string name) 
+        {
+            if (stream.IsConnected) return;
+            // unblock stream.WaitForConnection()
+            using (NamedPipeClientStream npcs = new(name))
+            {
+                try
+                {
+                    npcs.Connect(500);
+                }
+                catch (TimeoutException) 
+                {
+                
                 }
             }
         }
 
-        void OpenStream() 
-        {
-            // Open the named pipe.
-            this.Stream = new NamedPipeServerStream(this.FileName + "Reader");
-            this.Reader = new BinaryReader(this.Stream);
-        }
-
-        void RestartWriter()
-        {
-            if (this.WriterStream != null)
-            {
-                this.WriterStream.Close();
-                this.WriterStream.Dispose();
-            }
-            this.WriterStream = new NamedPipeServerStream(this.FileName + "Writer");
-            this.Writer = new BinaryWriter(this.WriterStream);
-        }
 
         string ReadNext() 
         {
