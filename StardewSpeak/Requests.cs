@@ -53,10 +53,10 @@ namespace StardewSpeak
                     return null;
                 case "REQUEST_BATCH":
                     var body = new List<dynamic>();
-                    foreach (dynamic batchedRequest in data) 
+                    foreach (dynamic batchedRequest in data)
                     {
                         string batchedMsgType = batchedRequest.type;
-                        dynamic batchedMsgData =JsonConvert.DeserializeObject(batchedRequest.data.ToString());
+                        dynamic batchedMsgData = JsonConvert.DeserializeObject(batchedRequest.data.ToString());
                         body.Add(HandleRequestMessage(batchedMsgType, batchedMsgData));
                     }
                     return body;
@@ -72,15 +72,15 @@ namespace StardewSpeak
                     return GameState.PlayerPosition;
                 case "PLAYER_ITEMS":
                     return GameState.PlayerItems();
-                case "GET_MONSTER_TARGET": 
+                case "GET_MONSTER_TARGET":
                     {
                         var chars = new List<dynamic>();
                         var monsters = GameState.CharactersAtLocation(Game1.currentLocation).
                             Select(x => x.isMonster).
                             OrderByDescending(x => x.isInvisible);
-                        foreach (var monster in monsters) 
-                        { 
-                            
+                        foreach (var monster in monsters)
+                        {
+
                         }
                         return null;
                     }
@@ -125,7 +125,7 @@ namespace StardewSpeak
                         var path = Pathfinder.Pathfinder.FindPath(player.currentLocation, playerX, playerY, targetX, targetY, cutoff);
                         return path;
                     }
-                case "PATH_TO_EDGE": 
+                case "PATH_TO_EDGE":
                     {
                         int direction = data.direction;
                         Layer layer = player.currentLocation.map.Layers[0];
@@ -133,27 +133,27 @@ namespace StardewSpeak
                         int testX = playerX;
                         int testY = 0;
                         int increment = 1;
-                        if (direction == 1) 
+                        if (direction == 1)
                         {
                             isXAxis = true;
                             testX = layer.LayerWidth - 1;
                             testY = playerY;
                             increment = -1;
                         }
-                        else if (direction == 2) 
+                        else if (direction == 2)
                         {
                             testX = playerX;
                             testY = layer.LayerHeight - 1;
                             increment = -1;
                         }
-                        else if (direction == 3) 
+                        else if (direction == 3)
                         {
                             isXAxis = true;
                             testX = 0;
                             testY = playerY;
                         }
                         dynamic path = null;
-                        while (testX != playerX || testY != playerY) 
+                        while (testX != playerX || testY != playerY)
                         {
                             if (Pathfinder.Pathfinder.isTileWalkable(location, testX, testY))
                             {
@@ -170,7 +170,7 @@ namespace StardewSpeak
                         }
                         return path;
                     }
-                case "GET_NEAREST_CHARACTER": 
+                case "GET_NEAREST_CHARACTER":
                     {
                         string characterType = data.characterType; // animal, npc, monster etc
                         string getBy = data.getBy;
@@ -215,7 +215,8 @@ namespace StardewSpeak
                                 ThenBy(x => Utils.DistanceBeteenPoints(x.position[0], x.position[1], fromPositionX, fromPositionY)).
                                 ToList();
                         }
-                        else {
+                        else
+                        {
                             throw new InvalidDataException();
                         }
                         if (requiredName != null) sorted = sorted.Where(x => x.name == requiredName).ToList();
@@ -236,7 +237,7 @@ namespace StardewSpeak
                         int fromY = data.y;
                         int cutoff = data.cutoff;
                         var tiles = Pathfinder.Pathfinder.FindPath(player.currentLocation, fromX, fromY, playerX, playerY, cutoff);
-                        return  new { tiles, location = player.currentLocation.NameOrUniqueName };
+                        return new { tiles, location = player.currentLocation.NameOrUniqueName };
                     }
                 case "BED_TILE":
                     {
@@ -244,7 +245,7 @@ namespace StardewSpeak
                         {
                             var fh = Game1.player.currentLocation as StardewValley.Locations.FarmHouse;
                             var bed = fh.getBedSpot();
-                            return  new { tileX = bed.X, tileY = bed.Y };
+                            return new { tileX = bed.X, tileY = bed.Y };
                         }
                         return null;
                     }
@@ -254,7 +255,7 @@ namespace StardewSpeak
                         {
                             var farm = Game1.player.currentLocation as StardewValley.Farm;
                             var sb = Game1.getFarm().GetStarterShippingBinLocation();
-                            return  new { tileX = (int)sb.X, tileY = (int)sb.Y, width = 2, height = 1 };
+                            return new { tileX = (int)sb.X, tileY = (int)sb.Y, width = 2, height = 1 };
                         }
                         return null;
                     }
@@ -271,7 +272,7 @@ namespace StardewSpeak
                         GameLocation fromLocation = player.currentLocation;
                         return Routing.MapConnections[fromLocation.NameOrUniqueName];
                     }
-                case "GET_LADDERS_DOWN": 
+                case "GET_LADDERS_DOWN":
                     {
                         var ladders = new List<dynamic>();
                         xTile.Tiles.TileArray tiles = location.Map.GetLayer("Buildings").Tiles;
@@ -283,7 +284,7 @@ namespace StardewSpeak
                                 if (buildingsLayer.Tiles[x, y] != null)
                                 {
                                     int currentTileIndex = buildingsLayer.Tiles[x, y].TileIndex;
-                                    if (currentTileIndex == 173) 
+                                    if (currentTileIndex == 173)
                                     {
                                         ladders.Add(new { tileX = x, tileY = y });
                                     }
@@ -305,7 +306,7 @@ namespace StardewSpeak
                         }
                         return null;
                     }
-                case "SHOW_HUD_MESSAGE": 
+                case "SHOW_HUD_MESSAGE":
                     {
                         string message = data.message;
                         int mType = data.msgType;
@@ -382,7 +383,7 @@ namespace StardewSpeak
                     }
                 case "GET_WATER_TILES":
                     {
-                        bool[,] allTiles = Game1.player.currentLocation.waterTiles;
+                        WaterTiles.WaterTileData[,] allTiles = Game1.player.currentLocation.waterTiles.waterTiles;
                         var wt = new List<List<int>>();
                         if (allTiles != null)
                         {
@@ -392,7 +393,7 @@ namespace StardewSpeak
                             {
                                 for (int y = 0; y < height; y++)
                                 {
-                                    bool isWaterTile = allTiles[x, y];
+                                    bool isWaterTile = allTiles[x, y].isWater;
                                     if (isWaterTile)
                                     {
                                         var tile = new List<int> { x, y };
@@ -409,10 +410,9 @@ namespace StardewSpeak
                     {
                         return new List<int> { Game1.getMouseX(), Game1.getMouseY() };
                     }
-                case "TTS_SPEAK": 
+                case "TTS_SPEAK":
                     {
                         string text = data.text;
-                        TTS.Speak(text);
                         return true;
                     }
                 case "SET_MOUSE_POSITION":
@@ -474,12 +474,12 @@ namespace StardewSpeak
                         Input.SetDown(key);
                         return true;
                     }
-                case "GET_ALL_GAME_LOCATIONS": 
+                case "GET_ALL_GAME_LOCATIONS":
                     {
                         var locs = Routing.AllGameLocations(includeBuildings: false).Select(x => x.NameOrUniqueName).ToList();
                         return locs;
                     }
-                case "GET_LATEST_GAME_EVENT": 
+                case "GET_LATEST_GAME_EVENT":
                     {
                         return Serialization.SerializeGameEvent(Game1.CurrentEvent);
                     }
