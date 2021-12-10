@@ -16,8 +16,6 @@ namespace StardewSpeak
     {
         private static bool Ready = false;
         public static Dictionary<string, List<LocationConnection>> MapConnections = new Dictionary<string, List<LocationConnection>>();
-        public static Dictionary<string, GameLocation> MapNamesToLocations = new Dictionary<string, GameLocation>();
-        public static Dictionary<string, Building> MapNamesToBuildings = new Dictionary<string, Building>();
 
         public class LocationConnection {
             public string TargetName;
@@ -37,8 +35,6 @@ namespace StardewSpeak
         public static void Reset()
         {
             Ready = false;
-            MapNamesToLocations.Clear();
-            MapNamesToBuildings.Clear();
             MapConnections = BuildRouteCache();
             Ready = true;
         }
@@ -66,9 +62,8 @@ namespace StardewSpeak
         private static List<LocationConnection> LocationConnections(GameLocation from)
         {
             var connections = new List<LocationConnection>();
-            foreach (var warp in from.warps)
+            foreach (Warp warp in from.warps)
             {
-                if (!MapNamesToLocations.ContainsKey(warp.TargetName)) continue;
                 GameLocation targetLoc = Game1.getLocationFromName(warp.TargetName);
                 if (targetLoc != null)
                 {
@@ -82,7 +77,6 @@ namespace StardewSpeak
                 {
                     Point point = door.Key;
                     string locName = door.Value;
-                   // var targetLoc = MapNamesToLocations[locName];
                     GameLocation targetLoc = Game1.getLocationFromName(locName);
                     if (targetLoc != null)
                     {
@@ -111,13 +105,7 @@ namespace StardewSpeak
         public static Dictionary<string, List<LocationConnection>> BuildRouteCache()
         {
             var routeCache = new Dictionary<string, List<LocationConnection>>();
-            MapNamesToLocations.Clear();
             var locations = AllGameLocations();
-            foreach (var gl in locations)
-            {
-                string locName = gl.NameOrUniqueName;
-                MapNamesToLocations.Add(locName, gl);
-            }
             foreach (var gl in locations)
             {
                 string locName = gl.NameOrUniqueName;
@@ -153,11 +141,6 @@ namespace StardewSpeak
             return allLocations;
         }
 
-        public static List<string> GetRoute(string destination)
-        {
-            return GetRoute(Game1.player.currentLocation.NameOrUniqueName, destination);
-        }
-
         public static List<string> GetRoute(string start, string destination)
         {
             return SearchRoute(start, destination);
@@ -187,15 +170,7 @@ namespace StardewSpeak
             while (queue.Count > 0)
             {
                 var currentLocationName = queue.Dequeue();
-                dynamic currentLocation;
-                if (MapNamesToLocations.ContainsKey(currentLocationName))
-                {
-                    currentLocation = MapNamesToLocations[currentLocationName];
-                }
-                else 
-                {
-                    currentLocation = MapNamesToBuildings[currentLocationName];
-                }
+                GameLocation currentLocation = Game1.getLocationFromName(currentLocationName);
                 if (validateTarget(currentLocation)) 
                 {
                     target = currentLocationName;
