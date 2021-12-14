@@ -76,7 +76,7 @@ mapping = {
     "<direction_keys>": objective.objective_action(objective.HoldKeyObjective, "direction_keys"),
     "<direction_nums> <n>": objective.objective_action(objective.MoveNTilesObjective, "direction_nums", "n"),
     "start swinging [tool]": objective.objective_action(objective.HoldKeyObjective, constants.USE_TOOL_BUTTON),
-    "item <positive_index>": df_utils.async_action(game.equip_item_by_index, 'positive_index'),
+    "[equip] item <positive_index>": df_utils.async_action(game.equip_item_by_index, 'positive_index'),
     "equip [melee] weapon": df_utils.async_action(game.equip_melee_weapon),
     "equip <items>": df_utils.async_action(game.equip_item_by_name, "items"),
     "nearest <items> [<positive_index>]": objective.function_objective(go_to_object, 'items', 'positive_index'),

@@ -47,7 +47,7 @@ tool_for_object = {
     constants.BOULDER: {"name": constants.PICKAXE, "level": 2},
     constants.HOLLOW_LOG: {"name": constants.AXE, "level": 2},
     constants.STUMP: {"name": constants.AXE, "level": 1},
-    constants.METEORITE: {'name': constants.PICKAXE, 'level': 3},
+    constants.METEORITE: {"name": constants.PICKAXE, "level": 3},
 }
 
 DEBRIS = (constants.WEEDS, constants.TWIG, constants.STONE)
@@ -599,7 +599,7 @@ async def get_tools():
 async def swing_tool():
     with server.tool_status_stream(ticks=1) as tss:
         async with press_and_release(constants.USE_TOOL_BUTTON):
-            await tss.wait(lambda t: t["inUse"], timeout=10)
+            await tss.wait(lambda t: t["inUse"], timeout=1)
         await tss.wait(lambda t: not t["inUse"], timeout=10)
 
 
@@ -637,13 +637,13 @@ async def navigate_tiles(
             items = await get_items(player_status["location"])
             if not items:
                 return
-            if not items_ok(previous_items, items):
-                raise RuntimeError("Unable to modify current tile")
-            previous_items = items
-            item_path = None
             sorted_items = sorted(items, key=lambda t: sort_items(start_tile, current_tile, t, player_status))
             if index is not None:
                 sorted_items = [sorted_items[index]]
+            if not items_ok(previous_items, items):
+                raise RuntimeError("Unable to modify current tile")
+            previous_items = sorted_items
+            item_path = None
             for item in sorted_items:
                 item_tile = (item["tileX"], item["tileY"])
                 if current_tile == item_tile and not allow_action_on_same_tile:
@@ -792,28 +792,33 @@ async def get_grabble_visible_objects(loc):
     return filtered_objs
 
 
+def disallow_previous_item(previous, current):
+    server.log(previous, current, level=2)
+    return not previous or previous == current
+
+
 async def dig_artifacts():
     await equip_item_by_name(constants.HOE)
     getter = visible_wrapper(get_visible_artifact_spots)
-    async for item in navigate_tiles(getter, generic_next_item_key):
+    async for item in navigate_tiles(getter, generic_next_item_key, items_ok=disallow_previous_item):
         await equip_item_by_name(constants.HOE)
         await swing_tool()
 
 
 async def gather_crafted_items():
-    async for item in navigate_tiles(get_ready_crafted, generic_next_item_key):
+    async for item in navigate_tiles(get_ready_crafted, generic_next_item_key, items_ok=disallow_previous_item):
         await do_action()
 
 
 async def gather_forage_items():
     getter = visible_wrapper(get_forage_visible_items)
-    async for item in navigate_tiles(getter, generic_next_item_key):
+    async for item in navigate_tiles(getter, generic_next_item_key, items_ok=disallow_previous_item):
         await do_action()
 
 
 async def gather_objects():
     getter = visible_wrapper(get_grabble_visible_objects)
-    async for item in navigate_tiles(getter, generic_next_item_key):
+    async for item in navigate_tiles(getter, generic_next_item_key, items_ok=disallow_previous_item):
         await do_action()
 
 

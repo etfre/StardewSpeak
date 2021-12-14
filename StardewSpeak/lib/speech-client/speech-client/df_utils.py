@@ -87,7 +87,7 @@ ten_through_twelve = {
 digitMap = {
     "zero": 0,
     "one": 1,
-    "too": 2,
+    "two": 2,
     "three": 3,
     "four": 4,
     "five": 5,
@@ -99,7 +99,7 @@ digitMap = {
 
 nonZeroDigitMap = {
     "one": 1,
-    "too": 2,
+    "two": 2,
     "three": 3,
     "four": 4,
     "five": 5,

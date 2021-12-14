@@ -31,16 +31,15 @@ namespace StardewSpeak
             this.FileName = System.Guid.NewGuid().ToString();
             this.ReaderStream = new NamedPipeServerStream(this.FileName + "Reader");
             this.Reader = new BinaryReader(this.ReaderStream);
+            this.ReaderStream.BeginWaitForConnection(this.RunReader, null);
             this.WriterStream = new NamedPipeServerStream(this.FileName + "Writer");
             this.Writer = new BinaryWriter(this.WriterStream);
-            Task.Factory.StartNew(() => this.RunReader());
-            Task.Factory.StartNew(() => this.RunWriter());
+            this.WriterStream.BeginWaitForConnection(this.RunWriter, null);
 
         }
 
-        void RunReader()
+        void RunReader(object state)
         {
-            this.ReaderStream.WaitForConnection();
             if (this.DoShutdown) return;
             while (true)
             {
@@ -59,23 +58,19 @@ namespace StardewSpeak
             this.ReadClosed = true;
             this.StartShutdown();
         }
-        void RunWriter()
+        void RunWriter(object state)
         {
-            string next = null;
-            this.WriterStream.WaitForConnection();
             if (this.DoShutdown) return;
+            string next;
             while (true)
             {
-                if (next == null)
+                try
                 {
-                    try
-                    {
-                        next = this.SendQueue.Take(this.WriteCancel.Token);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        break;
-                    }
+                    next = this.SendQueue.Take(this.WriteCancel.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
                 }
                 try
                 {
@@ -90,8 +85,9 @@ namespace StardewSpeak
                     }
                     throw;
                 }
-                next = null;
             }
+            this.WriterStream.Close();
+            this.WriterStream.Dispose();
             this.WriteClosed = true;
             this.StartShutdown();
         }

@@ -14,7 +14,7 @@ namespace StardewSpeak
     public class EventHandler
     {
         public Dictionary<string, string> MapKeysToButtons;
-        public List<string> buttons = new List<string> { "moveUpButton", "moveLeftButton", "moveDownButton", "moveRightButton" };
+        public List<string> buttons = new() { "moveUpButton", "moveLeftButton", "moveDownButton", "moveRightButton" };
         private readonly IModHelper modHelper;
         private readonly SpeechEngine speechEngine;
         private dynamic PreviousEvent = null;

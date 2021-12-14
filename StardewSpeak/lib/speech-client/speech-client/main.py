@@ -32,7 +32,6 @@ import locations
 IS_FROZEN = getattr(sys, "frozen", False)
 
 
-
 MODELS_DIR = os.path.abspath(os.path.join(args.args.python_root, "models"))
 
 
@@ -59,7 +58,10 @@ def add_base_user_lexicon(model_dir: str):
 def download_model(write_dir):
     import game
 
-    model_url = "https://github.com/daanzu/kaldi-active-grammar/releases/download/v1.8.0/kaldi_model_daanzu_20200905_1ep-biglm.zip"
+    model_url = (
+        "https://github.com/daanzu/kaldi-active-grammar/releases/download/v3.0.0/kaldi_model_daanzu_20211030-biglm.zip"
+    )
+
     game.show_hud_message(f"Downloading speech recognition model. This may take a few minutes...", 2)
     url_open = urllib.request.urlopen(model_url)
     with ZipFile(BytesIO(url_open.read())) as my_zip_file:
@@ -175,7 +177,6 @@ def main():
     if not IS_FROZEN:
         src = os.path.join(model_dir, "user_lexicon.txt")
         dst = os.path.abspath(os.path.join(os.path.abspath(__file__), "..", "..", "user_lexicon.txt"))
-        server.log(src, dst)
         shutil.copyfile(src, dst)
     run_engine()
 

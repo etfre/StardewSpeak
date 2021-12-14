@@ -28,7 +28,6 @@ def generate_word_phenomes(word):
 
 def get_phenome_match(word, i):
     import server
-    server.log(word)
     char = word[i]
     char2 = word[i:i+2]
     if char == 'a':

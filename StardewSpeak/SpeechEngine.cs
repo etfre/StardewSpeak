@@ -80,9 +80,6 @@ namespace StardewSpeak
                     UseShellExecute = false,
                     CreateNoWindow = true,
 
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    RedirectStandardInput = true,
                 },
                 EnableRaisingEvents = true
             })

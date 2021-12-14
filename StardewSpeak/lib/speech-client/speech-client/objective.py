@@ -164,7 +164,7 @@ class HarvestCropsObjective(Objective):
         return harvestable_crop_tiles
 
     async def run(self):
-        async for crop in game.navigate_tiles(self.get_harvestable_crops, game.generic_next_item_key):
+        async for crop in game.navigate_tiles(self.get_harvestable_crops, game.generic_next_item_key, items_ok=game.disallow_previous_item):
             await game.do_action()
 
 
@@ -243,7 +243,7 @@ class PlantSeedsOrFertilizerObjective(Objective):
         return [x for x in hoe_dirt_tiles if x['canPlantThisSeedHere']]
 
     async def run(self):
-        async for hdt in game.navigate_tiles(self.get_hoe_dirt, game.generic_next_item_key):
+        async for hdt in game.navigate_tiles(self.get_hoe_dirt, game.generic_next_item_key, items_ok=game.disallow_previous_item):
             await game.do_action()
 
 class HoePlotObjective(Objective):
@@ -268,7 +268,7 @@ class HoePlotObjective(Objective):
                 y = start_tile[1] + j * y_increment
                 plot_tiles.add((x, y))
         get_next_diggable = functools.partial(game.get_diggable_tiles, plot_tiles)
-        async for hdt in game.navigate_tiles(get_next_diggable, game.generic_next_item_key, allow_action_on_same_tile=False):
+        async for hdt in game.navigate_tiles(get_next_diggable, game.generic_next_item_key, allow_action_on_same_tile=False, items_ok=game.disallow_previous_item):
             await game.equip_item_by_name(constants.HOE)
             await game.swing_tool()
 
