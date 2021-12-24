@@ -885,6 +885,17 @@ async def go_inside():
             indoors_connections.sort(key=lambda t: distance_between_points(current_tile, (t["X"], t["Y"])))
             await pathfind_to_next_location(indoors_connections[0]["TargetName"], pss)
 
+async def go_outside():
+    outdoor_connections = [x for x in (await get_location_connections()) if x["TargetIsOutdoors"]]
+    if outdoor_connections:
+        with server.player_status_stream() as pss:
+            player_status = await pss.next()
+            current_location = player_status["location"]
+            if not current_location['TargetIsOutdoors']:
+                current_tile = await get_current_tile(pss)
+                outdoor_connections.sort(key=lambda t: distance_between_points(current_tile, (t["X"], t["Y"])))
+                await pathfind_to_next_location(outdoor_connections[0]["TargetName"], pss)
+
 
 async def get_animals(animals_stream, player_stream):
     animals, player_status = await asyncio.gather(animals_stream.next(), player_stream.next())
