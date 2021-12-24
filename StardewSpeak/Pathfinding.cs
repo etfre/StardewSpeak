@@ -89,6 +89,7 @@ namespace StardewSpeak.Pathfinder
 				int layerWidth = location.map.Layers[0].LayerWidth;
 				int layerHeight = location.map.Layers[0].LayerHeight;
 				Character character = Game1.player;
+				List<int> searchDirections = SearchDirections(startPoint, endPoint);
 				while (!openList.IsEmpty())
 				{
 					PathNode currentNode = openList.Dequeue();
@@ -98,7 +99,7 @@ namespace StardewSpeak.Pathfinder
 					}
 					closedList.Add(currentNode.id);
 					int ng = (byte)(currentNode.g + 1);
-					for (int i = 0; i < 4; i++)
+					foreach (int i in searchDirections)
 					{
 						int nx = currentNode.x + Directions[i, 0];
 						int ny = currentNode.y + Directions[i, 1];
@@ -114,7 +115,7 @@ namespace StardewSpeak.Pathfinder
 							}
 							else
 							{
-								PathNode neighbor = new PathNode(nx, ny, currentNode);
+								PathNode neighbor = new(nx, ny, currentNode);
 								neighbor.g = (byte)(currentNode.g + 1);
 								float f = ng + (Math.Abs(endPoint.X - nx) + Math.Abs(endPoint.Y - ny));
 								closedList.Add(nid);
@@ -161,6 +162,26 @@ namespace StardewSpeak.Pathfinder
 			return !location.isCollidingPosition(rect, Game1.viewport, true, 0, glider: false, Game1.player, pathfinding: true);
 		}
 
+		public static List<int> SearchDirections(Point start, Point end)
+		{
+			int xDiff = end.X - start.X;
+			int yDiff = end.Y - start.Y;
+			int first;
+			int second;
+			if (Math.Abs(yDiff) > Math.Abs(xDiff)) // north or south
+			{
+				first = yDiff > 0 ? 2 : 0;
+				second = xDiff > 0 ? 1 : 3;
+			}
+			else // east or west
+			{
+				first = xDiff > 0 ? 1 : 3;
+				second = yDiff > 0 ? 2 : 0;
+			}
+			int third = second < 2 ? second + 2 : second - 2;
+			int fourth = first < 2 ? first + 2 : first - 2;
+			return new List<int>() { first, second, third, fourth };
+		}
 	}
 
 	class PriorityQueue<T>

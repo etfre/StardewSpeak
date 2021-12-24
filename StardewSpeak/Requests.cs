@@ -109,7 +109,8 @@ namespace StardewSpeak
                     {
                         GameLocation fromLocation = player.currentLocation;
                         string toLocationStr = data.toLocation;
-                        GameLocation toLocation = Routing.FindLocationByName(toLocationStr);
+                        GameLocation toLocation = Game1.getLocationFromName(toLocationStr);
+                        //throw new InvalidOperationException($"Missing location {name}")
                         return Routing.GetRoute(fromLocation.NameOrUniqueName, toLocation.NameOrUniqueName);
                     }
                 case "ROUTE_INDOORS":
@@ -263,7 +264,7 @@ namespace StardewSpeak
                     {
                         GameLocation fromLocation = player.currentLocation;
                         string toLocationStr = data.toLocation;
-                        GameLocation toLocation = Routing.FindLocationByName(toLocationStr);
+                        GameLocation toLocation = Game1.getLocationFromName(toLocationStr);
                         var locationConnection = Routing.FindLocationConnection(fromLocation, toLocation);
                         return locationConnection;
                     }

@@ -39,16 +39,6 @@ namespace StardewSpeak
             Ready = true;
         }
 
-        public static GameLocation FindLocationByName(string name)
-        {
-            foreach (var gl in AllGameLocations()) {
-                if (gl.NameOrUniqueName == name) {
-                    return gl;
-                }
-            }
-            throw new InvalidOperationException($"Missing location {name}");
-        }
-
         public static LocationConnection FindLocationConnection(GameLocation from, GameLocation to) {
             var connections = MapConnections[from.NameOrUniqueName];
             string toName = to.NameOrUniqueName;
