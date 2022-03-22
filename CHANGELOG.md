@@ -2,8 +2,8 @@
 
 ## Unreleased
 
-* Add compatibility for SMAPI >= 3.13.2
-* Update mimimum SMAPI version to 3.13.2
+* Add compatibility for SMAPI >= 3.13.4
+* Update mimimum SMAPI version to 3.13.4
 
 ## 0.0.10 (August 2, 2021)
 
