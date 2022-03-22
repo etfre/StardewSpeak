@@ -138,14 +138,7 @@ namespace StardewSpeak
             if (ModEntry.Config.RestartKey.JustPressed())
             {
                 this.RestartSpeechClientOnExit = true;
-                if (this.speechEngine.Running)
-                {
-                    this.speechEngine.Exit();
-                }
-                else 
-                {
-                    this.speechEngine.Restart();
-                }
+                this.speechEngine.Exit();
             }
             else if (ModEntry.Config.StopKey.JustPressed())
             {

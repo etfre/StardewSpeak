@@ -26,7 +26,8 @@ namespace StardewSpeak
         public readonly object RequestQueueLock;
         public readonly Action<dynamic> OnMessage;
         public readonly Action<Process, TaskCompletionSource<int>> OnExit;
-        public HashSet<string> UnvalidatedModeAllowableMessageTypes = new HashSet<string> { 
+        public HashSet<string> UnvalidatedModeAllowableMessageTypes = new()
+        { 
             "HEARTBEAT", "REQUEST_BATCH", "NEW_STREAM", "STOP_STREAM", "GET_ACTIVE_MENU", "GET_MOUSE_POSITION",
             "SET_MOUSE_POSITION", "SET_MOUSE_POSITION_RELATIVE", "MOUSE_CLICK", "UPDATE_HELD_BUTTONS", "RELEASE_ALL_KEYS",
             "PRESS_KEY"
@@ -94,9 +95,12 @@ namespace StardewSpeak
         {
             try
             {
-                Proc.Kill();
+                this.Proc.Kill();
             }
-            catch (SystemException e) { }
+            catch (SystemException e) 
+            {
+                var x = 1;
+            }
         }
 
         private void HandleExited(Process process, TaskCompletionSource<int> tcs)
