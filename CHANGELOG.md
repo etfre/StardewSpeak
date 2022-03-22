@@ -1,6 +1,6 @@
 # Release notes
 
-## Unreleased
+## 0.0.11 (March 21, 2022)
 
 * Add compatibility for SMAPI >= 3.13.4
 * Update mimimum SMAPI version to 3.13.4
