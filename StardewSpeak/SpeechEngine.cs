@@ -67,7 +67,15 @@ namespace StardewSpeak
                 string executable = Path.Combine(pythonRoot, @"speech-client.exe");
                 string arguments = $"--python_root \"{pythonRoot}\" --named_pipe \"{namedPipe}\"";
 #endif
-            Task.Factory.StartNew(() => RunProcessAsync("\"" + executable + "\"", arguments));
+            if (!File.Exists(executable))
+            {
+                ModEntry.Log($"Missing executable {executable}", LogLevel.Error);
+            }
+            else
+            {
+                ModEntry.Log($"Launching Python client '{executable} {arguments}'", LogLevel.Debug);
+                Task.Factory.StartNew(() => RunProcessAsync("\"" + executable + "\"", arguments));
+            }
         }
 
         public async Task<int> RunProcessAsync(string fileName, string args)

@@ -80,7 +80,7 @@ namespace StardewSpeak
                 {
                     if (ex is EndOfStreamException || ex is IOException)
                     {
-                        Console.WriteLine("Client disconnected.");
+                        ModEntry.Log("Client disconnected.", LogLevel.Debug);
                         break;
                     }
                     throw;

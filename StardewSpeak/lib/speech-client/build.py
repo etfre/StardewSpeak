@@ -225,7 +225,10 @@ def zipdir(zipfile_ob: zipfile.ZipFile, folder: str, prefix: str = ""):
 
 
 def build_release(app_root):
-    msbuild = r"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe"
+    pf86 = os.environ['ProgramFiles(x86)']
+    vswhere = fr'{pf86}\Microsoft Visual Studio\Installer\vswhere.exe'
+    cmd = f'''"{vswhere}" -latest -prerelease -products * -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe'''
+    msbuild = subprocess.run(cmd, stdout=subprocess.PIPE).stdout.decode("utf-8").strip()
     sln = os.path.join(app_root, "StardewSpeak.sln")
     subprocess.run([msbuild, sln, "/p:Configuration=Release", "/t:Clean;Rebuild"])
     python_dist = os.path.join(app_root, "StardewSpeak", "lib", "speech-client", "dist")
@@ -288,9 +291,8 @@ def main():
     app_root = os.path.abspath(os.path.join("..", "..", ".."))
     if "c#" in steps:
         build_release(app_root)
-    if "zip" in steps:
+    if 'zip' in steps:
         build_release_zip(app_root)
-
 
 if __name__ == "__main__":
     main()

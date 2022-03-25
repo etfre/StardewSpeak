@@ -1,3 +1,4 @@
+
 import args
 import logger
 import winsound
@@ -8,16 +9,11 @@ import shutil
 import subprocess
 import os.path
 import os
-import threading
-import time
 import logging
 import sys
-from pathlib import Path
 from io import BytesIO
 from zipfile import ZipFile
 import urllib.request
-import shlex
-import argparse
 
 from dragonfly import RecognitionObserver, get_engine, AppContext
 from dragonfly.log import setup_log
@@ -76,7 +72,8 @@ def setup_engine(silence_timeout, model_dir):
                 f"Cannot find kaldi model at {os.path.abspath(model_dir)} using executable path {__file__}"
             )
         download_model(MODELS_DIR)
-    add_base_user_lexicon(model_dir)
+    if not IS_FROZEN:
+        add_base_user_lexicon(model_dir)
     # Set any configuration options here as keyword arguments.
     engine = get_engine(
         "kaldi",

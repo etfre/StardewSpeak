@@ -16,9 +16,12 @@ from dragonfly import *
 from srabuilder import rules
 
 import constants
-
-named_pipe_file = open(rf"\\.\pipe\{args.args.named_pipe}Reader", "r+b", 0)
-named_pipe_file_read = open(rf"\\.\pipe\{args.args.named_pipe}Writer", "r+b", 0)
+if args.args.named_pipe:
+    named_pipe_file = open(rf"\\.\pipe\{args.args.named_pipe}Reader", "r+b", 0)
+    named_pipe_file_read = open(rf"\\.\pipe\{args.args.named_pipe}Writer", "r+b", 0)
+else:
+    named_pipe_file = None
+    named_pipe_file_read = None
 
 loop = None
 streams = {}
