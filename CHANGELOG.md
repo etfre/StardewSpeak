@@ -3,6 +3,7 @@
 ## 0.0.12 (March 21, 2022)
 
 * Fix release bug related to copying user lexicon file
+* Fix release bug related to .NET 5 file structure
 * Minor logging and build improvements
 ## 0.0.11 (March 21, 2022)
 

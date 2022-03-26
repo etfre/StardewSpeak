@@ -213,14 +213,15 @@ def parse_command_line(parser):
     return args
 
 
-def zipdir(zipfile_ob: zipfile.ZipFile, folder: str, prefix: str = ""):
-    parent_dir = os.path.abspath(os.path.join(folder, ".."))
+def zipdir(zipfile_ob: zipfile.ZipFile, folder: str, prefix: str = "", exclude=()):
+    parent_dir = os.path.abspath(os.path.join(folder))
     for root, dirs, files in os.walk(folder):
-        print(root, files)
         start_path = os.path.relpath(root, parent_dir)
         for path in files:
-            full_path = os.path.join(root, path)
             arcname = os.path.join(prefix, start_path, path)
+            if arcname in exclude:
+                continue
+            full_path = os.path.join(root, path)
             zipfile_ob.write(full_path, arcname=arcname)
 
 
@@ -239,12 +240,14 @@ def build_release(app_root):
 
 def build_release_zip(app_root):
     source_root = os.path.join(app_root, "StardewSpeak")
-    with open(os.path.join(source_root, "manifest.json")) as f:
+    manifest_path = os.path.join(source_root, "manifest.json")
+    with open(manifest_path) as f:
         manifest = json.load(f)
     release_dir = os.path.join(app_root, "StardewSpeak", "bin", "release")
     zip_name = os.path.join(release_dir, f'{manifest["Name"]} {manifest["Version"]}.zip')
     with zipfile.ZipFile(zip_name, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as myzip:
-        zipdir(myzip, os.path.join(release_dir, "net5.0"), prefix=os.path.join("StardewSpeak"))
+        zipdir(myzip, os.path.join(release_dir, "net5.0"), prefix=os.path.join("StardewSpeak"), exclude=(os.path.join('StardewSpeak', 'StardewSpeak.deps.json')))
+        myzip.write(manifest_path, os.path.join("StardewSpeak", "manifest.json"))
 
 
 def main():
