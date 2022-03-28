@@ -22,7 +22,7 @@ async def focus_item(page, item):
 async def focus_item_dictation(page, text):
     items_on_page = [x[1]["name"] for x in page["currentRecipePage"]]
     best_idx = approximate_matching.do_match(str(text), items_on_page)
-    if best_idx:
+    if best_idx is not None:
         cmp = page["currentRecipePage"][best_idx][0]
         await menu_utils.focus_component(cmp)
 

@@ -1,4 +1,3 @@
-
 import args
 import logger
 import winsound
@@ -21,7 +20,7 @@ from srabuilder import sleep
 
 import approximate_matching
 import any_context, purchase_animals_menu, new_game_menu, shop_menu, container_menu, title_menu, load_game_menu, dialogue_menu, no_menu, any_menu, shipping_bin_menu, carpenter_menu, billboard_menu, geode_menu, museum_menu
-from game_menu import game_menu, crafting_page, inventory_page, exit_page
+from game_menu import game_menu, crafting_page, inventory_page, exit_page, skills_page
 import letter_viewer_menu, quest_log_menu, animal_query_menu, coop_menu, title_text_input_menu, cutscene, level_up_menu, shipped_items_menu, fishing_menu, mine_elevator_menu
 import locations
 
@@ -148,6 +147,7 @@ def main():
     crafting_page.load_grammar()
     inventory_page.load_grammar()
     exit_page.load_grammar()
+    skills_page.load_grammar()
     title_menu.load_grammar()
     load_game_menu.load_grammar()
     dialogue_menu.load_grammar()

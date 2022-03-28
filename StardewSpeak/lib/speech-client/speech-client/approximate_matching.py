@@ -1,13 +1,21 @@
 import os
+import server
 import dragonfly as df
 
 map_word_to_phenomes = {}
 
+def match_component(text: str,cmp_list, key: str):
+    items_on_page = [x for x in cmp_list if x and x[key]]
+    best_idx = do_match(str(text), [x[key] for x in items_on_page])
+    if best_idx is not None:
+        cmp = items_on_page[best_idx]
+        return cmp
+
 def do_match(text: str, options, threshold=0.1):
     text_phenomes = get_phenomes(text.lower())
-    phenomes = [get_phenomes(x.lower()) for x in options]
+    phenomes = [get_phenomes(x.lower()) if x else x for x in options]
     if phenomes:
-        scores = [(string_similarity(x, text_phenomes), i) for (i, x) in enumerate(phenomes)]
+        scores = [(string_similarity(x, text_phenomes), i) if x else (-1, i) for (i, x) in enumerate(phenomes)]
         top_score, top_index = max(scores, key=lambda x: x[0])
         if top_score > threshold:
             return top_index

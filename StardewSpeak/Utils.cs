@@ -631,6 +631,7 @@ namespace StardewSpeak
                 cmp.name,
                 containsMouse,
                 cmp.visible,
+                hoverText = cmp is ClickableTextureComponent ? (cmp as ClickableTextureComponent).hoverText : "",
             };
             if (adjustUiMode)
             {

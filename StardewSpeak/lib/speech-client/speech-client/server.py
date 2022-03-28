@@ -207,13 +207,18 @@ def setup_async_loop():
     def exception_handler(loop, context):
         # This only works when there are no references to the above tasks.
         # https://bugs.python.org/issue39256y
-        get_engine().disconnect()
-        sys.exit(context.get("exception", "bad"))
-        return
-        raise context["exception"]
+        # get_engine().disconnect()
+        # sys.exit(context.get("exception", "bad"))
+        # return
+        raise context.get("exception", "task shutdown error")
 
     async_thread = threading.Thread(target=async_setup, daemon=True, args=(loop,))
     async_thread.start()
+
+
+def graceful_exit(msg):
+    get_engine().disconnect()
+    sys.exit(msg)
 
 
 async def request_active_menu_with_delay():
@@ -294,8 +299,7 @@ async def async_readline():
                 named_pipe_file_read.seek(0)
                 loop.call_soon_threadsafe(fut.set_result, line)
             except:
-                get_engine().disconnect()
-                sys.exit('pipe disconnected')
+                graceful_exit("pipe disconnected")
 
     threading.Thread(target=_run, daemon=True, args=(q,)).start()
     while True:
@@ -347,8 +351,11 @@ def send_message(msg_type: str, msg=None):
     msg_str = json.dumps(full_msg)
     # print(msg_str, flush=True)
     if named_pipe_file:
-        named_pipe_file.write(struct.pack("I", len(msg_str)) + msg_str.encode("utf8"))  # Write str length and str
-        named_pipe_file.seek(0)
+        try:
+            named_pipe_file.write(struct.pack("I", len(msg_str)) + msg_str.encode("utf8"))  # Write str length and str
+            named_pipe_file.seek(0)
+        except:
+            graceful_exit("Named pipe broken")
     else:
         print(msg_str)
     return full_msg
