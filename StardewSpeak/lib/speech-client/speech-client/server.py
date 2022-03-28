@@ -16,6 +16,7 @@ from dragonfly import *
 from srabuilder import rules
 
 import constants
+
 if args.args.named_pipe:
     named_pipe_file = open(rf"\\.\pipe\{args.args.named_pipe}Reader", "r+b", 0)
     named_pipe_file_read = open(rf"\\.\pipe\{args.args.named_pipe}Writer", "r+b", 0)
@@ -205,8 +206,10 @@ def setup_async_loop():
 
     def exception_handler(loop, context):
         # This only works when there are no references to the above tasks.
-        # https://bugs.python.org/issue39256y'
+        # https://bugs.python.org/issue39256y
         get_engine().disconnect()
+        sys.exit(context.get("exception", "bad"))
+        return
         raise context["exception"]
 
     async_thread = threading.Thread(target=async_setup, daemon=True, args=(loop,))
@@ -265,6 +268,10 @@ async def populate_initial_game_event():
 
 
 async def heartbeat(timeout):
+    # await asyncio.sleep(20)
+    # get_engine().disconnect()
+    # sys.exit(1)
+    # raise RuntimeError('aasdasdad')
     while True:
         fut = request("HEARTBEAT")
         try:
@@ -281,10 +288,14 @@ async def async_readline():
     def _run(future_queue):
         while True:
             fut = future_queue.get()
-            n = struct.unpack("I", named_pipe_file_read.read(4))[0]  # Read str length
-            line = named_pipe_file_read.read(n).decode("utf8")  # Read str
-            named_pipe_file_read.seek(0)
-            loop.call_soon_threadsafe(fut.set_result, line)
+            try:
+                n = struct.unpack("I", named_pipe_file_read.read(4))[0]  # Read str length
+                line = named_pipe_file_read.read(n).decode("utf8")  # Read str
+                named_pipe_file_read.seek(0)
+                loop.call_soon_threadsafe(fut.set_result, line)
+            except:
+                get_engine().disconnect()
+                sys.exit('pipe disconnected')
 
     threading.Thread(target=_run, daemon=True, args=(q,)).start()
     while True:

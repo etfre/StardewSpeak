@@ -5,55 +5,33 @@ main_button_choice = df.Choice("main_buttons", {"new": "New", "load": "Load", "c
 
 TITLE_MENU = 'titleMenu'
 
-async def get_title_menu():
-    menu = await menu_utils.get_active_menu(TITLE_MENU)
+def get_title_menu(menu):
+    menu_utils.validate_menu_type(TITLE_MENU, menu)
     if menu['subMenu']:
         raise menu_utils.InvalidMenuOption()
     return menu
 
-async def click_main_button(btn_name: str):
-    menu = await get_title_menu()
+async def click_main_button(menu, btn_name: str):
     button = menu_utils.find_component_by_field(menu['buttons'], 'name', btn_name)
     await menu_utils.click_component(button)
 
-async def click_menu_button(btn_name: str):
-    menu = await get_title_menu()
-    btn = menu[btn_name]
-    await menu_utils.click_component(btn)
-
-def get_submenu(tm, menu_type=None):
-    if tm is None or tm.get('menuType') != TITLE_MENU:
-        raise menu_utils.InvalidMenuOption()
+def get_submenu(tm, menu_type):
+    menu_utils.validate_menu_type(TITLE_MENU, tm)
     submenu = tm.get('subMenu')
-    if not submenu or (menu_type is not None and submenu['menuType'] != menu_type):
-        raise menu_utils.InvalidMenuOption()
+    menu_utils.validate_menu_type(menu_type, submenu)
     return submenu
-
-async def click_submenu_button(button_name):
-    menu_getter = get_submenu
-    await menu_utils.click_menu_button(button_name, menu_getter=menu_getter)
 
 mapping = {
     "<main_buttons> [game]": df_utils.async_action(click_main_button, 'main_buttons'),
     "[change | select] (language | languages)": menu_utils.simple_click('languageButton'),
-    "about": df_utils.async_action(menu_utils.click_menu_button, 'aboutButton', get_title_menu),
+    "about": menu_utils.simple_click('aboutButton'),
 }
 
-@menu_utils.valid_menu_test
-def is_active():
-    menu = game.get_context_menu(TITLE_MENU)
-    return menu['subMenu'] is None
-
 def load_grammar():
-    grammar = df.Grammar("title_menu")
-    main_rule = df.MappingRule(
-        name="title_menu_rule",
-        mapping=mapping,
-        extras=[
-            main_button_choice,
-        ],
+    grammar = menu_utils.build_menu_grammar(
+        mapping,
+        get_title_menu,
+        extras=[main_button_choice],
         defaults={'positive_num': 1},
-        context=is_active,
     )
-    grammar.add_rule(main_rule)
     grammar.load()

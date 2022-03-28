@@ -172,7 +172,7 @@ namespace StardewSpeak
         public static void Serialize_ExitPage(dynamic menu, ExitPage page, Point mousePosition)
         {
             menu.menuType = "exitPage";
-            menu.exitToTitle = page.exitToDesktop;
+            menu.exitToDesktop = page.exitToDesktop;
             menu.exitToTitle = page.exitToTitle;
         }
 

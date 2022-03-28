@@ -1,5 +1,5 @@
 import dragonfly as df
-import title_menu, menu_utils, server, df_utils, game, letters, items, server
+import title_menu, menu_utils, server, df_utils, approximate_matching, items, server
 from game_menu import game_menu
 
 inventory_wrapper = menu_utils.InventoryMenuWrapper()
@@ -9,6 +9,12 @@ def get_inventory_page(menu):
     page = game_menu.get_page_by_name(menu, "skillsPage")
     return page
 
+async def focus_item_dictation(page, text):
+    items_on_page = [x[1]["name"] for x in page["currentRecipePage"]]
+    best_idx = approximate_matching.do_match(str(text), items_on_page)
+    if best_idx:
+        cmp = page["currentRecipePage"][best_idx][0]
+        await menu_utils.focus_component(cmp)
 
 
 mapping = {

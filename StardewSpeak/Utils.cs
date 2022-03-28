@@ -683,7 +683,7 @@ namespace StardewSpeak
             if (equippedFertilizer)
             {
                 int fertilizer = hd.fertilizer.Value;
-                bool emptyOrUngrownCrop = hd.crop == null || hd.crop.currentPhase == 0;
+                bool emptyOrUngrownCrop = hd.crop == null || hd.crop.currentPhase.Value == 0;
                 return emptyOrUngrownCrop && fertilizer == 0;
             }
             int objIndex = currentItem.ParentSheetIndex;

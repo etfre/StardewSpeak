@@ -25,21 +25,18 @@ namespace StardewSpeak
         Process Proc;
         public readonly object RequestQueueLock;
         public readonly Action<dynamic> OnMessage;
-        public readonly Action<Process, TaskCompletionSource<int>> OnExit;
         public HashSet<string> UnvalidatedModeAllowableMessageTypes = new()
         { 
             "HEARTBEAT", "REQUEST_BATCH", "NEW_STREAM", "STOP_STREAM", "GET_ACTIVE_MENU", "GET_MOUSE_POSITION",
             "SET_MOUSE_POSITION", "SET_MOUSE_POSITION_RELATIVE", "MOUSE_CLICK", "UPDATE_HELD_BUTTONS", "RELEASE_ALL_KEYS",
             "PRESS_KEY"
         };
-        public bool Running = false;
         public SpeechProcessNamedPipe NamedPipe;
 
 
-        public SpeechEngine(Action<dynamic> onMessage, Action<Process, TaskCompletionSource<int>> onExit)
+        public SpeechEngine(Action<dynamic> onMessage)
         {
             this.OnMessage = onMessage;
-            this.OnExit = onExit;
             this.RequestQueueLock = new object();
             this.NamedPipe = new SpeechProcessNamedPipe(this.OnNamedPipeInput);
         }
@@ -93,7 +90,6 @@ namespace StardewSpeak
                 EnableRaisingEvents = true
             })
             {
-                this.Running = true;
                 var proc = await RunProcessAsync(this.Proc).ConfigureAwait(false);
                 return proc;
             }
@@ -101,21 +97,12 @@ namespace StardewSpeak
 
         public void Exit() 
         {
-            try
-            {
-                this.Proc.Kill();
-            }
-            catch (SystemException e) 
-            {
-                var x = 1;
-            }
+            this.NamedPipe.StartShutdown();
         }
 
         private void HandleExited(Process process, TaskCompletionSource<int> tcs)
         {
-            this.Running = false;
             tcs.SetResult(process.ExitCode);
-            this.OnExit(process, tcs);
         }
         private Task<int> RunProcessAsync(Process process)
         {
@@ -130,9 +117,6 @@ namespace StardewSpeak
                 //but I'm not sure about the guarantees of the Exited event in such a case
                 throw new InvalidOperationException("Could not start process: " + process);
             }
-
-            process.BeginOutputReadLine();
-            process.BeginErrorReadLine();
             return tcs.Task;
         }
 
@@ -182,7 +166,6 @@ namespace StardewSpeak
 
         public bool SendMessage(string msgType, object data = null)     
         {
-            if (!this.Running) return false;
             var message = new MessageToEngine(msgType, data);
             var settings = new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
             settings.Error = (serializer, err) => err.ErrorContext.Handled = true;

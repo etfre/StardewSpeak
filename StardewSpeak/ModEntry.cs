@@ -50,7 +50,7 @@ namespace StardewSpeak
             ModEntry.Config = this.Helper.ReadConfig<ModConfig>();
             ModEntry.UpdateTickedRequestQueue = new ConcurrentQueue<dynamic>();
             ModEntry.UpdateTickingRequestQueue = new ConcurrentQueue<dynamic>();
-            this.speechEngine = new SpeechEngine(OnSpeechEngineInput, OnSpeechEngineExited);
+            this.speechEngine = new SpeechEngine(OnSpeechEngineInput);
             this.eventHandler = new EventHandler(helper, this.speechEngine);
             ModEntry.log = this.Monitor.Log;
             this.speechEngine.LaunchProcess();
@@ -96,23 +96,6 @@ namespace StardewSpeak
             }
         }
 
-        private void OnSpeechEngineExited(Process process, TaskCompletionSource<int> tcs) 
-        {
-            ModEntry.Streams = new Dictionary<string, Stream>();
-            Input.ClearHeld();
-            if (RestartSpeechClientOnExit)
-            {
-                Game1.addHUDMessage(new HUDMessage("Restarting speech recognition...", HUDMessage.newQuest_type));
-                ModEntry.log("Kaldi engine exited. Restarting in 5 seconds...", LogLevel.Debug);
-                System.Threading.Thread.Sleep(5000);
-                this.speechEngine.Restart();
-            }
-            else 
-            {
-                Game1.addHUDMessage(new HUDMessage("Stopped speech recognition", HUDMessage.newQuest_type));
-            }
-        }
-
         public static void Log(string msg, LogLevel level) {
             ModEntry.log(msg, level);
         }
@@ -137,13 +120,18 @@ namespace StardewSpeak
         {
             if (ModEntry.Config.RestartKey.JustPressed())
             {
-                this.RestartSpeechClientOnExit = true;
-                this.speechEngine.Exit();
+                ModEntry.Streams = new Dictionary<string, Stream>();
+                Input.ClearHeld();
+                Game1.addHUDMessage(new HUDMessage("Restarting speech recognition...", HUDMessage.newQuest_type));
+                ModEntry.log("Kaldi engine exited. Restarting...", LogLevel.Debug);
+                this.speechEngine.Restart();
             }
             else if (ModEntry.Config.StopKey.JustPressed())
             {
-                this.RestartSpeechClientOnExit = false;
+                ModEntry.Streams = new Dictionary<string, Stream>();
+                Input.ClearHeld();
                 this.speechEngine.Exit();
+                Game1.addHUDMessage(new HUDMessage("Stopped speech recognition", HUDMessage.newQuest_type));
             }
         }
         private void OnWarped(object sender, WarpedEventArgs e)

@@ -33,4 +33,9 @@
         <td>Open the select language menu.</td>
         <td>"change language"</td>
     </tr>
+    <tr>
+        <td>credits | about</td>
+        <td>Open the credits page.</td>
+        <td>"credits"</td>
+    </tr>
 </table>
