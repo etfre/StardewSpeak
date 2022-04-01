@@ -13,6 +13,7 @@ import sys
 from io import BytesIO
 from zipfile import ZipFile
 import urllib.request
+import menus
 
 from dragonfly import RecognitionObserver, get_engine, AppContext
 from dragonfly.log import setup_log
@@ -139,6 +140,7 @@ def main():
     sleep.load_sleep_wake_grammar(True)
     stardew_context = AppContext(title="stardew")
     server.setup_async_loop()
+    menus.load_all_grammars()
     any_context.load_grammar()
     new_game_menu.load_grammar()
     shop_menu.load_grammar()

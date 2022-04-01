@@ -43,6 +43,7 @@ marnie's m A r n i z
 mudstone m V d s t o U n
 nekoite n V k OI t
 neptunite n E p t j V n aI t
+npc 'E n p 'i s 'i
 othe o U D
 poppyseed p A p i s i d
 praire p r { V r

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* Add skills page, social page and gift log
+
 ## 0.0.12 (March 25, 2022)
 
 * Fix release bug related to copying user lexicon file

@@ -35,6 +35,19 @@ namespace StardewSpeak
             return serialized;
         }
 
+        public static void Serialize_ProfileMenu(dynamic menu, ProfileMenu pm, Point cursorPosition) 
+        {
+            menu.menuType = "profileMenu";
+            menu.backButton = pm.backButton;
+            menu.forwardButton = pm.forwardButton;
+            menu.previousCharacterButton = pm.previousCharacterButton;
+            menu.nextCharacterButton = pm.nextCharacterButton;
+            menu.downArrow = pm.downArrow;
+            menu.upArrow = pm.upArrow;
+            menu.clickableProfileItems = pm.clickableProfileItems;
+        }
+
+
         public static void Serialize_ShippingMenu(dynamic menu, ShippingMenu sm, Point cursorPosition)
         {
             int introTimer = Utils.GetPrivateField(sm, "introTimer");
@@ -113,6 +126,7 @@ namespace StardewSpeak
         public static void Serialize_CataloguePage(dynamic menu, CataloguePage page, Point mousePosition)
         {
             menu.menuType = "cataloguePage";
+            
         }
 
         public static void Serialize_SocialPage(dynamic menu, SocialPage page, Point mousePosition)
@@ -121,7 +135,16 @@ namespace StardewSpeak
             menu.downArrow = (ClickableTextureComponent)Utils.GetPrivateField(page, "downButton");
             menu.upArrow = (ClickableTextureComponent)Utils.GetPrivateField(page, "upButton");
             menu.slotPosition = (int)Utils.GetPrivateField(page, "slotPosition");
-            //menu.sprites = ((List<ClickableTextureComponent>)Utils.GetPrivateField(page, "sprites")).Skip(menu.slotPosition).Take(5).ToList();
+            menu.characterSlots = page.characterSlots.GetRange(menu.slotPosition, 5);
+            menu.names = page.names;
+        }
+
+        public static void Serialize_GiftLog(dynamic menu, SocialPage page, Point mousePosition)
+        {
+            menu.menuType = "socialPage";
+            menu.downArrow = (ClickableTextureComponent)Utils.GetPrivateField(page, "downButton");
+            menu.upArrow = (ClickableTextureComponent)Utils.GetPrivateField(page, "upButton");
+            menu.slotPosition = (int)Utils.GetPrivateField(page, "slotPosition");
             menu.characterSlots = page.characterSlots.GetRange(menu.slotPosition, 5);
         }
 
@@ -196,7 +219,7 @@ namespace StardewSpeak
                 return listVal;
             }
             return val;
-        }
+        }   
 
     }
 }
