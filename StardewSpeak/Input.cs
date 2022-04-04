@@ -54,21 +54,44 @@ namespace StardewSpeak
 
 		public static SButton OptionToSButton(string name) 
 		{
-			//InputButton optionBtn = (dynamic)Game1.options.GetType().GetProperty(name).GetValue(Game1.options, null);
-			InputButton optionBtn = Utils.GetPrivateField(Game1.options, name)[0];
-			return SButtonExtensions.ToSButton(optionBtn);
+			switch (name) 
+			{
+				case "MOUSE_LEFT": 
+					{
+						return SButton.MouseLeft;
+					}
+				case "MOUSE_RIGHT":
+					{
+						return SButton.MouseRight;
+					}
+				default: 
+					{
+						InputButton optionBtn = Utils.GetPrivateField(Game1.options, name)[0];
+						return SButtonExtensions.ToSButton(optionBtn);
+					}
+			}
 		}
 
 		public static void Hold(string optionName) 
 		{
 			if (!Held.ContainsKey(optionName))
 			{
-				var btn = OptionToSButton(optionName);
-				var newHeld = new Dictionary<string, SButton>(Held);
-				newHeld.Add(optionName, btn);
-				Held = newHeld;
+				SButton btn = OptionToSButton(optionName);
+				Hold(optionName, btn);
 			}
 			
+		}
+
+		public static void Hold(string name, SButton btn)
+		{
+			{
+				var newHeld = new Dictionary<string, SButton>(Held)
+				{
+					{ name, btn }
+				};
+				Held = newHeld;
+			}
+
 		}
 
 
@@ -86,9 +109,11 @@ namespace StardewSpeak
 
 		public static void LeftClick()
 		{
-			SButtonExtensions.ToSButton(Game1.options.inventorySlot8[0]);
-			var x = Game1.options.inventorySlot12[0];
-			InputEvent(SButton.MouseLeft, true);
+			//SButtonExtensions.ToSButton(Game1.options.inventorySlot8[0]);
+			//var x = Game1.options.inventorySlot12[0];
+			var btn = SButton.MouseLeft;
+			InputEvent(btn, true);
 		}
+
 	}
 }

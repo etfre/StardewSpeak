@@ -35,6 +35,62 @@ namespace StardewSpeak
             return serialized;
         }
 
+
+        public static void Serialize_OptionsPage(dynamic menu, OptionsPage op, Point cursorPosition)
+        {
+            menu.menuType = "optionsPage";
+            var optionSlots = new List<dynamic>();
+            Rectangle? activeDDBounds = null;
+            for (int i = 0; i < op.optionSlots.Count; i++) 
+            {
+                ClickableComponent cmp = op.optionSlots[i];
+                OptionsElement element = op.options[op.currentItemIndex + i];
+                if (element.greyedOut|| (activeDDBounds.HasValue && cmp.bounds.Intersects((Rectangle)activeDDBounds))) continue;
+                if (element is OptionsPlusMinus)
+                {
+                    OptionsPlusMinus pm = element as OptionsPlusMinus;
+                    var minusRect = new Rectangle(cmp.bounds.X + pm.minusButton.X, cmp.bounds.Y + pm.minusButton.Y, pm.minusButton.Width, pm.minusButton.Height);
+                    var minusCmp = Utils.Merge(Utils.RectangleToClickableComponent(minusRect, cursorPosition), new { label = pm.label + " minus" });
+                    var plusRect = new Rectangle(cmp.bounds.X + pm.plusButton.X, cmp.bounds.Y + pm.plusButton.Y, pm.plusButton.Width, pm.plusButton.Height);
+                    var plusCmp = Utils.Merge(Utils.RectangleToClickableComponent(plusRect, cursorPosition), new { label = pm.label + " plus" });
+                    optionSlots.Add(minusCmp);
+                    optionSlots.Add(plusCmp);
+
+                }
+                else if (element is OptionsCheckbox) 
+                {
+                    var rect = new Rectangle(cmp.bounds.X + element.bounds.X, cmp.bounds.Y + element.bounds.Y, element.bounds.Width, element.bounds.Height);
+                    optionSlots.Add(Utils.Merge(Utils.RectangleToClickableComponent(rect, cursorPosition), new { element.label }));
+                }
+                else if (element is OptionsDropDown)
+                {
+                    OptionsDropDown odd = element as OptionsDropDown;
+                    int y = cmp.bounds.Y + odd.bounds.Y;
+                    if (!(System.Object.ReferenceEquals(OptionsDropDown.selected, odd)))
+                    {
+                        var rect = new Rectangle(cmp.bounds.X + odd.bounds.X, y, element.bounds.Width, element.bounds.Height);
+                        var focusTarget = new { x = rect.X + 18, y = rect.Center.Y };
+                        optionSlots.Add(Utils.Merge(Utils.RectangleToClickableComponent(rect, cursorPosition), new { element.label, focusTarget }));
+                    }
+                    else
+                    {
+                        activeDDBounds = new Rectangle(cmp.bounds.X + odd.dropDownBounds.X, y, odd.dropDownBounds.Width, odd.dropDownBounds.Height);
+                        int heightPerOption = odd.dropDownBounds.Height / odd.dropDownDisplayOptions.Count;
+                        for (int j = 0; j < odd.dropDownDisplayOptions.Count; j++)
+                        {   
+                            string option = odd.dropDownDisplayOptions[j];
+                            var optY = y + heightPerOption*j;
+                            var rect = new Rectangle(cmp.bounds.X + odd.bounds.X, optY, element.bounds.Width, heightPerOption);
+                            var focusTarget = new { x = rect.X + 18, y = rect.Center.Y };
+                            optionSlots.Add(Utils.Merge(Utils.RectangleToClickableComponent(rect, cursorPosition), new { label = option, focusTarget }));
+                        }
+                    }
+                }
+
+
+            }
+            menu.optionSlots = optionSlots;
+        }
         public static void Serialize_ProfileMenu(dynamic menu, ProfileMenu pm, Point cursorPosition) 
         {
             menu.menuType = "profileMenu";

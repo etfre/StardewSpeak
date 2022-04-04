@@ -262,4 +262,14 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
         <td>Move the mouse <i>n</i> pixels.</td>
         <td>"small mouse down seven"</td>
     </tr>
+    <tr>
+        <td>hold mouse</td>
+        <td>Hold down the left mouse button.</td>
+        <td>"hold mouse"</td>
+    </tr>
+    <tr>
+        <td>release mouse</td>
+        <td>Release the left mouse button if it is being held.</td>
+        <td>"release mouse"</td>
+    </tr>
 </table>

@@ -427,6 +427,18 @@ async def mouse_click(btn="left", count=1):
         if i + 1 < count:
             await asyncio.sleep(0.1)
 
+async def mouse_hold(btn="left"):
+    import game
+    assert btn in ("left", "right")
+    sbutton = "MOUSE_LEFT" if btn == "left" else "MOUSE_RIGHT"
+    game.update_held_buttons_nowait(to_hold=(sbutton,))
+
+async def mouse_release(btn="left"):
+    import game
+    assert btn in ("left", "right")
+    sbutton = "MOUSE_LEFT" if btn == "left" else "MOUSE_RIGHT"
+    game.update_held_buttons_nowait(to_release=(sbutton,))
+
 
 def log(*a, sep=" ", level=1):
     to_send = [x if isinstance(x, str) else json.dumps(x) for x in a]

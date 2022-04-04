@@ -115,6 +115,9 @@ def parse_numrep(rep):
     numstr = str(first) + "".join(str(d) for d in rest)
     return int(numstr)
 
+def index_choice_from_list(name: str, l):
+    return df.Choice(name, {k: i for (i, k) in enumerate(l)})
+
 
 positive_digits = df.Sequence(
     [df.Choice(None, nonZeroDigitMap), df.Repetition(df.Choice(None, digitMap), min=0, max=2)],

@@ -9,7 +9,7 @@ MENU_GRAMMAR_COUNT = 0
 async def focus_component(cmp):
     if not cmp['visible']:
         raise InvalidMenuOption('Cannot focus non-visible component')   
-    x, y = cmp['center']
+    x, y = cmp.get('focusTarget', cmp['center'])
     await server.set_mouse_position(x, y)
 
 def find_component_containing_mouse(list_of_cmp_rows):

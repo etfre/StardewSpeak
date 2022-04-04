@@ -1,6 +1,7 @@
 from menus import (
     gift_log,
     social_page,
+    collections_page,
 )
 
 

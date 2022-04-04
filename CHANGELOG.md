@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-* Add skills page, social page and gift log
+* Add skills page
+* Add social page
+* Add gift log
+* Add collections page
+* Add "hold mouse" and "release mouse" commands
 
 ## 0.0.12 (March 25, 2022)
 
