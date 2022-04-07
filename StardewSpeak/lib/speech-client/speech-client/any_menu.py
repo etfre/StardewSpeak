@@ -17,13 +17,14 @@ async def move_cursor_to_next_component(menu, direction, n=1):
     for cmp in menu_utils.yield_clickable_components(menu):
         center = cmp["center"]
         if cmp["containsMouse"]:
-            current_position = center
+            current_position = cmp
         else:
-            target_components.append(center)
+            target_components.append(cmp)
     if not target_components:
         return
     if current_position is None:
-        current_position = await server.get_mouse_position()
+        cx, cy = await server.get_mouse_position()
+        current_position = {"center": (cx, cy), 'visible': True}
     if direction == constants.NORTH:
         direction_index, multiplier = 1, -1
     elif direction == constants.EAST:
@@ -33,25 +34,23 @@ async def move_cursor_to_next_component(menu, direction, n=1):
     elif direction == constants.WEST:
         direction_index, multiplier = 0, -1
     for i in range(n):
-        sort_key = functools.partial(
-            sort_fn, current_position, direction_index, multiplier
-        )
+        sort_key = functools.partial(sort_fn, current_position, direction_index, multiplier)
         res = min(target_components, key=sort_key)
-        right_direction = (
-            sort_fn(current_position, direction_index, multiplier, res)[0] == 0
-        )
+        right_direction = sort_fn(current_position, direction_index, multiplier, res)[0] == 0
         if not right_direction:
             break
         current_position = res
-    x, y = current_position
-    await server.set_mouse_position(x, y)
+    server.log(current_position)
+    await menu_utils.focus_component(current_position)
 
 
-def sort_fn(current_position, direction_index, multiplier, x):
-    val, target_val = current_position[direction_index], x[direction_index]
+def sort_fn(current_cmp, direction_index, multiplier, cmp):
+    center = cmp["center"]
+    current_center = current_cmp["center"]
+    val, target_val = current_center[direction_index], center[direction_index]
     direction_diff = (target_val - val) * multiplier
     side_index = 0 if direction_index == 1 else 1
-    side_diff = abs(current_position[side_index] - x[side_index])
+    side_diff = abs(current_center[side_index] - center[side_index])
     right_direction = 0 if direction_diff > 0 else 1
     return (right_direction, 0.1 * direction_diff + 0.9 * side_diff)
 

@@ -69,7 +69,7 @@ namespace StardewSpeak
                     if (!(System.Object.ReferenceEquals(OptionsDropDown.selected, odd)))
                     {
                         var rect = new Rectangle(cmp.bounds.X + odd.bounds.X, y, element.bounds.Width, element.bounds.Height);
-                        var focusTarget = new { x = rect.X + 18, y = rect.Center.Y };
+                        var focusTarget = new List<int>{ rect.X + 18, rect.Center.Y };
                         optionSlots.Add(Utils.Merge(Utils.RectangleToClickableComponent(rect, cursorPosition), new { element.label, focusTarget }));
                     }
                     else
@@ -81,7 +81,7 @@ namespace StardewSpeak
                             string option = odd.dropDownDisplayOptions[j];
                             var optY = y + heightPerOption*j;
                             var rect = new Rectangle(cmp.bounds.X + odd.bounds.X, optY, element.bounds.Width, heightPerOption);
-                            var focusTarget = new { x = rect.X + 18, y = rect.Center.Y };
+                            var focusTarget = new List<int> { rect.X + 18, rect.Center.Y };
                             optionSlots.Add(Utils.Merge(Utils.RectangleToClickableComponent(rect, cursorPosition), new { label = option, focusTarget }));
                         }
                     }

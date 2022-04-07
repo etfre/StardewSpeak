@@ -109,8 +109,6 @@ namespace StardewSpeak
 
 		public static void LeftClick()
 		{
-			//SButtonExtensions.ToSButton(Game1.options.inventorySlot8[0]);
-			//var x = Game1.options.inventorySlot12[0];
 			var btn = SButton.MouseLeft;
 			InputEvent(btn, true);
 		}

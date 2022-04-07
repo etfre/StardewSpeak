@@ -202,14 +202,6 @@ def parse_command_line(parser):
         sys.path = paths + sys.path
     sys.path.insert(0, os.path.dirname(MAIN))
     args.include_files = normalize_to_list(args.include_files)
-    zip_includes = []
-    if args.zip_includes:
-        for spec in args.zip_includes:
-            if "=" in spec:
-                zip_includes.append(spec.split("=", 1))
-            else:
-                zip_includes.append(spec)
-    args.zip_includes = zip_includes
     return args
 
 
