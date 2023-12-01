@@ -8,7 +8,7 @@ tabs = df_utils.index_choice_from_list(
         "artifacts",
         "minerals",
         "cooking",
-        "achievments",
+        "achievements",
         "letters",
         "[secret] notes",
     ],

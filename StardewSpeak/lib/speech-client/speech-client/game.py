@@ -7,7 +7,11 @@ import json
 import collections
 import contextlib
 import asyncio
-import server, constants, async_timeout, events
+import server
+import constants
+
+import async_timeout
+import events
 
 last_faced_east_west = constants.WEST
 last_faced_north_south = constants.SOUTH

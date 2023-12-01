@@ -14,6 +14,7 @@ import uuid
 import json
 from dragonfly import *
 from srabuilder import rules
+from typing import Any
 
 import constants
 
@@ -29,30 +30,6 @@ streams = {}
 mod_requests = {}
 
 ongoing_tasks = {}  # not connected to an objective, slide mouse, swing sword etc
-
-
-async def start_ongoing_task(name, str, async_fn):
-    await stop_ongoing_task(name)
-
-    async def to_call(awaitable):
-        try:
-            await awaitable
-        except (Exception, BaseException):
-            raise
-        finally:
-            del ongoing_tasks[name]
-
-    wrapped_coro = async_fn()
-    coro = to_call(wrapped_coro)
-    task_wrapper = TaskWrapper(coro)
-    ongoing_tasks[task_wrapper]
-
-
-async def stop_ongoing_task(name):
-    task = ongoing_tasks.get(name)
-    if task:
-        await task.cancel()
-
 
 async def stop_all_ongoing_tasks():
     cancel_awaitables = [t.cancel() for t in ongoing_tasks.values()]
@@ -97,6 +74,7 @@ class Stream:
         )
 
     def close(self):
+        print('closing stream')
         if not self.closed:
             self.closed = True
             send_message("STOP_STREAM", self.id)
@@ -199,7 +177,8 @@ def setup_async_loop():
     def async_setup(l):
         l.set_exception_handler(exception_handler)
         l.create_task(menu_changed())
-        l.create_task(async_readline())
+        if args.args.named_pipe:
+            l.create_task(async_readline())
         l.create_task(heartbeat(300))
         l.create_task(populate_initial_game_event())
         l.run_forever()
@@ -210,7 +189,7 @@ def setup_async_loop():
         # get_engine().disconnect()
         # sys.exit(context.get("exception", "bad"))
         # return
-        raise context.get("exception", "task shutdown error")
+        raise context.get("exception", RuntimeError(f"task shutdown error {context}"))
 
     async_thread = threading.Thread(target=async_setup, daemon=True, args=(loop,))
     async_thread.start()
@@ -234,7 +213,9 @@ async def menu_changed():
 
     async with on_menu_changed_stream() as mcs:
         while True:
-            changed_event_coro, active_menu_coro = mcs.next(), request_active_menu_with_delay()
+            # await asyncio.sleep(1)
+            changed_event_coro = loop.create_task( mcs.next())
+            active_menu_coro = loop.create_task( request_active_menu_with_delay())
             done, pending = await asyncio.wait(
                 [changed_event_coro, active_menu_coro], return_when=asyncio.FIRST_COMPLETED
             )
@@ -289,7 +270,6 @@ async def heartbeat(timeout):
 async def async_readline():
     # Is there a better way to read async stdin on Windows?
     q = queue.Queue()
-
     def _run(future_queue):
         while True:
             fut = future_queue.get()
@@ -298,7 +278,7 @@ async def async_readline():
                 line = named_pipe_file_read.read(n).decode("utf8")  # Read str
                 named_pipe_file_read.seek(0)
                 loop.call_soon_threadsafe(fut.set_result, line)
-            except:
+            except Exception as e:
                 graceful_exit("pipe disconnected")
 
     threading.Thread(target=_run, daemon=True, args=(q,)).start()

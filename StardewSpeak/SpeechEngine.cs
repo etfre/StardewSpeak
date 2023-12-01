@@ -55,7 +55,7 @@ namespace StardewSpeak
             #if DEBUG
                 ModEntry.Log("Running Python client in debug mode", LogLevel.Trace);
                 string pythonRoot = Path.Combine(rootDir, @"StardewSpeak\lib\speech-client");
-                string executable = Path.Combine(pythonRoot, @"Scripts\python.exe");
+                string executable = Path.Combine(pythonRoot, @".venv\Scripts\python.exe");
                 string main = Path.Combine(pythonRoot, @"speech-client\main.py");
                 string arguments = $"\"{main}\" --python_root \"{pythonRoot}\" --named_pipe \"{namedPipe}\"";
 #else
