@@ -102,7 +102,7 @@ mapping = {
     "harvest crops": objective.objective_action(objective.HarvestCropsObjective),
     "[open | read] (quests | journal | quest log)": df_utils.async_action(game.press_key, constants.JOURNAL_BUTTON),
     "face <direction_nums>": objective.objective_action(objective.FaceDirectionObjective, "direction_nums"),
-    "stop": df_utils.async_action(server.stop_everything),
+    "halt": df_utils.async_action(server.stop_everything),
     "swing": df_utils.async_action(game.press_key, constants.USE_TOOL_BUTTON),
     "next toolbar": df_utils.async_action(game.press_key, constants.TOOLBAR_SWAP),
     "<points>": objective.function_objective(objective.move_to_point, "points"),
@@ -132,6 +132,7 @@ mapping = {
 
 @menu_utils.valid_menu_test
 def is_active():
+    # return True
     return game.get_context_menu() is None
 
 

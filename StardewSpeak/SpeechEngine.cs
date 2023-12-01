@@ -164,14 +164,13 @@ namespace StardewSpeak
             this.SendMessage("RESPONSE", respData);
         }
 
-        public bool SendMessage(string msgType, object data = null)     
+        public void SendMessage(string msgType, object data = null)     
         {
             var message = new MessageToEngine(msgType, data);
             var settings = new JsonSerializerSettings() { ReferenceLoopHandling = ReferenceLoopHandling.Ignore };
             settings.Error = (serializer, err) => err.ErrorContext.Handled = true;
             string msgStr = JsonConvert.SerializeObject(message, Formatting.None, settings);
             this.NamedPipe.SendQueue.Add(msgStr);
-            return true;
         }
 
         public void SendEvent(string eventType, object data = null) {

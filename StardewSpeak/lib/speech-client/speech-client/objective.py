@@ -190,7 +190,11 @@ class ClearDebrisObjective(Objective):
         self.debris_type = debris_type
 
     async def get_debris(self, location):
-        debris_objects, resource_clumps, tools = await asyncio.gather(self.get_debris_objects(location), game.get_resource_clump_pieces(location), game.get_tools(), loop=server.loop)
+        debris_objects, resource_clumps, tools = await asyncio.gather(
+            self.get_debris_objects(location), 
+            game.get_resource_clump_pieces(location),
+            game.get_tools(), 
+        )
         debris = debris_objects + resource_clumps
         clearable_debris = []
         for d in debris:

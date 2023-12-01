@@ -490,7 +490,6 @@ async def ensure_not_moving():
     stop_moving()
     await events.wait_for_update_ticked()
 
-
 async def face_direction(direction: int, stream: server.Stream, move_cursor=False):
     await ensure_not_moving()
     status = await server.request("PLAYER_STATUS")
@@ -861,7 +860,7 @@ def set_context_menu(menu):
     context_variables["ACTIVE_MENU"] = menu
 
 
-def get_context_menu(menu_type=None):
+def get_context_menu(menu_type: str | None = None):
     import menu_utils
 
     menu = context_variables["ACTIVE_MENU"]
@@ -894,6 +893,7 @@ async def go_outside():
     if outdoor_connections:
         with server.player_status_stream() as pss:
             player_status = await pss.next()
+            server.log(player_status)
             current_location = player_status["location"]
             if not current_location['TargetIsOutdoors']:
                 current_tile = await get_current_tile(pss)

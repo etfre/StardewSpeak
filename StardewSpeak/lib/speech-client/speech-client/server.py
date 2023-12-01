@@ -14,7 +14,9 @@ import uuid
 import json
 from dragonfly import *
 from srabuilder import rules
-from typing import Any
+from typing import Any, Coroutine
+from asyncio.futures import Future
+from logger import logger
 
 import constants
 
@@ -27,7 +29,7 @@ else:
 
 loop = None
 streams = {}
-mod_requests = {}
+mod_requests: dict[str, Future] = {}
 
 ongoing_tasks = {}  # not connected to an objective, slide mouse, swing sword etc
 
@@ -74,7 +76,7 @@ class Stream:
         )
 
     def close(self):
-        print('closing stream')
+        log(f'Closing stream {self.name}', level=0)
         if not self.closed:
             self.closed = True
             send_message("STOP_STREAM", self.id)
@@ -176,7 +178,7 @@ def setup_async_loop():
 
     def async_setup(l):
         l.set_exception_handler(exception_handler)
-        l.create_task(menu_changed())
+        l.create_task(poll_current_menu())
         if args.args.named_pipe:
             l.create_task(async_readline())
         l.create_task(heartbeat(300))
@@ -208,27 +210,61 @@ async def request_active_menu_with_delay():
     return menu
 
 
+async def poll_current_menu():
+    while True:
+        new_menu = await request_active_menu_with_delay()
+        await handle_new_menu(new_menu)
+
+async def handle_new_menu(new_menu):
+    import game
+    current_menu = game.context_variables["ACTIVE_MENU"]
+    is_new_menu = not is_same_menu(current_menu, new_menu)
+    game.set_context_menu(new_menu)
+    if is_new_menu:
+        await stop_everything()
+
+
 async def menu_changed():
     import game
 
-    async with on_menu_changed_stream() as mcs:
-        while True:
-            # await asyncio.sleep(1)
-            changed_event_coro = loop.create_task( mcs.next())
-            active_menu_coro = loop.create_task( request_active_menu_with_delay())
-            done, pending = await asyncio.wait(
-                [changed_event_coro, active_menu_coro], return_when=asyncio.FIRST_COMPLETED
-            )
-            done_task = list(done)[0]
-            done_coro = done_task.get_coro()
-            if done_coro == changed_event_coro:
-                new_menu = done_task.result()["newMenu"]
-            else:
-                new_menu = done_task.result()
+    # async with on_menu_changed_stream() as mcs:
+    #     while True:
+    #         changed_event_coro = mcs.next()
+    #         active_menu_coro = request_active_menu_with_delay()
+    #         done, pending = await asyncio.wait(
+    #             [TaskWrapper(changed_event_coro).task, TaskWrapper(active_menu_coro).task], return_when=asyncio.FIRST_COMPLETED
+    #         )
+    #         done_task = list(done)[0]
+    #         done_coro = done_task.get_coro()
+    #         result = done_task.result()
+    #         if done_coro == changed_event_coro:
+    #             new_menu = result["newMenu"]
+    #         else:
+    #             new_menu = result
+    #         current_menu = game.context_variables["ACTIVE_MENU"]
+    #         is_new_menu = not is_same_menu(current_menu, new_menu)
+    #         game.set_context_menu(new_menu)
+    #         if is_new_menu:
+    #             log("menu result", result)
+    #             await stop_everything()
+
+    # while True:
+    #     new_menu = await request_active_menu_with_delay()
+    #     current_menu = game.context_variables["ACTIVE_MENU"]
+    #     is_new_menu = not is_same_menu(current_menu, new_menu)
+    #     game.set_context_menu(new_menu)
+    #     if is_new_menu:
+    #         log("new menu", new_menu)
+    #         await stop_everything()
+
+    while True:
+        async with on_menu_changed_stream() as mcs:
+            new_menu = await mcs.next()['newMenu']
             current_menu = game.context_variables["ACTIVE_MENU"]
             is_new_menu = not is_same_menu(current_menu, new_menu)
             game.set_context_menu(new_menu)
             if is_new_menu:
+                log("new menu", new_menu)
                 await stop_everything()
 
 
@@ -311,7 +347,7 @@ class RequestBuilder:
             if isinstance(r, RequestBuilder):
                 msg = {"type": r.request_type, "data": r.data}
             else:
-                msg = {"type": msg[0], data: msg[1]}
+                msg = {"type": msg[0], "data": msg[1]}
             batched.append(msg)
         return cls("REQUEST_BATCH", batched)
 
@@ -329,7 +365,6 @@ def send_message(msg_type: str, msg=None):
     msg_id = str(uuid.uuid4())
     full_msg = {"type": msg_type, "id": msg_id, "data": msg}
     msg_str = json.dumps(full_msg)
-    # print(msg_str, flush=True)
     if named_pipe_file:
         try:
             named_pipe_file.write(struct.pack("I", len(msg_str)) + msg_str.encode("utf8"))  # Write str length and str
@@ -421,6 +456,8 @@ async def mouse_release(btn="left"):
 
 
 def log(*a, sep=" ", level=1):
+    for item in a:
+        logger.warning(item)
     to_send = [x if isinstance(x, str) else json.dumps(x) for x in a]
     return send_message("LOG", {"value": sep.join(to_send), "level": level})
 
@@ -439,16 +476,19 @@ async def cancel_task(task):
 
 
 class TaskWrapper:
-    def __init__(self, coro):
+
+    done: bool
+
+    def __init__(self, coro: Coroutine):
         self.result = None
-        self.exception = None
-        self.exception_trace = None
+        self.exception: BaseException | None = None
+        self.exception_trace: str | None = None
         self.done = False
-        self.task = loop.create_task(self.wrap_coro(coro))
+        self.task = loop.create_task(self._wrap_coro(coro))
 
     # I don't understand asyncio task exception handling. So let's just catch any coroutine exceptions here and expose
     # the result/exception through self.result and self.exception
-    async def wrap_coro(self, coro):
+    async def _wrap_coro(self, coro: Coroutine):
         try:
             self.result = await coro
         except (asyncio.CancelledError, Exception) as e:
