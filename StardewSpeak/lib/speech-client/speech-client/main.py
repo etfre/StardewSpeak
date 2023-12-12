@@ -1,5 +1,5 @@
 import args
-import logger
+from logger import logger
 import winsound
 import traceback
 import csv
@@ -14,6 +14,8 @@ from io import BytesIO
 from zipfile import ZipFile
 import urllib.request
 import menus
+import asyncio.queues
+import threading
 
 from dragonfly import RecognitionObserver, get_engine, AppContext
 from dragonfly.log import setup_log
@@ -33,12 +35,22 @@ MODELS_DIR = os.path.abspath(os.path.join(args.args.python_root, "models"))
 
 class Observer(RecognitionObserver):
     def on_begin(self):
+        import server
+        logger.warning(f"on_begin()")
+        try:
+            server.active_menu_request_queue.put_nowait(None)
+        except asyncio.queues.QueueFull:
+            logger.warning("is full")
+            pass
+        server.active_menu_request_queue_out.get(timeout=1)
         pass
 
     def on_recognition(self, words):
-        import server
+        logger.warning(f"on_recognition()")
 
-        server.log("Recognized:", " ".join(words), level=1)
+        import server
+        # server.log("Recognized:", " ".join(words), level=1)
+        # logger.warn("Recognized:", " ".join(words))
 
     def on_failure(self):
         pass

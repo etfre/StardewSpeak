@@ -112,7 +112,8 @@ class MoveNTilesObjective(Objective):
 
 class MoveToLocationObjective(Objective):
     def __init__(self, location):
-        self.location = location
+        import locations
+        self.location: locations.Location = location
 
     async def run(self):
         async with server.player_status_stream() as stream:

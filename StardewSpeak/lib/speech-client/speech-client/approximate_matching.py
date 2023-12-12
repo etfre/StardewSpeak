@@ -4,7 +4,7 @@ import dragonfly as df
 
 map_word_to_phenomes = {}
 
-def match_component(text: str,cmp_list, key: str):
+def match_component(text: str, cmp_list, key: str):
     items_on_page = [x for x in cmp_list if x and x[key]]
     best_idx = do_match(str(text), [x[key] for x in items_on_page])
     if best_idx is not None:
@@ -61,7 +61,7 @@ def load_lexicons():
 
 def get_phenomes(s: str):
     words = s.split()
-    phenomes = []
+    phenomes: list[str] = []
     for word in words:
         if word in map_word_to_phenomes:
             word_phenomes = map_word_to_phenomes[word]
@@ -77,7 +77,7 @@ def get_bigrams(s: str):
     '''
     return {tuple(s[i:i+2]) for i in range(len(s) - 1)}
 
-def string_similarity(str1, str2):
+def string_similarity(str1:str, str2:str):
     '''
     Perform bigram comparison between two strings
     and return a percentage match in decimal form

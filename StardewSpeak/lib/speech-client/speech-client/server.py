@@ -9,6 +9,7 @@ import functools
 import queue
 import sys
 import asyncio
+import asyncio.queues
 import threading
 import uuid
 import json
@@ -17,6 +18,9 @@ from srabuilder import rules
 from typing import Any, Coroutine
 from asyncio.futures import Future
 from logger import logger
+
+active_menu_request_queue: asyncio.queues.Queue = asyncio.Queue(maxsize=1)
+active_menu_request_queue_out: queue.Queue = queue.Queue(maxsize=1)
 
 import constants
 
@@ -178,7 +182,8 @@ def setup_async_loop():
 
     def async_setup(l):
         l.set_exception_handler(exception_handler)
-        l.create_task(poll_current_menu())
+        # l.create_task(poll_current_menu())
+        l.create_task(update_active_menu_when_requested())
         if args.args.named_pipe:
             l.create_task(async_readline())
         l.create_task(heartbeat(300))
@@ -204,11 +209,25 @@ def graceful_exit(msg):
 
 async def request_active_menu_with_delay():
     import menu_utils
-
     await asyncio.sleep(1)
     menu = await menu_utils.get_active_menu()
     return menu
 
+async def update_active_menu_when_requested():
+    import menu_utils, server
+    while True:
+        await active_menu_request_queue.get()
+        logger.warn("logger.warn update_active_menu_when_requested() 0")
+        server.log("update_active_menu_when_requested() 0")
+        new_menu = await menu_utils.get_active_menu()
+        logger.warn("logger.warnupdate_active_menu_when_requested 1")
+        server.log("update_active_menu_when_requested 1")
+        await handle_new_menu(new_menu)
+        logger.warn("logger.warn update_active_menu_when_requested 2")
+        server.log("update_active_menu_when_requested 2")
+        active_menu_request_queue_out.put_nowait(None)
+        logger.warn("logger.warn update_active_menu_when_requested 3")
+        server.log("update_active_menu_when_requested 3")
 
 async def poll_current_menu():
     while True:
@@ -502,3 +521,13 @@ class TaskWrapper:
             await self.task
         except asyncio.CancelledError:
             pass
+
+def read_queue(q): 
+    items = [q.get()]
+    while not q.empty():
+        try:
+            next_item = q.get(block=False)
+            items.append(next_item)
+        except TypeError:
+            continue
+    return items
