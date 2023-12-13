@@ -19,5 +19,30 @@ formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
 fh.setFormatter(formatter)
 fh.setLevel(logging.DEBUG)
 logger.addHandler(fh)
+logger.warning
 
 
+def trace(msg: object):
+    import server
+    logger.debug(msg)
+    server.log(msg, level=0)
+
+def debug(msg: object):
+    import server
+    logger.debug(msg)
+    server.log(msg, level=1)
+
+def info(msg: object):
+    import server
+    logger.info(msg)
+    server.log(msg, level=2)
+
+def warning(msg):
+    import server
+    logger.warn(msg)
+    server.log(msg, level=3)
+
+def error(msg: object):
+    import server
+    logger.error(msg)
+    server.log(msg, level=4)

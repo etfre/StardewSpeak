@@ -17,12 +17,8 @@ from dragonfly import *
 from srabuilder import rules
 from typing import Any, Coroutine
 from asyncio.futures import Future
-from logger import logger
+import logger
 
-active_menu_request_queue: asyncio.queues.Queue = asyncio.Queue(maxsize=1)
-active_menu_request_queue_out: queue.Queue = queue.Queue(maxsize=1)
-
-import constants
 
 if args.args.named_pipe:
     named_pipe_file = open(rf"\\.\pipe\{args.args.named_pipe}Reader", "r+b", 0)
@@ -80,7 +76,6 @@ class Stream:
         )
 
     def close(self):
-        log(f'Closing stream {self.name}', level=0)
         if not self.closed:
             self.closed = True
             send_message("STOP_STREAM", self.id)
@@ -180,15 +175,13 @@ def setup_async_loop():
     global loop
     loop = asyncio.new_event_loop()
 
-    def async_setup(l):
-        l.set_exception_handler(exception_handler)
-        # l.create_task(poll_current_menu())
-        l.create_task(update_active_menu_when_requested())
+    def async_setup():
+        loop.set_exception_handler(exception_handler)
         if args.args.named_pipe:
-            l.create_task(async_readline())
-        l.create_task(heartbeat(300))
-        l.create_task(populate_initial_game_event())
-        l.run_forever()
+            loop.create_task(async_readline())
+        loop.create_task(heartbeat(2))
+        loop.create_task(populate_initial_game_event())
+        loop.run_forever()
 
     def exception_handler(loop, context):
         # This only works when there are no references to the above tasks.
@@ -198,7 +191,7 @@ def setup_async_loop():
         # return
         raise context.get("exception", RuntimeError(f"task shutdown error {context}"))
 
-    async_thread = threading.Thread(target=async_setup, daemon=True, args=(loop,))
+    async_thread = threading.Thread(target=async_setup, daemon=True)
     async_thread.start()
 
 
@@ -207,32 +200,11 @@ def graceful_exit(msg):
     sys.exit(msg)
 
 
-async def request_active_menu_with_delay():
+async def request_and_update_active_menu():
     import menu_utils
-    await asyncio.sleep(1)
-    menu = await menu_utils.get_active_menu()
-    return menu
+    new_menu = await menu_utils.get_active_menu()
+    await handle_new_menu(new_menu)
 
-async def update_active_menu_when_requested():
-    import menu_utils, server
-    while True:
-        await active_menu_request_queue.get()
-        logger.warn("logger.warn update_active_menu_when_requested() 0")
-        server.log("update_active_menu_when_requested() 0")
-        new_menu = await menu_utils.get_active_menu()
-        logger.warn("logger.warnupdate_active_menu_when_requested 1")
-        server.log("update_active_menu_when_requested 1")
-        await handle_new_menu(new_menu)
-        logger.warn("logger.warn update_active_menu_when_requested 2")
-        server.log("update_active_menu_when_requested 2")
-        active_menu_request_queue_out.put_nowait(None)
-        logger.warn("logger.warn update_active_menu_when_requested 3")
-        server.log("update_active_menu_when_requested 3")
-
-async def poll_current_menu():
-    while True:
-        new_menu = await request_active_menu_with_delay()
-        await handle_new_menu(new_menu)
 
 async def handle_new_menu(new_menu):
     import game
@@ -240,51 +212,8 @@ async def handle_new_menu(new_menu):
     is_new_menu = not is_same_menu(current_menu, new_menu)
     game.set_context_menu(new_menu)
     if is_new_menu:
+        logger.debug(f"Got new menu {new_menu['menuType']}")
         await stop_everything()
-
-
-async def menu_changed():
-    import game
-
-    # async with on_menu_changed_stream() as mcs:
-    #     while True:
-    #         changed_event_coro = mcs.next()
-    #         active_menu_coro = request_active_menu_with_delay()
-    #         done, pending = await asyncio.wait(
-    #             [TaskWrapper(changed_event_coro).task, TaskWrapper(active_menu_coro).task], return_when=asyncio.FIRST_COMPLETED
-    #         )
-    #         done_task = list(done)[0]
-    #         done_coro = done_task.get_coro()
-    #         result = done_task.result()
-    #         if done_coro == changed_event_coro:
-    #             new_menu = result["newMenu"]
-    #         else:
-    #             new_menu = result
-    #         current_menu = game.context_variables["ACTIVE_MENU"]
-    #         is_new_menu = not is_same_menu(current_menu, new_menu)
-    #         game.set_context_menu(new_menu)
-    #         if is_new_menu:
-    #             log("menu result", result)
-    #             await stop_everything()
-
-    # while True:
-    #     new_menu = await request_active_menu_with_delay()
-    #     current_menu = game.context_variables["ACTIVE_MENU"]
-    #     is_new_menu = not is_same_menu(current_menu, new_menu)
-    #     game.set_context_menu(new_menu)
-    #     if is_new_menu:
-    #         log("new menu", new_menu)
-    #         await stop_everything()
-
-    while True:
-        async with on_menu_changed_stream() as mcs:
-            new_menu = await mcs.next()['newMenu']
-            current_menu = game.context_variables["ACTIVE_MENU"]
-            is_new_menu = not is_same_menu(current_menu, new_menu)
-            game.set_context_menu(new_menu)
-            if is_new_menu:
-                log("new menu", new_menu)
-                await stop_everything()
 
 
 def is_same_menu(menu1, menu2):
@@ -308,11 +237,7 @@ async def populate_initial_game_event():
     game.set_context_value("GAME_EVENT", game_event)
 
 
-async def heartbeat(timeout):
-    # await asyncio.sleep(20)
-    # get_engine().disconnect()
-    # sys.exit(1)
-    # raise RuntimeError('aasdasdad')
+async def heartbeat(timeout: int):
     while True:
         fut = request("HEARTBEAT")
         try:
@@ -324,10 +249,10 @@ async def heartbeat(timeout):
 
 async def async_readline():
     # Is there a better way to read async stdin on Windows?
-    q = queue.Queue()
-    def _run(future_queue):
+    q: queue.Queue[Future[str]] = queue.Queue()
+    def _run():
         while True:
-            fut = future_queue.get()
+            fut = q.get()
             try:
                 n = struct.unpack("I", named_pipe_file_read.read(4))[0]  # Read str length
                 line = named_pipe_file_read.read(n).decode("utf8")  # Read str
@@ -336,9 +261,9 @@ async def async_readline():
             except Exception as e:
                 graceful_exit("pipe disconnected")
 
-    threading.Thread(target=_run, daemon=True, args=(q,)).start()
+    threading.Thread(target=_run, daemon=True).start()
     while True:
-        fut = loop.create_future()
+        fut: Future[str] = loop.create_future()
         q.put(fut)
         line = await fut
         on_message(line)
@@ -395,13 +320,13 @@ def send_message(msg_type: str, msg=None):
     return full_msg
 
 
-def on_message(msg_str):
+def on_message(msg_str: str):
     import events
 
     try:
         msg = json.loads(msg_str)
     except json.JSONDecodeError:
-        log(f"Got invalid message from mod {msg_str}", level=1)
+        logger.trace(f"Got invalid message from mod {msg_str}")
         return
     msg_type = msg["type"]
     msg_data = msg["data"]
@@ -428,7 +353,7 @@ def on_message(msg_str):
         stream_value = msg_data["value"]
         stream_error = msg_data.get("error")
         if stream_error is not None:
-            log(f"Stream {stream_id} error: {stream_value}")
+            logger.debug(f"Stream {stream_id} error: {stream_value}")
             stream.close()
             return
         stream.set_value(stream_value)
@@ -475,8 +400,6 @@ async def mouse_release(btn="left"):
 
 
 def log(*a, sep=" ", level=1):
-    for item in a:
-        logger.warning(item)
     to_send = [x if isinstance(x, str) else json.dumps(x) for x in a]
     return send_message("LOG", {"value": sep.join(to_send), "level": level})
 
