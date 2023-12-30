@@ -1,6 +1,7 @@
 certifi==2023.11.17
 cffi==1.16.0
 charset-normalizer==3.3.2
+cmake==3.27.7
 comtypes==1.2.0
 decorator==5.1.1
 dfly-breathe==0.2.4
@@ -20,6 +21,7 @@ requests==2.31.0
 setuptools==69.0.2
 six==1.16.0
 sounddevice==0.4.6
+srabuilder @ git+https://github.com/evfredericksen/srabuilder.git@df091f3ace2e4adebfa0bb5bdeb39505734cfecd
 urllib3==2.1.0
 ush==3.1.0
 webrtcvad-wheels==2.0.11.post1

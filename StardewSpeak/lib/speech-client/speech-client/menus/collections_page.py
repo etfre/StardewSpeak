@@ -1,4 +1,8 @@
 import menu_utils, server, df_utils
+from typing_extensions import TypedDict, Any
+
+class CollectionsPage(TypedDict):
+    tabs: list[Any]
 
 tabs = df_utils.index_choice_from_list(
     "tabs",
@@ -23,7 +27,7 @@ def get_collections_page(menu):
     return page
 
 
-async def click_side_tab(menu, idx: int):
+async def click_side_tab(menu: CollectionsPage, idx: int):
     cmp = menu["tabs"][idx]
     await menu_utils.click_component(cmp)
 

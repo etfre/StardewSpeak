@@ -1,3 +1,4 @@
+from __future__ import annotations
 import time
 import logging
 import args
@@ -28,7 +29,7 @@ else:
     named_pipe_file_read = None
 
 loop = None
-streams = {}
+streams: dict[str, Stream] = {}
 mod_requests: dict[str, Future] = {}
 
 ongoing_tasks = {}  # not connected to an objective, slide mouse, swing sword etc
@@ -47,7 +48,8 @@ async def stop_everything():
 
 
 class Stream:
-    def __init__(self, name, data=None):
+    
+    def __init__(self, name: str, data=None):
         self.has_value = False
         self.latest_value = None
         self.future = loop.create_future()
