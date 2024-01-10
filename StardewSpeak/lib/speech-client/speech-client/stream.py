@@ -13,7 +13,7 @@ class Stream[T]:
         import server
         self.has_value = False
         self.latest_value = None
-        self.future: asyncio.Future[T] | None = server.loop.create_future()
+        self.future: asyncio.Future[T | None] = server.loop.create_future()
         self.name = name
         self.id = f"{name}_{str(uuid.uuid4())}"
         self.closed = False

@@ -151,8 +151,8 @@ class WaterCropsObjective(Objective):
     def __init__(self):
         pass
 
-    async def get_unwatered_crops(self, location: str):
-        hoe_dirt_tiles = await game.get_hoe_dirt('')
+    async def get_unwatered_crops(self):
+        hoe_dirt_tiles = await game.get_hoe_dirt()
         tiles_to_water = [hdt for hdt in hoe_dirt_tiles if hdt['crop'] and not hdt['isWatered'] and hdt['needsWatering']]
         return tiles_to_water
 
@@ -164,7 +164,7 @@ class WaterCropsObjective(Objective):
 
 class HarvestCropsObjective(Objective):
 
-    async def get_harvestable_crops(self, location: str):
+    async def get_harvestable_crops(self):
         hoe_dirt_tiles = await game.get_hoe_dirt('')
         harvestable_crop_tiles = [hdt for hdt in hoe_dirt_tiles if hdt['crop'] and hdt['readyForHarvest']]
         return harvestable_crop_tiles
@@ -176,9 +176,9 @@ class HarvestCropsObjective(Objective):
 
 class ClearOreObjective(Objective):
 
-    async def get_debris(self, location):
+    async def get_debris(self):
         ore_types = set((95, 843, 844, 25, 75, 76, 77, 816, 817, 818, 819, 8, 10, 12, 14, 6, 4, 2, 751, 849, 290, 850, 764, 765))
-        objs = await game.get_location_objects(location)
+        objs = await game.get_location_objects()
         ores = [x for x in objs if x['name'] == 'Stone' and x['parentSheetIndex'] in ore_types]
         return ores
 
@@ -195,10 +195,10 @@ class ClearDebrisObjective(Objective):
     def __init__(self, debris_type):
         self.debris_type = debris_type
 
-    async def get_debris(self, location):
+    async def get_debris(self):
         debris_objects, resource_clumps, tools = await asyncio.gather(
-            self.get_debris_objects(location), 
-            game.get_resource_clump_pieces(location),
+            self.get_debris_objects(), 
+            game.get_resource_clump_pieces(),
             game.get_tools(), 
         )
         debris = debris_objects + resource_clumps
@@ -216,8 +216,8 @@ class ClearDebrisObjective(Objective):
             clearable_debris = [x for x in clearable_debris if x['name'] == constants.WEEDS]
         return clearable_debris
 
-    async def get_debris_objects(self, location):
-        objs = await game.get_location_objects(location)
+    async def get_debris_objects(self):
+        objs = await game.get_location_objects()
         debris = [{**o, 'type': 'object'} for o in objs if game.is_debris(o)]
         return debris
 
@@ -248,8 +248,8 @@ class PlantSeedsOrFertilizerObjective(Objective):
     def __init__(self):
         pass
 
-    async def get_hoe_dirt(self, location: str):
-        hoe_dirt_tiles = await game.get_hoe_dirt('')
+    async def get_hoe_dirt(self):
+        hoe_dirt_tiles = await game.get_hoe_dirt()
         return [x for x in hoe_dirt_tiles if x['canPlantThisSeedHere']]
 
     async def run(self):
@@ -259,8 +259,8 @@ class PlantSeedsOrFertilizerObjective(Objective):
 class HoePlotObjective(Objective):
 
     def __init__(self, n1, n2):
-        self.n1 = n1
-        self.n2 = n2
+        self.n1: int = n1
+        self.n2: int = n2
 
     async def run(self):
         async with stream.player_status_stream() as pss:

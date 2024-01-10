@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TypedDict, Any, Literal, NotRequired
+from enum import Enum
 
 class PlayerStatus(TypedDict):
     location: str
@@ -41,3 +42,21 @@ class ClickableComponent(TypedDict):
     focusTarget: NotRequired[Point]
 
 type Point = tuple[int, int]
+
+class Debris(TypedDict):
+    chunkType: int
+    debrisType: int
+    tileX: int
+    tileY: int
+    isMoving: bool
+    movingTowardsPlayer: bool
+
+class ResourceClump(TypedDict):
+    tileX: int
+    tileY: int
+    height: int 
+    width: int
+    objectIndex: int
+    health: float
+    name: str
+    type: Literal["resource_clump"]

@@ -20,6 +20,18 @@ from asyncio.futures import Future
 import logger
 from typing import Callable
 
+class NamedPipeHandler:
+
+    def __init__(self, named_pipe: str) -> None:
+        self.named_pipe_file = open(rf"\\.\pipe\{named_pipe}Reader", "r+b", 0)
+        self.named_pipe_file_read = open(rf"\\.\pipe\{named_pipe}Writer", "r+b", 0)
+
+    def read(self):
+        pass
+
+    def write(self, msg: str):
+        pass
+
 if args.args.named_pipe:
     named_pipe_file = open(rf"\\.\pipe\{args.args.named_pipe}Reader", "r+b", 0)
     named_pipe_file_read = open(rf"\\.\pipe\{args.args.named_pipe}Writer", "r+b", 0)
@@ -27,7 +39,7 @@ else:
     named_pipe_file = None
     named_pipe_file_read = None
 
-loop = None
+loop = asyncio.new_event_loop()
 
 mod_requests: dict[str, Future] = {}
 
@@ -55,8 +67,6 @@ def _do_create_task(awaitable, *args, **kw):
 
 
 def setup_async_loop():
-    global loop
-    loop = asyncio.new_event_loop()
 
     def async_setup():
         loop.set_exception_handler(exception_handler)
@@ -230,20 +240,20 @@ def on_message(msg_str: str):
     elif msg_type == "STREAM_MESSAGE":
         stream_id = msg_data["stream_id"]
 
-        stream = stream.streams.get(stream_id)
-        if stream is None:
+        stream_obj = stream.streams.get(stream_id)
+        if stream_obj is None:
             send_message("STOP_STREAM", stream_id)
             return
         stream_value = msg_data["value"]
         stream_error = msg_data.get("error")
         if stream_error is not None:
             logger.debug(f"Stream {stream_id} error: {stream_value}")
-            stream.close()
+            stream_obj.close()
             return
-        stream.set_value(stream_value)
-        stream.latest_value = stream_value
+        stream_obj.set_value(stream_value)
+        stream_obj.latest_value = stream_value
         try:
-            stream.future.set_result(None)
+            stream_obj.future.set_result(None)
         except asyncio.InvalidStateError:
             pass
     elif msg_type == "EVENT":
