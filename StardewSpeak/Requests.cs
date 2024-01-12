@@ -238,7 +238,8 @@ namespace StardewSpeak
                         int fromY = data.y;
                         int cutoff = data.cutoff;
                         var tiles = Pathfinder.Pathfinder.FindPath(player.currentLocation, fromX, fromY, playerX, playerY, cutoff);
-                        return new { tiles, location = player.currentLocation.NameOrUniqueName };
+                        var location = new { name = player.currentLocation.NameOrUniqueName };
+                        return new { tiles, location = location };
                     }
                 case "BED_TILE":
                     {

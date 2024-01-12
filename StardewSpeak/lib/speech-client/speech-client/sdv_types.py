@@ -60,3 +60,32 @@ class ResourceClump(TypedDict):
     health: float
     name: str
     type: Literal["resource_clump"]
+
+class Tree(TypedDict):
+    type: Literal["tree"]
+    treeType: int
+    tileX: int 
+    tileY: int 
+    tapped: bool
+    stump: bool
+    growthStage: int
+
+class Grass(TypedDict):
+    type: Literal["grass"]
+    grassType: int
+    tileX: int 
+    tileY: int 
+    numberOfWeeds: int
+
+type TerrainFeature = Tree | Grass
+
+class LocationObject(TypedDict):
+    name: str
+    tileX: int 
+    tileY: int
+    type: str
+    isForage: bool
+    readyForHarvest: bool
+    canBeGrabbed: bool
+    isOnScreen: bool
+    parentSheetIndex: int
