@@ -19,11 +19,8 @@ namespace StardewSpeak
 
         public static object PlayerStatus() {
             Farmer player = Game1.player;
-            var currentLocation = player.currentLocation;
-            var location = new { 
-                name = currentLocation?.NameOrUniqueName,
-                isOutdoors = currentLocation.IsOutdoors
-            };
+            GameLocation currentLocation = player.currentLocation;
+            var location = Serialization.SerializeLocation(currentLocation);
             var playerPosition = player.Position;
             var position = new List<float> { playerPosition.X, playerPosition.Y };
             var facingDirection = player.FacingDirection;

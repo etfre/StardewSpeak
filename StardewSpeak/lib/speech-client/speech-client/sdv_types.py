@@ -1,4 +1,5 @@
 from __future__ import annotations
+from dataclasses import dataclass
 from typing import TypedDict, Any, Literal, NotRequired
 from enum import Enum
 
@@ -89,3 +90,22 @@ class LocationObject(TypedDict):
     canBeGrabbed: bool
     isOnScreen: bool
     parentSheetIndex: int
+
+@dataclass
+class Rectangle:
+    left: int
+    top: int
+    width: int
+    height: int
+
+    @property
+    def right(self):
+        return self.left + self.width
+    
+    @property
+    def bottom(self):
+        return self.top + self.height
+    
+    def contains_point(self, point: Point):
+        x, y = point
+        return (self.left <= x < self.right) and (self.top <= y < self.bottom)

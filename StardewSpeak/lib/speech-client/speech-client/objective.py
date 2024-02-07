@@ -173,11 +173,24 @@ class WaterCropsObjective(Objective):
 
     async def run(self):
         await game.equip_item_by_name(constants.WATERING_CAN)
-        async for crop in game.navigate_tiles(
-            self.get_unwatered_crops, game.generic_next_item_key, allow_action_on_same_tile=False
-        ):
-            await game.equip_item_by_name(constants.WATERING_CAN)
-            await game.swing_tool()
+        async with stream.tool_status_stream() as tss:
+            watering_can_status = await tss.next()
+            assert watering_can_status
+            watering_can_upgrade_level = watering_can_status["upgradeLevel"]
+            async for crop in game.navigate_tiles(
+                self.get_unwatered_crops,
+                game.generic_next_item_key,
+                allow_action_on_same_tile=False,
+            ):
+                await game.equip_item_by_name(constants.WATERING_CAN)
+                player_status, unwatered_crops = await asyncio.gather(
+                    server_requests.get_player_status(), self.get_unwatered_crops()
+                )
+                unwatered_crop_tiles = [(x["tileX"], x["tileY"]) for x in unwatered_crops]
+                power_level = game.calculate_modifiable_tiles(
+                    unwatered_crop_tiles, watering_can_upgrade_level, player_status
+                )
+                await game.swing_tool(power_level, tool_status_stream=tss)
 
 
 class HarvestCropsObjective(Objective):
@@ -305,15 +318,25 @@ class HoePlotObjective(Objective):
                 y = start_tile[1] + j * y_increment
                 plot_tiles.add((x, y))
         get_next_diggable = functools.partial(game.get_diggable_tiles, plot_tiles)
-        async for hdt in game.navigate_tiles(
-            get_next_diggable,
-            game.generic_next_item_key,
-            allow_action_on_same_tile=False,
-            items_ok=game.ensure_items_changed,
-        ):
-            await game.equip_item_by_name(constants.HOE)
-            await game.swing_tool()
-
+        async with stream.tool_status_stream() as tss:
+            hoe_status = await tss.next()
+            assert hoe_status
+            hoe_upgrade_level = hoe_status["upgradeLevel"]
+            async for hdt in game.navigate_tiles(
+                get_next_diggable,
+                game.generic_next_item_key,
+                allow_action_on_same_tile=False,
+                items_ok=game.ensure_items_changed,
+            ):
+                await game.equip_item_by_name(constants.HOE)
+                player_status, candidate_hoe_dirts = await asyncio.gather(
+                    server_requests.get_player_status(), get_next_diggable()
+                )
+                candidate_hoe_dirt_tiles = [(x["tileX"], x["tileY"]) for x in candidate_hoe_dirts]
+                power_level = game.calculate_modifiable_tiles(
+                    candidate_hoe_dirt_tiles, hoe_upgrade_level, player_status
+                )
+                await game.swing_tool(power_level, tool_status_stream=tss)
 
 class TalkToNPCObjective(Objective):
     def __init__(self, npc_name):

@@ -26,3 +26,8 @@ async def get_grass():
 async def get_location_objects() -> list[sdv_types.LocationObject]:
     objects = await server.request(constants.GET_LOCATION_OBJECTS)
     return objects
+
+async def get_player_status() -> sdv_types.PlayerStatus:
+    req_builder = server.RequestBuilder("PLAYER_STATUS")
+    status = await req_builder.request()
+    return status

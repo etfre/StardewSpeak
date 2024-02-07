@@ -551,7 +551,9 @@ def closest_item_key(start_tile, current_tile, item, player_status):
     return distance_between_points(current_tile, target_tile)
 
 
-def generic_next_item_key(start_tile, current_tile, item, player_status):
+def generic_next_item_key(
+    start_tile: sdv_types.Point, current_tile: sdv_types.Point, item: Any, player_status: PlayerStatus
+):
     target_tile = item["tileX"], item["tileY"]
     score = score_objects_by_distance(start_tile, current_tile, target_tile)
     return score
@@ -586,11 +588,99 @@ async def get_tools():
     return tools
 
 
-async def swing_tool():
-    with stream.tool_status_stream(ticks=1) as tss:
+def get_tool_extension(tool_power_level: int):
+    if tool_power_level == 0:
+        return 1
+    if tool_power_level in (1, 3):
+        return 3
+    if tool_power_level == 2:
+        return 5
+    if tool_power_level == 4:
+        return 6
+
+
+def get_tool_swing_bounding_box(
+    tool_start_tile: sdv_types.Point, tool_power_level: int, facing_direction: int
+) -> sdv_types.Rectangle:
+    side_adjust = 0 if tool_power_level <= 2 else 1
+    non_extension_width_and_height = side_adjust * 2 + 1
+    extension = get_tool_extension(tool_power_level)
+    start_x, start_y = tool_start_tile
+    if facing_direction == constants.NORTH:
+        left, top, width, height = (
+            start_x - side_adjust,
+            start_y - extension + 1,
+            non_extension_width_and_height,
+            extension,
+        )
+    elif facing_direction == constants.EAST:
+        left, top, width, height = start_x, start_y - side_adjust, extension, non_extension_width_and_height
+    elif facing_direction == constants.SOUTH:
+        left, top, width, height = start_x - side_adjust, start_y, non_extension_width_and_height, extension
+    elif facing_direction == constants.WEST:
+        left, top, width, height = (
+            start_x - extension + 1,
+            start_y - side_adjust,
+            extension,
+            non_extension_width_and_height,
+        )
+    return sdv_types.Rectangle(left, top, width, height)
+
+
+def calculate_modifiable_tiles(
+    tiles: sdv_types.Point, tool_upgrade_level: int, player_status: sdv_types.PlayerStatus, penalty_per_level=0.5
+    ):
+    facing_direction = player_status["facingDirection"]
+    if facing_direction == constants.NORTH:
+        adj_x, adj_y = 0, -1
+    elif facing_direction == constants.EAST:
+        adj_x, adj_y = 1, 0
+    elif facing_direction == constants.SOUTH:
+        adj_x, adj_y = 0, 1
+    elif facing_direction == constants.WEST:
+        adj_x, adj_y = -1, 0
+    else:
+        raise RuntimeError(f"Unexpected facing direction {facing_direction}")
+
+    tool_start_tile = player_status["tileX"] + adj_x, player_status["tileY"] + adj_y
+    logger.debug(f"tool start tile {tool_start_tile}")
+    assert 0 <= tool_upgrade_level <= 4
+    max_tiles = -1
+    max_level = -1
+    for test_level in range(tool_upgrade_level + 1):
+        bb = get_tool_swing_bounding_box(tool_start_tile, test_level, facing_direction)
+        current_tiles = 0
+        for tile in tiles:
+            cp = bb.contains_point(tile)
+            if cp:
+                current_tiles += 1
+        logger.debug(f"level {test_level}, bounding box {bb}, {current_tiles}")
+        current_tiles -= test_level * penalty_per_level
+        if current_tiles > max_tiles:
+            max_tiles = current_tiles
+            max_level = test_level
+    return max_level
+
+
+async def swing_tool(power_level: int = 0, tool_status_stream: Stream[sdv_types.ToolStatus] | None = None):
+    logger.debug(f"Swinging tool to power level {power_level}")
+    timeout = 1 + 2 * power_level
+    normalized_tool_status_stream = tool_status_stream or stream.tool_status_stream(ticks=1)
+    try:
         async with press_and_release(constants.USE_TOOL_BUTTON):
-            await tss.wait(lambda t: t["inUse"], timeout=1)
-        await tss.wait(lambda t: not t["inUse"], timeout=10)
+            await normalized_tool_status_stream.wait(lambda t: is_tool_at_power_level(t, power_level), timeout=timeout)
+        await normalized_tool_status_stream.wait(lambda t: not t["inUse"], timeout=10)
+    finally:
+        if tool_status_stream is None:  # only close stream if we created it here
+            normalized_tool_status_stream.close()
+
+
+def is_tool_at_power_level(tool: sdv_types.ToolStatus, power_level: int):
+    if tool is None:
+        return False
+    if tool["upgradeLevel"] < power_level:
+        raise RuntimeError("Unable to")
+    return tool["inUse"] and tool["power"] >= power_level
 
 
 async def do_action():
@@ -619,15 +709,15 @@ async def navigate_tiles[
 ):
     import events
 
-    async with stream.player_status_stream() as pss:
-        player_status = await pss.next()
+    async with stream.player_status_stream() as player_status_stream:
+        player_status = await player_status_stream.next()
         start_tile = player_status["tileX"], player_status["tileY"]
         previous_items: list | None = None
         while True:
-            current_tile = player_status["tileX"], player_status["tileY"]
             items = await get_items()
             if not items:
                 return
+            current_tile = player_status["tileX"], player_status["tileY"]
             sorted_items = sorted(items, key=lambda t: sort_items(start_tile, current_tile, t, player_status))
             if index is not None:
                 sorted_items: list[T] = [sorted_items[index]]
@@ -638,10 +728,10 @@ async def navigate_tiles[
             for item in sorted_items:
                 item_tile = (item["tileX"], item["tileY"])
                 if current_tile == item_tile and not allow_action_on_same_tile:
-                    await pathfind_to_adjacent_tile_from_current(pss)
-                    await face_tile(pss, item_tile)
+                    await pathfind_to_adjacent_tile_from_current(player_status_stream)
+                    await face_tile(player_status_stream, item_tile)
                 try:
-                    item_path = await pathfind_fn(item["tileX"], item["tileY"], pss)
+                    item_path = await pathfind_fn(item["tileX"], item["tileY"], player_status_stream)
                 except NavigationFailed:
                     pass
                 else:
@@ -650,7 +740,7 @@ async def navigate_tiles[
                     break
             if not item_path:
                 return
-            player_status = await pss.next()
+            player_status = await player_status_stream.next()
 
 
 async def navigate_nearest_tile(get_items, pathfind_fn=pathfind_to_adjacent, index=None):
@@ -1012,7 +1102,7 @@ async def face_tile(_stream: Stream[sdv_types.PlayerStatus], tile: Point):
     player_status = await _stream.next()
     player_tile = player_status["tileX"], player_status["tileY"]
     direction_to_face = direction_from_tiles(player_tile, tile)
-    await face_direction(direction_to_face, stream)
+    await face_direction(direction_to_face, _stream)
 
 
 async def pathfind_to_tile(x, y, _stream: Stream, cutoff=-1):
@@ -1024,7 +1114,7 @@ async def pathfind_to_tile(x, y, _stream: Stream, cutoff=-1):
 
 
 async def move_n_tiles(direction: int, n: int, player_status_stream: Stream[sdv_types.PlayerStatus]):
-    status = await get_player_status()
+    status = await server_requests.get_player_status()
     await ensure_not_moving()
     from_x, from_y = status["tileX"], status["tileY"]
     to_x, to_y = from_x, from_y
@@ -1040,12 +1130,6 @@ async def move_n_tiles(direction: int, n: int, player_status_stream: Stream[sdv_
         raise ValueError(f"Unexpected direction {direction}")
     path = await path_to_tile(to_x, to_y, status["location"]["name"])
     await path.travel(player_status_stream)
-
-
-async def get_player_status():
-    req_builder = server.RequestBuilder("PLAYER_STATUS")
-    status = await req_builder.request()
-    return status
 
 
 class HUDMessageException(Exception):

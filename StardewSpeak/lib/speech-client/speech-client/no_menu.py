@@ -29,7 +29,7 @@ async def move_and_face_previous_direction(direction: int, n: int):
         await game.face_direction(ps["facingDirection"], pss, move_cursor=True)
 
 
-async def get_shipping_bin_tiles(item):
+async def get_shipping_bin_tiles():
     tile = await server.request("SHIPPING_BIN_TILE")
     return game.break_into_pieces([tile])
 
@@ -39,7 +39,7 @@ async def go_to_shipping_bin():
     await game.do_action()
 
 
-async def get_bed_tile(item):
+async def get_bed_tile():
     tile = await server.request("BED_TILE")
     return [tile]
 
@@ -48,7 +48,7 @@ async def go_to_bed():
     await game.navigate_nearest_tile(get_bed_tile, pathfind_fn=game.pathfind_to_tile)
 
 
-async def get_ladders_down(item):
+async def get_ladders_down():
     return await server.request("GET_LADDERS_DOWN")
 
 
