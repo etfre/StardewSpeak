@@ -44,8 +44,8 @@ namespace StardewSpeak
         public static dynamic HandleRequestMessage(string msgType, dynamic data = null)
         {
             var player = Game1.player;
-            int playerX = player.getTileX();
-            int playerY = player.getTileY();
+            int playerX = (int)player.Tile.X;
+            int playerY = (int)player.Tile.Y;
             GameLocation currentLocation = player.currentLocation;
             switch (msgType)
             {
@@ -189,8 +189,7 @@ namespace StardewSpeak
                         List<dynamic> sorted;
                         if (characterType == "animal")
                         {
-                            if (!(currentLocation is IAnimalLocation)) return null;
-                            foreach (FarmAnimal farmAnimal in (currentLocation as IAnimalLocation).Animals.Values)
+                            foreach (FarmAnimal farmAnimal in currentLocation.Animals.Values)
                             {
                                 var animal = Serialization.SerializeAnimal(farmAnimal);
                                 if ((getBy == "unpet" && !animal.wasPet) || (getBy == "readyForHarvest" && animal.readyForHarvest))
@@ -337,7 +336,7 @@ namespace StardewSpeak
                         string name = data.name;
                         FarmAnimal animal = Utils.FindAnimalByName(name);
                         bool didPet = false;
-                        if (animal != null && !animal.wasPet)
+                        if (animal != null && !animal.wasPet.Value)
                         {
                             animal.pet(player);
                             didPet = true;
@@ -349,7 +348,7 @@ namespace StardewSpeak
                         string name = data.name;
                         FarmAnimal animal = Utils.FindAnimalByName(name);
                         bool didUseTool = false;
-                        if (animal != null && player.CurrentTool?.BaseName == animal.toolUsedForHarvest.Value)
+                        if (animal != null && player.CurrentTool?.BaseName == animal.GetAnimalData().HarvestTool)
                         {
                             Rectangle rect = animal.GetHarvestBoundingBox();
                             int x = rect.Center.X - Game1.viewport.X;

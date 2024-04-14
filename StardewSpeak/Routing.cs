@@ -52,6 +52,16 @@ namespace StardewSpeak
         private static List<LocationConnection> LocationConnections(GameLocation from)
         {
             var connections = new List<LocationConnection>();
+            if (from.IsFarm) 
+            {
+                if (from is StardewValley.Farm farm)
+                {
+                    var fhe = farm.GetMainFarmHouseEntry();
+                    var lc = new LocationConnection("FarmHouse", fhe.X, fhe.Y - 1, true, false);
+                    connections.Add(lc);
+                }
+
+            }
             foreach (Warp warp in from.warps)
             {
                 GameLocation targetLoc = Game1.getLocationFromName(warp.TargetName);
@@ -75,19 +85,15 @@ namespace StardewSpeak
                     }
                 }
             }
-            if (from is StardewValley.Locations.BuildableGameLocation)
+            foreach (var b in from.buildings)
             {
-                StardewValley.Locations.BuildableGameLocation bl = from as StardewValley.Locations.BuildableGameLocation;
-                foreach (var b in bl.buildings)
+                if (b.indoors.Value != null)
                 {
-                    if (b.indoors.Value != null)
-                    {
-                        var point = b.humanDoor.Value;
-                        var locName = b.indoors.Value.NameOrUniqueName;
-                        var lc = new LocationConnection(locName, point.X + b.tileX.Value, point.Y + b.tileY.Value, true, false);
-                        connections.Add(lc);
-                    };
-                }
+                    var point = b.humanDoor.Value;
+                    var locName = b.indoors.Value.NameOrUniqueName;
+                    var lc = new LocationConnection(locName, point.X + b.tileX.Value, point.Y + b.tileY.Value, true, false);
+                    connections.Add(lc);
+                };
             }
             return connections;
         }
@@ -116,10 +122,9 @@ namespace StardewSpeak
                 string name = gl.NameOrUniqueName;
                 if (string.IsNullOrWhiteSpace(name)) continue;
                 allLocations.Add(gl);
-                if (includeBuildings && gl is StardewValley.Locations.BuildableGameLocation)
+                if (includeBuildings)
                 {
-                    StardewValley.Locations.BuildableGameLocation bl = gl as StardewValley.Locations.BuildableGameLocation;
-                    foreach (var b in bl.buildings)
+                    foreach (var b in gl.buildings)
                     {
                         if (b.indoors.Value != null) 
                         {

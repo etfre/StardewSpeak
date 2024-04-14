@@ -218,9 +218,9 @@ def zipdir(zipfile_ob: zipfile.ZipFile, folder: str, prefix: str = "", exclude=(
 
 
 def build_release(app_root):
-    pf86 = os.environ['ProgramFiles(x86)']
-    vswhere = fr'{pf86}\Microsoft Visual Studio\Installer\vswhere.exe'
-    cmd = f'''"{vswhere}" -latest -prerelease -products * -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe'''
+    pf86 = os.environ["ProgramFiles(x86)"]
+    vswhere = rf"{pf86}\Microsoft Visual Studio\Installer\vswhere.exe"
+    cmd = f""""{vswhere}" -latest -prerelease -products * -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe"""
     msbuild = subprocess.run(cmd, stdout=subprocess.PIPE).stdout.decode("utf-8").strip()
     sln = os.path.join(app_root, "StardewSpeak.sln")
     subprocess.run([msbuild, sln, "/p:Configuration=Release", "/t:Clean;Rebuild"])
@@ -238,7 +238,12 @@ def build_release_zip(app_root):
     release_dir = os.path.join(app_root, "StardewSpeak", "bin", "release")
     zip_name = os.path.join(release_dir, f'{manifest["Name"]} {manifest["Version"]}.zip')
     with zipfile.ZipFile(zip_name, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as myzip:
-        zipdir(myzip, os.path.join(release_dir, "net5.0"), prefix=os.path.join("StardewSpeak"), exclude=(os.path.join('StardewSpeak', 'StardewSpeak.deps.json')))
+        zipdir(
+            myzip,
+            os.path.join(release_dir, "net6.0"),
+            prefix=os.path.join("StardewSpeak"),
+            exclude=(os.path.join("StardewSpeak", "StardewSpeak.deps.json")),
+        )
         myzip.write(manifest_path, os.path.join("StardewSpeak", "manifest.json"))
 
 
@@ -286,8 +291,9 @@ def main():
     app_root = os.path.abspath(os.path.join("..", "..", ".."))
     if "c#" in steps:
         build_release(app_root)
-    if 'zip' in steps:
+    if "zip" in steps:
         build_release_zip(app_root)
+
 
 if __name__ == "__main__":
     main()

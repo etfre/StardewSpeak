@@ -2,8 +2,12 @@ from __future__ import annotations
 import async_timeout
 import uuid
 import asyncio
-from typing import Callable
+from typing import Callable, Awaitable
 from sdv_types import PlayerStatus, ToolStatus
+from pydantic import BaseModel
+
+class ValueContainer[T](BaseModel):
+    value: T
 
 streams: dict[str, Stream] = {}
 
@@ -11,17 +15,15 @@ class Stream[T]:
     
     def __init__(self, name: str, data=None):
         import server
-        self.has_value = False
-        self.latest_value = None
+        self.value: ValueContainer[T] | None = None
         self.future: asyncio.Future[T | None] = server.loop.create_future()
         self.name = name
         self.id = f"{name}_{str(uuid.uuid4())}"
         self.closed = False
         self.open(data)
 
-    def set_value(self, value):
-        self.latest_value = value
-        self.has_value = True
+    def set_value(self, value: T | None):
+        self.value = None if value is None else ValueContainer(value=value)
         try:
             self.future.set_result(None)
         except asyncio.InvalidStateError:
@@ -48,8 +50,8 @@ class Stream[T]:
             self.set_value(None)
 
     async def current(self) -> T:
-        if self.has_value:
-            return self.latest_value
+        if self.value:
+            return self.value.value
         return await self.next()
 
     async def __aenter__(self):
@@ -72,8 +74,10 @@ class Stream[T]:
             await self.future
         if self.closed:
             raise StreamClosedError(f"Stream {self.name} closed while waiting for next value")
+        if not self.value:
+            raise RuntimeError("Unexpectedly no value set in stream")
         self.future = server.loop.create_future()
-        return self.latest_value
+        return self.value.value
 
     async def wait(self, condition: Callable[[T], bool], timeout: float | None = None) -> T:
         async with async_timeout.timeout(timeout):

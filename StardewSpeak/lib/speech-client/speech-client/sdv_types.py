@@ -1,6 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import TypedDict, Any, Literal, NotRequired
+from typing import TypedDict, Any, Literal, NotRequired, Final
+import constants
 from enum import Enum
 
 class PlayerStatus(TypedDict):
@@ -109,3 +110,5 @@ class Rectangle:
     def contains_point(self, point: Point):
         x, y = point
         return (self.left <= x < self.right) and (self.top <= y < self.bottom)
+    
+Direction: Final = Literal[0, 1, 2, 3]

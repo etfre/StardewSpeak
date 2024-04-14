@@ -16,7 +16,8 @@ import stream
 from stream import Stream, player_status_stream, player_items_stream
 from sdv_types import PlayerStatus, Point
 import server_requests
-from typing import Awaitable, Callable, Coroutine, Any, Generator, Iterable
+from functools import wraps
+from typing import AsyncGenerator, Awaitable, Callable, Coroutine, Any, Generator, Iterable
 
 import async_timeout
 import events
@@ -360,6 +361,7 @@ async def path_to_tile(x: int, y: int, location: str, cutoff=-1):
         raise NavigationFailed(f"Cannot pathfind to {x}, {y} at location {location}")
     return Path(path, location)
 
+
 async def pathfind_to_next_location(next_location: str, status_stream: Stream):
     path, door_direction = await path_to_next_location(next_location, status_stream)
     await path.travel(status_stream, next_location)
@@ -597,10 +599,11 @@ def get_tool_extension(tool_power_level: int):
         return 5
     if tool_power_level == 4:
         return 6
+    raise RuntimeError(f"Unexpected tool_power_level {tool_power_level}")
 
 
 def get_tool_swing_bounding_box(
-    tool_start_tile: sdv_types.Point, tool_power_level: int, facing_direction: int
+    tool_start_tile: sdv_types.Point, tool_power_level: int, facing_direction: sdv_types.Direction
 ) -> sdv_types.Rectangle:
     side_adjust = 0 if tool_power_level <= 2 else 1
     non_extension_width_and_height = side_adjust * 2 + 1
@@ -629,7 +632,7 @@ def get_tool_swing_bounding_box(
 
 def calculate_modifiable_tiles(
     tiles: sdv_types.Point, tool_upgrade_level: int, player_status: sdv_types.PlayerStatus, penalty_per_level=0.5
-    ):
+):
     facing_direction = player_status["facingDirection"]
     if facing_direction == constants.NORTH:
         adj_x, adj_y = 0, -1
@@ -680,6 +683,8 @@ def is_tool_at_power_level(tool: sdv_types.ToolStatus, power_level: int):
         return False
     if tool["upgradeLevel"] < power_level:
         raise RuntimeError("Unable to")
+    logger.error(tool)
+    logger.error(power_level)
     return tool["inUse"] and tool["power"] >= power_level
 
 
@@ -706,7 +711,7 @@ async def navigate_tiles[
     items_ok=lambda prev, curr: True,
     allow_action_on_same_tile=True,
     index=None,
-):
+) -> AsyncGenerator[T, Any]:
     import events
 
     async with stream.player_status_stream() as player_status_stream:
@@ -842,9 +847,10 @@ async def get_ready_crafted():
     return ready_crafted
 
 
-def visible_wrapper(fn):
+def visible_wrapper(fn: Callable[[], Awaitable[list[sdv_types.LocationObject]]]):
     seen_tiles = set()
 
+    @wraps(fn)
     async def get_visible():
         items = await fn()
         for item in items:

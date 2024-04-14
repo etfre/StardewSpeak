@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
+using StardewValley.Pathfinding;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -79,7 +80,7 @@ namespace StardewSpeak.Pathfinder
 			}
 			try
 			{
-				bool endPointIsFarmer = endPoint.X == Game1.player.getTileX() && endPoint.Y == Game1.player.getTileY();
+				bool endPointIsFarmer = endPoint.X == Game1.player.Tile.X && endPoint.Y == Game1.player.Tile.Y;
 				_openList.Clear();
 				_closedList.Clear();
 				var openList = _openList;
