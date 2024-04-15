@@ -18,7 +18,8 @@ from srabuilder import rules
 from typing import Any, Coroutine
 from asyncio.futures import Future
 import logger
-from typing import Callable
+from typing import get_args
+from pydantic import BaseModel
 
 class NamedPipeHandler:
 
@@ -251,7 +252,6 @@ def on_message(msg_str: str):
             stream_obj.close()
             return
         stream_obj.set_value(stream_value)
-        stream_obj.latest_value = stream_value
         try:
             stream_obj.future.set_result(None)
         except asyncio.InvalidStateError:

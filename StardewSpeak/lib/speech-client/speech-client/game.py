@@ -211,11 +211,6 @@ def score_objects_by_distance(
     return start_weight * distance_from_start + current_weight * distance_from_current
 
 
-async def get_hoe_dirt():
-    hoe_dirt = await server.request("GET_HOE_DIRT")
-    return hoe_dirt or []
-
-
 async def get_resource_clump_pieces():
     clumps = await server_requests.get_resource_clumps()
     return break_into_pieces(clumps)
@@ -225,7 +220,7 @@ def break_into_pieces(items: list[sdv_types.ResourceClump]) -> list[sdv_types.Re
     pieces = []
     # break up resource clump like a boulder into one object for each tile
     for item in items:
-        start_x, start_y = item["tileX"], item["tileY"]
+        start_x, start_y = get_item_tile(item)
         for x in range(item["width"]):
             for y in range(item["height"]):
                 piece = {**item, "tileX": start_x + x, "tileY": start_y + y}
@@ -253,9 +248,9 @@ async def gather_items_on_ground(radius: int):
             debris = await server_requests.get_debris()
             test_tiles_set: set[sdv_types.Point] = set()
             for item in debris:
-                within_radius = distance_between_points(start_tile, (item["tileX"], item["tileY"])) < radius
+                within_radius = distance_between_points(start_tile, get_item_tile(item)) < radius
                 if within_radius:
-                    debris_tile = item["tileX"], item["tileY"]
+                    debris_tile = get_item_tile(item)
                     for tile in get_adjacent_tiles(debris_tile) + (debris_tile,):
                         items_to_gather[tile] += 1
                         if tile not in tile_blacklist:
@@ -547,16 +542,22 @@ async def equip_item_by_index(idx: int):
 def show_hud_message(msg: str, msg_type: int):
     server.send_message("SHOW_HUD_MESSAGE", {"message": msg, "msgType": msg_type})
 
+def get_item_tile(item):
+    try:
+        return (item.tileX, item.tileY)
+    except AttributeError:
+        return item["tileX"], item["tileY"]
+
 
 def closest_item_key(start_tile, current_tile, item, player_status):
-    target_tile = item["tileX"], item["tileY"]
+    target_tile = get_item_tile(item)
     return distance_between_points(current_tile, target_tile)
 
 
 def generic_next_item_key(
     start_tile: sdv_types.Point, current_tile: sdv_types.Point, item: Any, player_status: PlayerStatus
 ):
-    target_tile = item["tileX"], item["tileY"]
+    target_tile = get_item_tile(item)
     score = score_objects_by_distance(start_tile, current_tile, target_tile)
     return score
 
@@ -569,7 +570,7 @@ def next_crop_key(start_tile, current_tile, target_tile, player_status):
 
 
 def next_debris_key(start_tile, current_tile, debris_obj, player_status):
-    target_tile = debris_obj["tileX"], debris_obj["tileY"]
+    target_tile = get_item_tile(debris_obj)
     score = score_objects_by_distance(start_tile, current_tile, target_tile)
     return score
 
@@ -683,8 +684,6 @@ def is_tool_at_power_level(tool: sdv_types.ToolStatus, power_level: int):
         return False
     if tool["upgradeLevel"] < power_level:
         raise RuntimeError("Unable to")
-    logger.error(tool)
-    logger.error(power_level)
     return tool["inUse"] and tool["power"] >= power_level
 
 
@@ -731,12 +730,13 @@ async def navigate_tiles[
             previous_items = sorted_items
             item_path: Path | None = None
             for item in sorted_items:
-                item_tile = (item["tileX"], item["tileY"])
+                item_tile = get_item_tile(item)
                 if current_tile == item_tile and not allow_action_on_same_tile:
                     await pathfind_to_adjacent_tile_from_current(player_status_stream)
                     await face_tile(player_status_stream, item_tile)
                 try:
-                    item_path = await pathfind_fn(item["tileX"], item["tileY"], player_status_stream)
+                    tileX, tileY = get_item_tile(item)
+                    item_path = await pathfind_fn(tileX, tileY, player_status_stream)
                 except NavigationFailed:
                     pass
                 else:
@@ -779,7 +779,7 @@ def next_tile(current_tile: sdv_types.Point, direction: int):
 
 async def chop_tree_and_gather_resources(tree: sdv_types.Tree):
     evt = events.wait_for_event("TERRAIN_FEATURE_LIST_CHANGED")
-    tree_tile = tree["tileX"], tree["tileY"]
+    tree_tile = get_item_tile(tree)
     async with press_and_release(constants.USE_TOOL_BUTTON), stream.tool_status_stream(ticks=1) as tss:
         while not evt.done():
             tool_status = await tss.next()
@@ -794,7 +794,7 @@ async def chop_tree_and_gather_resources(tree: sdv_types.Tree):
 
 
 async def clear_object(obj, obj_getter, tool_name):
-    obj_tile = obj["tileX"], obj["tileY"]
+    obj_tile = get_item_tile(obj)
     async with stream.tool_status_stream(ticks=1) as tss, press_and_release(constants.USE_TOOL_BUTTON):
         while True:
             clumps, tool_status = await asyncio.gather(obj_getter(), tss.next())
@@ -802,7 +802,7 @@ async def clear_object(obj, obj_getter, tool_name):
                 return
             target = None
             for c in clumps:
-                if obj_tile == (c["tileX"], c["tileY"]):
+                if obj_tile == get_item_tile(c):
                     target = c
                     break
             if not target:
@@ -819,7 +819,7 @@ def find_character_by_name(name: str, characters):
 
 async def get_current_tile(_stream: Stream):
     ps = await _stream.next()
-    current_tile = ps["tileX"], ps["tileY"]
+    current_tile = get_item_tile(ps)
     return current_tile
 
 
@@ -835,7 +835,7 @@ async def write_game_state():
 
     objs = await server_requests.get_location_objects()
     log(objs, "location_objects.json")
-    hdt = await get_hoe_dirt()
+    hdt = await server_requests.get_hoe_dirt()
     log(hdt, "hoe_dirt.json")
     menu = await menu_utils.get_active_menu()
     log(menu, "menu.json")
@@ -855,8 +855,8 @@ def visible_wrapper(fn: Callable[[], Awaitable[list[sdv_types.LocationObject]]])
         items = await fn()
         for item in items:
             if item["isOnScreen"]:
-                seen_tiles.add((item["tileX"], item["tileY"]))
-        seen_or_visible_items = [x for x in items if (x["tileX"], x["tileY"]) in seen_tiles]
+                seen_tiles.add(get_item_tile(item))
+        seen_or_visible_items = [x for x in items if get_item_tile(x) in seen_tiles]
         return seen_or_visible_items
 
     return get_visible
@@ -990,7 +990,7 @@ async def go_outside():
 async def get_animals(animals_stream, player_stream):
     animals, player_status = await asyncio.gather(animals_stream.next(), player_stream.next())
     player_tile = player_status["tileX"], player_status["tileY"]
-    animals.sort(key=lambda x: distance_between_points(player_tile, (x["tileX"], x["tileY"])))
+    animals.sort(key=lambda x: distance_between_points(player_tile, get_item_tile(x)))
     return animals
 
 

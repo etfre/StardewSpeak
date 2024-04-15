@@ -174,7 +174,7 @@ namespace StardewSpeak
                 if (tf is HoeDirt)
                 {
                     var dirtTile = tf as HoeDirt;
-                    var crop = dirtTile.crop == null ? null : new { dirtTile.crop.currentPhase, dead = dirtTile.crop.dead.Value, fullyGrown = dirtTile.crop.fullyGrown.Value };
+                    var crop = dirtTile.crop == null ? null : new { currentPhase = dirtTile.crop.currentPhase.Value, dead = dirtTile.crop.dead.Value, fullyGrown = dirtTile.crop.fullyGrown.Value };
                     string fertilizer = dirtTile.fertilizer.Value;
                     var tileX = (int)dirtTile.Tile.X;
                     var tileY = (int)dirtTile.Tile.Y;

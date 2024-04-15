@@ -165,9 +165,9 @@ class WaterCropsObjective(Objective):
         pass
 
     async def get_unwatered_crops(self):
-        hoe_dirt_tiles = await game.get_hoe_dirt()
+        hoe_dirt_tiles = await server_requests.get_hoe_dirt()
         tiles_to_water = [
-            hdt for hdt in hoe_dirt_tiles if hdt["crop"] and not hdt["isWatered"] and hdt["needsWatering"]
+            hdt for hdt in hoe_dirt_tiles if hdt.crop and not hdt.isWatered and hdt.needsWatering
         ]
         return tiles_to_water
 
@@ -186,7 +186,7 @@ class WaterCropsObjective(Objective):
                 player_status, unwatered_crops = await asyncio.gather(
                     server_requests.get_player_status(), self.get_unwatered_crops()
                 )
-                unwatered_crop_tiles = [(x["tileX"], x["tileY"]) for x in unwatered_crops]
+                unwatered_crop_tiles = [(x.tileX, x.tileY) for x in unwatered_crops]
                 power_level = game.calculate_modifiable_tiles(
                     unwatered_crop_tiles, watering_can_upgrade_level, player_status
                 )
@@ -195,8 +195,8 @@ class WaterCropsObjective(Objective):
 
 class HarvestCropsObjective(Objective):
     async def get_harvestable_crops(self):
-        hoe_dirt_tiles = await game.get_hoe_dirt()
-        harvestable_crop_tiles = [hdt for hdt in hoe_dirt_tiles if hdt["crop"] and hdt["readyForHarvest"]]
+        hoe_dirt_tiles = await server_requests.get_hoe_dirt()
+        harvestable_crop_tiles = [hdt for hdt in hoe_dirt_tiles if hdt.crop and hdt.readyForHarvest]
         return harvestable_crop_tiles
 
     async def run(self):
@@ -287,7 +287,8 @@ class PlantSeedsOrFertilizerObjective(Objective):
         pass
 
     async def get_hoe_dirt(self):
-        hoe_dirt_tiles = await game.get_hoe_dirt()
+        hoe_dirt_tiles = await server_requests.get_hoe_dirt()
+        logger.error(hoe_dirt_tiles)
         return [x for x in hoe_dirt_tiles if x["canPlantThisSeedHere"]]
 
     async def run(self):
@@ -332,7 +333,7 @@ class HoePlotObjective(Objective):
                 player_status, candidate_hoe_dirts = await asyncio.gather(
                     server_requests.get_player_status(), get_next_diggable()
                 )
-                candidate_hoe_dirt_tiles = [(x["tileX"], x["tileY"]) for x in candidate_hoe_dirts]
+                candidate_hoe_dirt_tiles = [(x.tileX, x.tileY) for x in candidate_hoe_dirts]
                 power_level = game.calculate_modifiable_tiles(
                     candidate_hoe_dirt_tiles, hoe_upgrade_level, player_status
                 )

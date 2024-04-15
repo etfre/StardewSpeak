@@ -1,6 +1,7 @@
 from sdv_types import Point, PlayerStatus
 import constants
 import sdv_types
+from logger import logger
 import server
 
 async def get_debris() -> list[sdv_types.Debris]:
@@ -31,3 +32,7 @@ async def get_player_status() -> sdv_types.PlayerStatus:
     req_builder = server.RequestBuilder("PLAYER_STATUS")
     status = await req_builder.request()
     return status
+
+async def get_hoe_dirt() -> list[sdv_types.HoeDirt]:
+    resp = await server.request("GET_HOE_DIRT") or []
+    return [sdv_types.HoeDirt(**x) for x in resp]

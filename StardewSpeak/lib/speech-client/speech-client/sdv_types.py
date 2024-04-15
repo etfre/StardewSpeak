@@ -3,6 +3,13 @@ from dataclasses import dataclass
 from typing import TypedDict, Any, Literal, NotRequired, Final
 import constants
 from enum import Enum
+from pydantic import BaseModel as BasePydanticModel
+
+class BaseModel(BasePydanticModel):
+
+    class Config:
+        extra = 'forbid'
+
 
 class PlayerStatus(TypedDict):
     location: str
@@ -16,13 +23,12 @@ class PlayerStatus(TypedDict):
 type ToolStatus = Tool | None
 
 class BaseGameItem(TypedDict):
-    type: Literal[""]
     netName: str
     stack: int
 
 class Tool(BaseGameItem):
     type: Literal["tool"]
-    isTool: True
+    isTool: Literal[True]
     power: int
     baseName: str
     upgradeLevel: int
@@ -110,5 +116,23 @@ class Rectangle:
     def contains_point(self, point: Point):
         x, y = point
         return (self.left <= x < self.right) and (self.top <= y < self.bottom)
+    
+class HoeDirt(BaseModel):
+    type: Literal["hoeDirt"]
+    readyForHarvest: bool
+    fertilizer: str
+    isWatered: bool
+    needsWatering: bool
+    tileX: int
+    tileY: int
+    crop: Crop | None
+    canPlantThisSeedHere: int
+        
+class Crop(BaseModel):
+    currentPhase: int
+    dead: bool
+    fullyGrown: bool
+        
+
     
 Direction: Final = Literal[0, 1, 2, 3]

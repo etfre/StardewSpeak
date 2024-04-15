@@ -732,7 +732,7 @@ namespace StardewSpeak
                     type = "tool",
                     isTool = true,
                     upgradeLevel = tool.UpgradeLevel,
-                    power = player.toolPower,
+                    power = player.toolPower.Value,
                     baseName = tool.BaseName,
                     inUse = player.UsingTool,
                     tileX,
