@@ -318,7 +318,7 @@ class HoePlotObjective(Objective):
             for j in range(self.n2):
                 y = start_tile[1] + j * y_increment
                 plot_tiles.add((x, y))
-        get_next_diggable = functools.partial(game.get_diggable_tiles, plot_tiles)
+        get_next_diggable = functools.partial(server_requests.get_diggable_tiles, plot_tiles)
         async with stream.tool_status_stream() as tss:
             hoe_status = await tss.next()
             assert hoe_status
@@ -373,7 +373,7 @@ async def use_tool_on_animals(tool: str, animal_type=None):
 
 async def start_shopping():
     async with stream.player_status_stream() as pss:
-        loc = (await stream.next())["location"]["name"]
+        loc = (await pss.next())["location"]["name"]
         if loc == "AnimalShop":
             tile, facing_direction = (12, 16), constants.NORTH
         elif loc == "Blacksmith":
@@ -391,7 +391,7 @@ async def start_shopping():
         elif loc == "SeedShop":
             tile, facing_direction = (4, 19), constants.NORTH
         x, y = tile
-        await game.pathfind_to_tile(x, y, stream)
+        await game.pathfind_to_tile(x, y, pss)
         await game.do_action()
 
 

@@ -56,6 +56,11 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
         <td>"face east"</td>
     </tr>
     <tr>
+        <td>action</td>
+        <td>Check/Do Action.</td>
+        <td>"action"</td>
+    </tr>
+    <tr>
         <td>clear (debris | stones | rocks | twigs | wood | weeds)</td>
         <td>Begin clearing weeds, stone, or wood. Saying clear debris will clear all types.</td>
         <td>
@@ -189,9 +194,9 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
         <td>"start swinging"</td>
     </tr>
     <tr>
-        <td>stop</td>
+        <td>halt</td>
         <td>Stop current actions.</td>
-        <td>"stop"</td>
+        <td>"halt"</td>
     </tr>
     <tr>
         <td>item &lt;n&gt;</td>

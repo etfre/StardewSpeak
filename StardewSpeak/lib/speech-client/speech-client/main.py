@@ -40,13 +40,10 @@ class Observer(RecognitionObserver):
         import server
         future = asyncio.run_coroutine_threadsafe(server.request_and_update_active_menu(), server.loop)
         # Wait for the result with an optional timeout argument
-        future.result(3)
+        future.result(6)
 
-    def on_recognition(self, words):
-        logger.info("Recognized:", " ".join(words))
-
-    def on_failure(self):
-        pass
+    def on_recognition(self, words, *a):
+        logger.info(f"Recognized: {" ".join(words)}")
 
 
 def add_base_user_lexicon(model_dir: str):

@@ -1,15 +1,15 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import TypedDict, Any, Literal, NotRequired, Final
+from typing import TypedDict, Any, Literal, NotRequired, Final, TypeVar
 import constants
 from enum import Enum
 from pydantic import BaseModel as BasePydanticModel
+
 
 class BaseModel(BasePydanticModel):
 
     class Config:
         extra = 'forbid'
-
 
 class PlayerStatus(TypedDict):
     location: str
@@ -133,6 +133,8 @@ class Crop(BaseModel):
     dead: bool
     fullyGrown: bool
         
-
+class DiggableTile(BaseModel):
+    tileX: int
+    tileY: int
     
 Direction: Final = Literal[0, 1, 2, 3]

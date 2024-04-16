@@ -228,10 +228,6 @@ def break_into_pieces(items: list[sdv_types.ResourceClump]) -> list[sdv_types.Re
     return pieces
 
 
-async def get_diggable_tiles(test_tiles_set):
-    test_tiles = [{"tileX": x, "tileY": y} for x, y in test_tiles_set]
-    filtered = await server.request("GET_DIGGABLE_TILES", {"tiles": test_tiles})
-    return filtered
 
 
 async def gather_items_on_ground(radius: int):
@@ -632,7 +628,7 @@ def get_tool_swing_bounding_box(
 
 
 def calculate_modifiable_tiles(
-    tiles: sdv_types.Point, tool_upgrade_level: int, player_status: sdv_types.PlayerStatus, penalty_per_level=0.5
+    tiles: list[sdv_types.Point], tool_upgrade_level: int, player_status: sdv_types.PlayerStatus, penalty_per_level=0.5
 ):
     facing_direction = player_status["facingDirection"]
     if facing_direction == constants.NORTH:
@@ -658,7 +654,6 @@ def calculate_modifiable_tiles(
             cp = bb.contains_point(tile)
             if cp:
                 current_tiles += 1
-        logger.debug(f"level {test_level}, bounding box {bb}, {current_tiles}")
         current_tiles -= test_level * penalty_per_level
         if current_tiles > max_tiles:
             max_tiles = current_tiles
