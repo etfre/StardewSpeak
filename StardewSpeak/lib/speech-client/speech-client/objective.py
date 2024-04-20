@@ -135,12 +135,12 @@ async def move_to_point(point):
     async with stream.player_status_stream() as pss:
         player_status = await pss.next()
         regex_mismatch = isinstance(point.location, re.Pattern) and not point.location.match(
-            player_status["location"]["name"]
+            player_status.location.name
         )
-        str_mismatch = isinstance(point.location, str) and point.location != player_status["location"]["name"]
+        str_mismatch = isinstance(point.location, str) and point.location != player_status.location.name
         if regex_mismatch or str_mismatch:
             raise game.NavigationFailed(
-                f'Currently in {player_status["location"]["name"]} - unable to move to point in location {point.location}'
+                f'Currently in {player_status.location.name} - unable to move to point in location {point.location}'
             )
         await game.navigate_nearest_tile(point.get_tiles, pathfind_fn=point.pathfind_fn)
         if point.on_arrival:
@@ -166,9 +166,7 @@ class WaterCropsObjective(Objective):
 
     async def get_unwatered_crops(self):
         hoe_dirt_tiles = await server_requests.get_hoe_dirt()
-        tiles_to_water = [
-            hdt for hdt in hoe_dirt_tiles if hdt.crop and not hdt.isWatered and hdt.needsWatering
-        ]
+        tiles_to_water = [hdt for hdt in hoe_dirt_tiles if hdt.crop and not hdt.isWatered and hdt.needsWatering]
         return tiles_to_water
 
     async def run(self):
@@ -289,7 +287,7 @@ class PlantSeedsOrFertilizerObjective(Objective):
     async def get_hoe_dirt(self):
         hoe_dirt_tiles = await server_requests.get_hoe_dirt()
         logger.error(hoe_dirt_tiles)
-        return [x for x in hoe_dirt_tiles if x["canPlantThisSeedHere"]]
+        return [x for x in hoe_dirt_tiles if x.canPlantThisSeedHere]
 
     async def run(self):
         async for hdt in game.navigate_tiles(
@@ -307,8 +305,8 @@ class HoePlotObjective(Objective):
         async with stream.player_status_stream() as pss:
             await game.equip_item_by_name(constants.HOE)
             player_status = await pss.next()
-        player_tile = player_status["tileX"], player_status["tileY"]
-        facing_direction = player_status["facingDirection"]
+        player_tile = player_status.tileX, player_status.tileY
+        facing_direction = player_status.facingDirection
         start_tile = game.next_tile(player_tile, facing_direction)
         plot_tiles = set()
         x_increment = -1 if game.last_faced_east_west == constants.WEST else 1
@@ -338,6 +336,7 @@ class HoePlotObjective(Objective):
                     candidate_hoe_dirt_tiles, hoe_upgrade_level, player_status
                 )
                 await game.swing_tool(power_level, tool_status_stream=tss)
+
 
 class TalkToNPCObjective(Objective):
     def __init__(self, npc_name):
@@ -373,7 +372,7 @@ async def use_tool_on_animals(tool: str, animal_type=None):
 
 async def start_shopping():
     async with stream.player_status_stream() as pss:
-        loc = (await pss.next())["location"]["name"]
+        loc = (await pss.next()).location.name
         if loc == "AnimalShop":
             tile, facing_direction = (12, 16), constants.NORTH
         elif loc == "Blacksmith":
@@ -425,7 +424,8 @@ class DefendObjective(Objective):
                 distance_from_monster = game.distance_between_points_diagonal(player_position, closest_monster_position)
                 if distance_from_monster > 0:
                     direction_to_face = game.direction_from_positions(player_position, closest_monster_position)
-                    await game.face_direction(direction_to_face, player_stream)
+                    if direction_to_face is not None:
+                        await game.face_direction(direction_to_face, player_stream)
                 if distance_from_monster < 110:
                     await server.set_mouse_position(
                         closest_monster_position[0], closest_monster_position[1], from_viewport=True
@@ -463,7 +463,8 @@ class AttackObjective(Objective):
                     )
                     if distance_from_monster > 0:
                         direction_to_face = game.direction_from_positions(player_position, closest_monster_position)
-                        await game.face_direction(direction_to_face, player_stream)
+                        if direction_to_face is not None:
+                            await game.face_direction(direction_to_face, player_stream)
                     await server.set_mouse_position(
                         closest_monster_position[0], closest_monster_position[1], from_viewport=True
                     )

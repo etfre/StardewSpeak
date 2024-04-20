@@ -40,9 +40,9 @@ class Observer(RecognitionObserver):
         import server
         future = asyncio.run_coroutine_threadsafe(server.request_and_update_active_menu(), server.loop)
         # Wait for the result with an optional timeout argument
-        future.result(6)
+        future.result(3)
 
-    def on_recognition(self, words, *a):
+    def on_recognition(self, words, *a, **kw):
         logger.info(f"Recognized: {" ".join(words)}")
 
 

@@ -114,7 +114,8 @@ async def handle_new_menu(new_menu):
     is_new_menu = not is_same_menu(current_menu, new_menu)
     game.set_context_menu(new_menu)
     if is_new_menu:
-        logger.debug(f"Got new menu {new_menu['menuType']}")
+        menu_type = new_menu['menuType'] if new_menu else None
+        logger.debug(f"Got new menu {menu_type}")
         await stop_everything()
 
 
@@ -188,7 +189,7 @@ class RequestBuilder:
     def stream(self, ticks=1):
         import stream
 
-        return stream.Stream("UPDATE_TICKED", data={"type": self.request_type, "ticks": ticks})
+        return stream.Stream("UPDATE_TICKED", data={"type": self.request_type, "ticks": ticks},model_type=self.response_model)
 
     @classmethod
     def batch(cls, *reqs):
@@ -262,7 +263,7 @@ def on_message(msg_str: str):
             logger.debug(f"Stream {stream_id} error: {stream_value}")
             stream_obj.close()
             return
-        stream_obj.set_value(stream_value)
+        stream_obj.set_value(translate_model(stream_value, stream_obj.model_type))
         try:
             stream_obj.future.set_result(None)
         except asyncio.InvalidStateError:
@@ -375,6 +376,11 @@ def translate_model(val: Any, model: Any):
     if inspect.isclass(model):
         is_pydantic_model = pydantic.BaseModel in model.__mro__
         if is_pydantic_model:
-            return model.model_validate(val)
+            try:
+                return model.model_validate(val)
+            except pydantic.ValidationError as e:
+                e.add_note(f"Pydantic validation error. val: {val}, model: {model}")
+                raise e
+
     
     return val

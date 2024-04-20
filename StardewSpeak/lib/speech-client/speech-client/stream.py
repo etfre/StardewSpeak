@@ -2,7 +2,7 @@ from __future__ import annotations
 import async_timeout
 import uuid
 import asyncio
-from typing import Callable, Awaitable
+from typing import Callable, Awaitable, Type, Any
 from sdv_types import PlayerStatus, ToolStatus
 from pydantic import BaseModel
 
@@ -13,10 +13,11 @@ streams: dict[str, Stream] = {}
 
 class Stream[T]:
     
-    def __init__(self, name: str, data=None):
+    def __init__(self, name: str, data=None, model_type: Type[T] = None):
         import server
         self.value: ValueContainer[T] | None = None
         self.future: asyncio.Future[T | None] = server.loop.create_future()
+        self.model_type = model_type
         self.name = name
         self.id = f"{name}_{str(uuid.uuid4())}"
         self.closed = False
@@ -92,7 +93,7 @@ class StreamClosedError(Exception):
 
 
 def player_status_stream(ticks=1) -> Stream[PlayerStatus]:
-    return Stream("UPDATE_TICKED", data={"type": "PLAYER_STATUS", "ticks": ticks})
+    return Stream("UPDATE_TICKED", data={"type": "PLAYER_STATUS", "ticks": ticks}, model_type=PlayerStatus)
 
 
 def tool_status_stream(ticks=1) -> Stream[ToolStatus]:

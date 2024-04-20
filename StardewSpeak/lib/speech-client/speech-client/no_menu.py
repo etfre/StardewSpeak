@@ -25,8 +25,8 @@ async def go_to_object(item: items.Item, index):
 async def move_and_face_previous_direction(direction: int, n: int):
     async with stream.player_status_stream() as pss:
         ps = await pss.next()
-        await game.move_n_tiles(direction, n, stream)
-        await game.face_direction(ps["facingDirection"], pss, move_cursor=True)
+        await game.move_n_tiles(direction, n, pss)
+        await game.face_direction(ps.facingDirection, pss, move_cursor=True)
 
 
 async def get_shipping_bin_tiles():
@@ -60,7 +60,7 @@ async def ladder_down():
 async def navigate_direction(direction: int):
     async with stream.player_status_stream() as pss:
         player_status = await pss.next()
-        location = player_status["location"]["name"]
+        location = player_status.location.name
         path_tiles = await server.request("PATH_TO_EDGE", {"direction": direction})
         if path_tiles:
             path = game.Path(path_tiles, location)

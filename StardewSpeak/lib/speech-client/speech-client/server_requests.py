@@ -43,11 +43,10 @@ async def get_player_status() -> sdv_types.PlayerStatus:
 async def get_hoe_dirt() -> list[sdv_types.HoeDirt]:
     return await server.request("GET_HOE_DIRT", response_model=list[sdv_types.HoeDirt])
 
+
 async def get_diggable_tiles(test_tiles_set: Iterable[sdv_types.Point]):
     test_tiles = [{"tileX": x, "tileY": y} for x, y in test_tiles_set]
     filtered = await server.request(
-        "GET_DIGGABLE_TILES", 
-        {"tiles": test_tiles}, 
-        response_model=list[sdv_types.DiggableTile]
+        "GET_DIGGABLE_TILES", {"tiles": test_tiles}, response_model=list[sdv_types.DiggableTile]
     )
     return filtered
