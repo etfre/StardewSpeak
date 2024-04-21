@@ -11,7 +11,7 @@ import zipfile
 import shutil
 import sys
 
-import lark
+from typing import Sequence
 import cx_Freeze
 from cx_Freeze.common import normalize_to_list
 
@@ -187,7 +187,7 @@ def prepare_parser():
     return parser
 
 
-def parse_command_line(parser):
+def parse_command_line(parser: argparse.ArgumentParser):
     args = parser.parse_args()
     args.excludes = normalize_to_list(args.excludes)
     args.includes = normalize_to_list(args.includes)
@@ -205,7 +205,7 @@ def parse_command_line(parser):
     return args
 
 
-def zipdir(zipfile_ob: zipfile.ZipFile, folder: str, prefix: str = "", exclude=()):
+def zipdir(zipfile_ob: zipfile.ZipFile, folder: str, prefix: str = "", exclude: Sequence[str]=()):
     parent_dir = os.path.abspath(os.path.join(folder))
     for root, dirs, files in os.walk(folder):
         start_path = os.path.relpath(root, parent_dir)
@@ -217,7 +217,7 @@ def zipdir(zipfile_ob: zipfile.ZipFile, folder: str, prefix: str = "", exclude=(
             zipfile_ob.write(full_path, arcname=arcname)
 
 
-def build_release(app_root):
+def build_release(app_root: str):
     pf86 = os.environ["ProgramFiles(x86)"]
     vswhere = rf"{pf86}\Microsoft Visual Studio\Installer\vswhere.exe"
     cmd = f""""{vswhere}" -latest -prerelease -products * -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe"""
@@ -271,23 +271,22 @@ def main():
             excludes=EXCLUDES,
             packages=args.packages,
             compress=args.compress,
-            optimizeFlag=args.optimize_flag,
+            optimize=args.optimize_flag,
             path=None,
-            targetDir=app_root,
-            includeFiles=[
+            target_dir=app_root,
+            include_files=[
                 (
-                    "Lib\site-packages\webrtcvad_wheels-2.0.10.post2.dist-info",
-                    "lib\webrtcvad_wheels-2.0.10.post2.dist-info",
+                    ".venv\\Lib\\site-packages\\webrtcvad_wheels-2.0.11.post1.dist-info",
+                    ".venv\\lib\\webrtcvad_wheels-2.0.11.post1.dist-info",
                 ),
                 ("models", "models"),
                 ("bin", "bin"),
             ],
-            zipIncludes=args.zip_includes,
             silent=args.silent,
-            zipIncludePackages=args.zip_include_packages,
-            zipExcludePackages=args.zip_exclude_packages,
+            zip_include_packages=args.zip_include_packages,
+            zip_exclude_packages=args.zip_exclude_packages,
         )
-        freezer.Freeze()
+        freezer.freeze()
     app_root = os.path.abspath(os.path.join("..", "..", ".."))
     if "c#" in steps:
         build_release(app_root)
