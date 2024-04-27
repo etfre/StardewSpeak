@@ -4,7 +4,7 @@ cffi==1.16.0
 charset-normalizer==3.3.2
 cmake==3.27.7
 comtypes==1.2.0
-cx_Freeze==7.0.0rc0
+cx_Freeze==7.0.0
 cx_Logging==3.2.0
 decorator==5.1.1
 dragonfly @ git+https://github.com/dictation-toolbox/dragonfly.git@250ecfeb590cdf73147ac6627afb70151353097b

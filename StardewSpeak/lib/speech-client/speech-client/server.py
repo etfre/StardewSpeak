@@ -173,13 +173,13 @@ async def async_readline():
         on_message(line)
 
 
-class RequestBuilder:
-    def __init__(self, request_type: str, data=None, response_model=None):
+class RequestBuilder[TV]:
+    def __init__(self, request_type: str, data=None, response_model: Type[TV] | None = None):
         self.request_type = request_type
         self.data = {} if data is None else data
         self.response_model = response_model
 
-    def request(self, data=None, response_model=None):
+    def request(self, data=None) -> Awaitable[TV]:
         data = self.data if data is None else data
         self._fut = loop.create_future()
         sent_msg = send_message(self.request_type, data)

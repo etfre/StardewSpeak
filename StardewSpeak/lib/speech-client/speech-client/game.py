@@ -761,7 +761,7 @@ def is_debris(obj):
     return obj.get("name") in DEBRIS
 
 
-def next_tile(current_tile: sdv_types.Point, direction: int):
+def next_tile(current_tile: sdv_types.Point, direction: int):       
     x, y = current_tile
     if direction == constants.NORTH:
         return x, y - 1

@@ -32,8 +32,6 @@ IS_FROZEN = getattr(sys, "frozen", False)
 
 MODELS_DIR = os.path.abspath(os.path.join(args.args.python_root, "models"))
 
-async def asleep():
-    return 6
 
 class Observer(RecognitionObserver):
     def on_begin(self):
@@ -131,7 +129,6 @@ def main():
     except Exception as e:
         logger.warning(
             f"Unable to disable exclusive mode for default audio device: {traceback.format_exc()}",
-            level=2,
         )
     model_dir = os.path.join(MODELS_DIR, "kaldi_model")
     engine = setup_engine(300, model_dir)

@@ -1,6 +1,16 @@
 # Release notes
 
-## Unreleased
+## 0.0.14 (Unreleased)
+
+* Experimental support for the Stardew Valley 1.6 update.
+* While watering crops of hoeing dirt, the farmer will now automatically hold the tool for the appropriate length of time to target the maximum number of tiles, based on the upgrade level of the current tool.
+
+#### Technical changes:
+
+* Update to Python 3.12.
+* Begin to use Pydantic for validation of messages between Python and C#.
+
+## 0.0.13 (April 8, 2022)
 
 * Add skills page
 * Add social page

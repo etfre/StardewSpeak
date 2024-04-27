@@ -142,7 +142,7 @@ class Rectangle:
 class HoeDirt(BaseModel):
     type: Literal["hoeDirt"]
     readyForHarvest: bool
-    fertilizer: str
+    fertilizer: str | None
     isWatered: bool
     needsWatering: bool
     tileX: int

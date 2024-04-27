@@ -35,7 +35,7 @@ async def get_location_objects() -> list[sdv_types.LocationObject]:
 
 
 async def get_player_status() -> sdv_types.PlayerStatus:
-    req_builder = server.RequestBuilder("PLAYER_STATUS")
+    req_builder = server.RequestBuilder("PLAYER_STATUS", response_model=sdv_types.PlayerStatus)
     status = await req_builder.request()
     return status
 

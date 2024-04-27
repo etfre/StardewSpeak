@@ -277,7 +277,7 @@ def main():
             include_files=[
                 (
                     ".venv\\Lib\\site-packages\\webrtcvad_wheels-2.0.11.post1.dist-info",
-                    ".venv\\lib\\webrtcvad_wheels-2.0.11.post1.dist-info",
+                    "lib\\webrtcvad_wheels-2.0.11.post1.dist-info",
                 ),
                 ("models", "models"),
                 ("bin", "bin"),
