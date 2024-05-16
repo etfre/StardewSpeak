@@ -162,4 +162,4 @@ class DiggableTile(BaseModel):
     tileY: int
 
 
-Direction: Final = Literal[0, 1, 2, 3]
+Direction = Literal[0, 1, 2, 3]

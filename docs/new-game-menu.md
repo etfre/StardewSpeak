@@ -28,7 +28,7 @@
     </tr>
     <tr>
         <td>&lt;farm_name&gt; farm</td>
-        <td>Select farm. Options for <i>farm_name</i> are standard, riverland, forest, hilltop, wilderness, four corners, and beach.</td>
+        <td>Select farm. Options for <i>farm_name</i> are standard, riverland, forest, hilltop, wilderness, four corners, beach, and meadowlands.</td>
         <td>"forest farm"</td>
     </tr>
     <tr>

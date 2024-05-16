@@ -239,8 +239,9 @@ class ClearDebrisObjective(Objective):
             tool = tools.get(required_tool["name"])
             if tool and tool["upgradeLevel"] >= required_tool["level"]:
                 clearable_debris.append(d)
+            
         if self.debris_type == constants.STONE:
-            clearable_debris = [x for x in clearable_debris if x["name"] in (constants.STONE, constants.BOULDER)]
+            clearable_debris = [x for x in clearable_debris if x["name"] in (constants.STONE, constants.BOULDER, constants.MINE_ROCK)]
         elif self.debris_type == constants.TWIG:
             clearable_debris = [
                 x for x in clearable_debris if x["name"] in (constants.TWIG, constants.HOLLOW_LOG, constants.STUMP)
@@ -456,6 +457,8 @@ class AttackObjective(Objective):
                 distance_from_monster = 0
                 while distance_from_monster < 110:
                     player_status, target = await batched_request_builder.request()
+                    if target is None:
+                        break
                     player_position = player_status["center"]
                     closest_monster_position = target["center"]
                     distance_from_monster = game.distance_between_points_diagonal(
@@ -469,6 +472,7 @@ class AttackObjective(Objective):
                         closest_monster_position[0], closest_monster_position[1], from_viewport=True
                     )
                     await game.swing_tool()
+                    await game.equip_melee_weapon()
                     await asyncio.sleep(0.1)
 
     def get_closest_monster(self, resp):

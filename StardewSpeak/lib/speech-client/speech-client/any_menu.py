@@ -1,31 +1,37 @@
 import asyncio
 import functools
+from typing import cast
 import dragonfly as df
 from srabuilder import rules
 import title_menu, menu_utils, server, df_utils, game, container_menu, objective, constants, carpenter_menu
-from sdv_types import ClickableComponent
+from sdv_types import ClickableComponent, Direction
 
 
 def validate_any_menu(menu):
     if menu is None:
         return False
-
-
-async def move_cursor_to_next_component(menu, direction, n=1):
-    current_position = None
-    target_components = []
-    clickable = list(menu_utils.yield_clickable_components(menu))
-    for cmp in menu_utils.yield_clickable_components(menu):
-        center = cmp["center"]
-        if cmp["containsMouse"]:
-            current_position = cmp
+    
+async def current_position_and_target_components(menu: dict) -> tuple[ClickableComponent, list[ClickableComponent]] | None:
+    current_position: ClickableComponent | None = None
+    target_components: list[ClickableComponent] = []
+    for cmp_info in menu_utils.yield_clickable_components(menu):
+        if cmp_info.component["containsMouse"]:
+            current_position = cmp_info.component
         else:
-            target_components.append(cmp)
+            target_components.append(cmp_info.component)
     if not target_components:
         return
     if current_position is None:
         cx, cy = await server.get_mouse_position()
-        current_position = {"center": (cx, cy), 'visible': True}
+        current_position = {"center": (cx, cy), 'visible': True, "containsMouse": True}
+    return (cast(ClickableComponent, current_position), target_components)
+
+
+async def move_cursor_to_next_component(menu: dict, direction: Direction, n=1):
+    res = await current_position_and_target_components(menu)
+    if res is None:
+        return
+    current_position, target_components = res
     if direction == constants.NORTH:
         direction_index, multiplier = 1, -1
     elif direction == constants.EAST:
@@ -34,17 +40,19 @@ async def move_cursor_to_next_component(menu, direction, n=1):
         direction_index, multiplier = 1, 1
     elif direction == constants.WEST:
         direction_index, multiplier = 0, -1
+    else:
+        raise ValueError(f"Unexpected direction {direction}")
     for i in range(n):
-        sort_key = functools.partial(sort_fn, current_position, direction_index, multiplier)
+        sort_key = functools.partial(sort_closest_direction, current_position, direction_index, multiplier)
         res = min(target_components, key=sort_key)
-        right_direction = sort_fn(current_position, direction_index, multiplier, res)[0] == 0
+        right_direction = sort_closest_direction(current_position, direction_index, multiplier, res)[0] == 0
         if not right_direction:
             break
         current_position = res
     await menu_utils.focus_component(current_position)
 
 
-def sort_fn(current_cmp: ClickableComponent, direction_index: int, multiplier, cmp: ClickableComponent):
+def sort_closest_direction(current_cmp: ClickableComponent, direction_index: int, multiplier, cmp: ClickableComponent):
     center = cmp["center"]
     current_center = current_cmp["center"]
     val, target_val = current_center[direction_index], center[direction_index]

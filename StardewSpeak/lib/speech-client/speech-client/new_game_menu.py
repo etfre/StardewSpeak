@@ -35,6 +35,7 @@ farm_types = {
     "wilderness": "Wilderness",
     "four corners": "Four Corners",
     "beach": "Beach",
+    "meadow lands": "ModFarm_MeadowlandsFarm",
 }
 
 arrows = {

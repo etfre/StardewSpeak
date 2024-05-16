@@ -3,9 +3,9 @@ import server, constants
 import asyncio
 import functools
 import inspect
-from typing import Any, TypedDict
+from typing import Any, Generator, Literal, TypedDict
 
-from sdv_types import ClickableComponent
+from sdv_types import BaseModel, ClickableComponent
 
 MENU_GRAMMAR_COUNT = 0
 
@@ -165,19 +165,23 @@ def scroll_commands(page_size=4):
 class InvalidMenuOption(Exception):
     pass
 
+class ClickableComponentInfo(BaseModel):
+    accessor: str | None = None
+    component: ClickableComponent
 
-def yield_clickable_components(item):
+
+def yield_clickable_components(item, accessor: str | None = None) -> Generator[ClickableComponentInfo, Any, Any]:
     if isinstance(item, dict):
         if item.get("type") == "clickableComponent":
             if item["visible"]:
-                yield item
+                yield ClickableComponentInfo(component=item, accessor=accessor)
         else:
             menu_type = item.get("menuType")
-            for child in item.values():
-                yield from yield_clickable_components(child)
+            for key, child in item.items():
+                yield from yield_clickable_components(child, accessor=key)
     if isinstance(item, (list, tuple)):
         for child in item:
-            yield from yield_clickable_components(child)
+            yield from yield_clickable_components(child, accessor=accessor)
 
 
 def inventory_commands():

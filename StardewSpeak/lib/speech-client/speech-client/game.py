@@ -292,7 +292,7 @@ async def pathfind_to_resource(
     tiles: list[sdv_types.Point], location: str, player_status_stream: Stream[sdv_types.PlayerStatus], cutoff=-1
 ):
     path = None
-    invalid = []
+    invalid: list[sdv_types.Point] = []
     for tile in tiles:
         try:
             path_to_take = await path_to_tile(tile[0], tile[1], location, cutoff=cutoff)
@@ -326,7 +326,7 @@ async def path_to_next_location(next_location: str, status_stream: Stream[Player
     player_status = await status_stream.next()
     location = player_status.location.name
     connections = await get_location_connections()
-    logger.debug(f"connections {connections}")
+    logger.trace(f"connections {connections}")
     connection_to_next_loc = [c for c in connections if c["TargetName"] == next_location]
     current_tile = await get_current_tile(status_stream)
     connection_to_next_loc.sort(key=lambda cn: distance_between_points(current_tile, (cn["X"], cn["Y"])))
@@ -343,7 +343,9 @@ async def path_to_next_location(next_location: str, status_stream: Stream[Player
         except NavigationFailed:
             continue
         return path, door_direction
-    raise NavigationFailed(f"Cannot pathfind from {location} to {next_location}")
+    error_msg = f"Cannot pathfind from {location} to {next_location}"
+    show_hud_message(error_msg, 3)
+    raise NavigationFailed(error_msg)
 
 
 async def path_to_tile(x: int, y: int, location: str, cutoff=-1):
@@ -355,7 +357,7 @@ async def path_to_tile(x: int, y: int, location: str, cutoff=-1):
 
 async def pathfind_to_next_location(next_location: str, status_stream: Stream[sdv_types.PlayerStatus]):
     path, door_direction = await path_to_next_location(next_location, status_stream)
-    logger.debug(f"path to {next_location}: {path.tiles}")
+    logger.trace(f"path to {next_location}: {path.tiles}")
     await path.travel(status_stream, next_location)
     if door_direction is not None:
         await face_direction(door_direction, status_stream, move_cursor=True)
@@ -1070,8 +1072,13 @@ class MoveToCharacter:
 
     async def move_directly_to_character(self, target, threshold=75, timeout=4):
         req_data = {**self.get_character_builder.data, "target": target, "getPath": False}
+        player_status_builder = server.RequestBuilder("PLAYER_STATUS", response_model=sdv_types.PlayerStatus)
         char_req_builder = server.RequestBuilder(self.get_character_builder.request_type, req_data)
-        batched_builder = server.RequestBuilder.batch(server.RequestBuilder("PLAYER_STATUS"), char_req_builder)
+        batched_builder = server.RequestBuilder.batch(
+            player_status_builder, 
+            char_req_builder, 
+            response_model=tuple[sdv_types.PlayerStatus, Any]
+        )
         is_moving = False
         async with async_timeout.timeout(timeout):
             try:

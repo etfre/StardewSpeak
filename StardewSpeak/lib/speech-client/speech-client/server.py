@@ -1,6 +1,4 @@
 from __future__ import annotations
-import time
-import logging
 import args
 import struct
 import traceback
@@ -192,7 +190,7 @@ class RequestBuilder[TV]:
         return stream.Stream("UPDATE_TICKED", data={"type": self.request_type, "ticks": ticks},model_type=self.response_model)
 
     @classmethod
-    def batch(cls, *reqs):
+    def batch[T](cls, *reqs: RequestBuilder, response_model: Type[T] | None = None) -> RequestBuilder[T]:
         batched = []
         for r in reqs:
             if isinstance(r, RequestBuilder):
@@ -200,7 +198,7 @@ class RequestBuilder[TV]:
             else:
                 msg = {"type": msg[0], "data": msg[1]}
             batched.append(msg)
-        return cls("REQUEST_BATCH", batched)
+        return cls("REQUEST_BATCH", batched, response_model=response_model)
 
 
 def request_batch(messages):
@@ -308,9 +306,14 @@ async def mouse_release(btn="left"):
     sbutton = "MOUSE_LEFT" if btn == "left" else "MOUSE_RIGHT"
     game.update_held_buttons_nowait(to_release=(sbutton,))
 
+class PydanticEncoder(json.JSONEncoder):
+    def default(self, o: Any) -> Any:
+        if isinstance(o, pydantic.BaseModel):
+            return o.model_dump(mode="json")
+        return super().default(o)
 
 def log(*a, sep=" ", level=1):
-    to_send = [x if isinstance(x, str) else json.dumps(x) for x in a]
+    to_send = [x if isinstance(x, str) else json.dumps(x, cls=PydanticEncoder) for x in a]
     return send_message("LOG", {"value": sep.join(to_send), "level": level})
 
 
@@ -367,12 +370,18 @@ def read_queue(q):
     return items
 
 def translate_model(val: Any, model: Any):
-    if get_origin(model) is list:
+    origin = get_origin(model)
+    if origin in (list, tuple):
         args = get_args(model)
         if not args:
             return val
-        list_model_type = args[0]
-        return [translate_model(x, list_model_type) for x in val]
+        if origin is list:
+            list_model_type = args[0]
+            return [translate_model(x, list_model_type) for x in val]
+        translated = []
+        for subval, subtype in zip(val, args):
+            translated.append(translate_model(subval, subtype))
+        return tuple(translated)
     if inspect.isclass(model):
         is_pydantic_model = pydantic.BaseModel in model.__mro__
         if is_pydantic_model:
@@ -381,6 +390,4 @@ def translate_model(val: Any, model: Any):
             except pydantic.ValidationError as e:
                 e.add_note(f"Pydantic validation error. val: {val}, model: {model}")
                 raise e
-
-    
     return val

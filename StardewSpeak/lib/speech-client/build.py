@@ -253,7 +253,6 @@ def main():
     if "python" in steps:
         app_name = "speech-client"
         app_root = os.path.join("dist")
-        source_root = os.path.join(app_root, "speech-client")
         shutil.rmtree(app_root, ignore_errors=True)
         executables = [
             cx_Freeze.Executable(
