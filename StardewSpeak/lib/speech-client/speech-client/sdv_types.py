@@ -53,12 +53,16 @@ class Scythe(BaseGameItem):
 
 type GameItem = Tool | MeleeWeapon | Scythe
 
-
 class ClickableComponent(TypedDict):
+    type: Literal["clickableComponent"]
+    bounds: dict
+    hoverText: str
     containsMouse: bool
     visible: bool
     center: Point
+    name: str
     focusTarget: NotRequired[Point]
+    rect: NotRequired[dict]
 
 
 type Point = tuple[int, int]
