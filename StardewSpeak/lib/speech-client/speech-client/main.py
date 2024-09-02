@@ -36,14 +36,16 @@ MODELS_DIR = os.path.abspath(os.path.join(args.args.python_root, "models"))
 class Observer(RecognitionObserver):
     def on_begin(self):
         import server
-        logger.debug(f"Recognition started, current menu type is {menu_utils.current_menu_type()}")
-        future = asyncio.run_coroutine_threadsafe(server.request_and_update_active_menu(), server.loop)
-        # Wait for the result with an optional timeout argument
-        future.result()
-        logger.debug(f"Recognition started, current checked menu type is menu type is {menu_utils.current_menu_type()}")
+        # logger.debug(f"Recognition started, current menu type is {menu_utils.current_menu_type()}")
+        # future = asyncio.run_coroutine_threadsafe(server.request_and_update_active_menu(), server.loop)
+        # # Wait for the result with an optional timeout argument
+        # future.result()
+        # logger.debug(f"Recognition started, current checked menu type is menu type is {menu_utils.current_menu_type()}")
 
     def on_recognition(self, words, *a, **kw):
+        import game
         logger.info(f"Recognized: {" ".join(words)}")
+        game.context_variables["CURRENT_RECOGNITION_EVENT"] = None
 
 
 def add_base_user_lexicon(model_dir: str):
@@ -140,7 +142,6 @@ def main():
     observer.register()
 
     sleep.load_sleep_wake_grammar(True)
-    stardew_context = AppContext(title="stardew")
     server.setup_async_loop()
     menus.load_all_grammars()
     any_context.load_grammar()

@@ -1,5 +1,5 @@
 import dragonfly as df
-import constants, server, game, df_utils
+import constants, server, game, df_utils, menu_utils
 
 mouse_directions = {
     "up": constants.NORTH,
@@ -29,7 +29,7 @@ non_repeat_mapping = {
     "release mouse": df_utils.async_action(server.mouse_release),
 }
 
-
+@menu_utils.valid_menu_test
 def is_active():
     return True
 
@@ -43,7 +43,7 @@ def load_grammar():
             df_utils.positive_num,
             df.Choice("mouse_directions", mouse_directions),
         ],
-        context=df.FuncContext(is_active),
+        context=is_active,
         defaults={"positive_num": 1},
     )
     grammar.add_rule(main_rule)

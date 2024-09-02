@@ -12,6 +12,7 @@ mapping = {
     "skip [cutscene | event]": df_utils.async_action(click_skip_btn),
 }
 
+@menu_utils.valid_menu_test
 def is_active():
     evt = game.get_context_value('GAME_EVENT')
     return evt is not None and evt['skippable']
@@ -21,7 +22,7 @@ def load_grammar():
     main_rule = df.MappingRule(
         name="cutscene_rule",
         mapping=mapping,
-        context=df.FuncContext(is_active),
+        context=is_active,
     )
     grammar.add_rule(main_rule)
     grammar.load()
