@@ -406,7 +406,10 @@ namespace StardewSpeak
                         return wt;
                     }
                 case "GET_ACTIVE_MENU":
-                       return Utils.SerializeMenu(Game1.activeClickableMenu);
+                    {
+                        var menu = Utils.SerializeMenu(Game1.activeClickableMenu);
+                        return menu;
+                    }
                 case "GET_MOUSE_POSITION":
                     {
                         return new List<int> { Game1.getMouseX(), Game1.getMouseY() };

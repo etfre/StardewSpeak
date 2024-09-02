@@ -230,7 +230,7 @@ def build_release(app_root: str):
     shutil.copytree(python_dist, top_level_dist)
 
 
-def build_release_zip(app_root):
+def build_release_zip(app_root: str):
     source_root = os.path.join(app_root, "StardewSpeak")
     manifest_path = os.path.join(source_root, "manifest.json")
     with open(manifest_path) as f:

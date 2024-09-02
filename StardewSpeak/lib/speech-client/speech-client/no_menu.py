@@ -3,6 +3,7 @@ import functools
 from srabuilder import rules
 import characters, locations, fishing_menu, server_requests, menu_utils, server, df_utils, game, container_menu, objective, constants, items
 import stream
+import logger
 
 mouse_directions = {
     "up": "up",
@@ -133,6 +134,7 @@ mapping = {
 
 @menu_utils.valid_menu_test
 def is_active():
+    logger.info(f"is active check {menu_utils.current_menu_type()}")
     return game.get_context_menu() is None
 
 

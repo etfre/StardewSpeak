@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from dataclasses import dataclass
 import time
 import functools
 import math
@@ -68,8 +70,12 @@ DEBRIS = (constants.WEEDS, constants.TWIG, constants.STONE)
 context_variables = {
     "ACTIVE_MENU": None,
     "GAME_EVENT": None,
+    "CURRENT_RECOGNITION_EVENT": None,
 }
 
+@dataclass
+class RecognitionEvent:
+    menu: None = None
 
 async def update_held_buttons(to_hold=(), to_release=()):
     await server.request("UPDATE_HELD_BUTTONS", {"toHold": to_hold, "toRelease": to_release})

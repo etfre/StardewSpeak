@@ -4,6 +4,7 @@ import asyncio
 import functools
 import inspect
 from typing import Any, Generator, Literal, TypedDict
+import logger
 
 from sdv_types import BaseModel, ClickableComponent
 
@@ -174,6 +175,7 @@ def yield_clickable_components(item, accessor: str | None = None) -> Generator[C
     if isinstance(item, dict):
         if item.get("type") == "clickableComponent":
             if item["visible"]:
+                logger.warning(f"abc {item}")
                 yield ClickableComponentInfo(component=item, accessor=accessor)
         else:
             menu_type = item.get("menuType")
@@ -310,3 +312,22 @@ def validate_menu_type(menu_type: str | None, menu: BaseMenu | None):
             raise InvalidMenuOption(f"Expecting {menu_type}, got None")
         if menu["menuType"] != menu_type:
             raise InvalidMenuOption(f"Expecting {menu_type}, got {menu['menuType']}")
+
+def is_same_menu(menu1, menu2):
+    if (menu1, menu2) == (None, None):
+        return True
+    if (menu1, menu2).count(None) == 1:
+        return False
+    if menu1["menuType"] != menu2["menuType"]:
+        return False
+    if menu1["menuType"] == "titleMenu":
+        return is_same_menu(menu1["subMenu"], menu2["subMenu"])
+    if menu1.get("onFarm") != menu2.get("onFarm"):  # carpenter menu, likely others
+        return False
+    return True
+
+def current_menu_type():
+    import game
+
+    current_menu = game.context_variables["ACTIVE_MENU"]
+    return current_menu['menuType'] if current_menu else None

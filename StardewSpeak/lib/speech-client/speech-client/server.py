@@ -107,28 +107,16 @@ async def request_and_update_active_menu():
 
 async def handle_new_menu(new_menu):
     import game
+    import menu_utils
 
     current_menu = game.context_variables["ACTIVE_MENU"]
-    is_new_menu = not is_same_menu(current_menu, new_menu)
+    is_new_menu = not menu_utils.is_same_menu(current_menu, new_menu)
     game.set_context_menu(new_menu)
     if is_new_menu:
         menu_type = new_menu['menuType'] if new_menu else None
         logger.debug(f"Got new menu {menu_type}")
         await stop_everything()
 
-
-def is_same_menu(menu1, menu2):
-    if (menu1, menu2) == (None, None):
-        return True
-    if (menu1, menu2).count(None) == 1:
-        return False
-    if menu1["menuType"] != menu2["menuType"]:
-        return False
-    if menu1["menuType"] == "titleMenu":
-        return is_same_menu(menu1["subMenu"], menu2["subMenu"])
-    if menu1.get("onFarm") != menu2.get("onFarm"):  # carpenter menu, likely others
-        return False
-    return True
 
 
 async def populate_initial_game_event():

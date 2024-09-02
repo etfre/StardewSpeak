@@ -96,9 +96,17 @@ class HoldKeyObjective(Objective):
         self.keys = keys
 
     async def run(self):
+        import menu_utils
+        current_menu = game.context_variables["ACTIVE_MENU"]
+        menu_type = current_menu['menuType'] if current_menu else None
+        logger.debug(f"Holding keys {self.keys}, menu_type is {menu_type}")
         async with game.press_and_release(self.keys):
-            # infinite loop to indicate that the objective isn't done until task is canceled
-            await server.sleep_forever()
+            while True:
+                await asyncio.sleep(1)
+                active_menu = await menu_utils.get_active_menu()
+                is_new_menu = not menu_utils.is_same_menu(current_menu, active_menu)
+                if is_new_menu:
+                    break
 
 
 class FaceDirectionObjective(Objective):

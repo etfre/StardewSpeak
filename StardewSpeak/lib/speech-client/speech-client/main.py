@@ -25,7 +25,7 @@ import approximate_matching
 import any_context, purchase_animals_menu, new_game_menu, shop_menu, container_menu, title_menu, load_game_menu, dialogue_menu, no_menu, any_menu, shipping_bin_menu, carpenter_menu, billboard_menu, geode_menu, museum_menu
 from game_menu import game_menu, crafting_page, inventory_page, exit_page, skills_page
 import letter_viewer_menu, quest_log_menu, animal_query_menu, coop_menu, title_text_input_menu, cutscene, level_up_menu, shipped_items_menu, fishing_menu, mine_elevator_menu
-import locations
+import locations, menu_utils
 
 IS_FROZEN = getattr(sys, "frozen", False)
 
@@ -36,9 +36,11 @@ MODELS_DIR = os.path.abspath(os.path.join(args.args.python_root, "models"))
 class Observer(RecognitionObserver):
     def on_begin(self):
         import server
+        logger.debug(f"Recognition started, current menu type is {menu_utils.current_menu_type()}")
         future = asyncio.run_coroutine_threadsafe(server.request_and_update_active_menu(), server.loop)
         # Wait for the result with an optional timeout argument
         future.result()
+        logger.debug(f"Recognition started, current checked menu type is menu type is {menu_utils.current_menu_type()}")
 
     def on_recognition(self, words, *a, **kw):
         logger.info(f"Recognized: {" ".join(words)}")
