@@ -1,11 +1,11 @@
 {
   "Name": "StardewSpeak",
   "Author": "evfredericksen",
-  "Version": "0.0.12",
+  "Version": "0.0.14",
   "Description": "Play Stardew Valley by voice",
   "UniqueID": "evfredericksen.StardewSpeak",
   "EntryDll": "StardewSpeak.dll",
-  "MinimumApiVersion": "3.13.4",
+  "MinimumApiVersion": "4.0.4",
   "UpdateKeys": [
     "GitHub:evfredericksen/StardewSpeak"
   ]

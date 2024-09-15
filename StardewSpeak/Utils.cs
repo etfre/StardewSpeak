@@ -391,7 +391,6 @@ namespace StardewSpeak
                         leftSelectionButtons = SerializeComponentList(ccm.leftSelectionButtons, mousePosition),
                         nameBoxCC = SerializeClickableCmp(ccm.nameBoxCC, mousePosition),
                         okButton = SerializeClickableCmp(ccm.okButton, mousePosition),
-                        petButtons = SerializeComponentList(ccm.petButtons, mousePosition),
                         randomButton = SerializeClickableCmp(ccm.randomButton, mousePosition),
                         rightSelectionButtons = SerializeComponentList(ccm.rightSelectionButtons, mousePosition),
                         skipIntroButton = SerializeClickableCmp(ccm.skipIntroButton, mousePosition),
@@ -425,7 +424,7 @@ namespace StardewSpeak
                     bool needsScroll = qlm.NeedsScroll();
                     if (questPage != -1 && shownQuest.ShouldDisplayAsComplete() && shownQuest.HasMoneyReward())
                         menuTypeObj = Merge(menuTypeObj, new { rewardBox = SerializeClickableCmp(qlm.rewardBox, mousePosition) });
-                    if (questPage != -1 && quest != null && !quest.completed && (bool)quest.canBeCancelled)
+                    if (questPage != -1 && quest != null && !quest.completed.Value && quest.canBeCancelled.Value)
                         menuTypeObj = Merge(menuTypeObj, new { cancelQuestButton = SerializeClickableCmp(qlm.cancelQuestButton, mousePosition) });
                     if (needsScroll) 
                     {
@@ -609,12 +608,9 @@ namespace StardewSpeak
         public static FarmAnimal FindAnimalByName(string name) 
         {
             var location = Game1.player.currentLocation;
-            if (location is IAnimalLocation)
+            foreach (FarmAnimal animal in location.Animals.Values)
             {
-                foreach (FarmAnimal animal in (location as IAnimalLocation).Animals.Values)
-                {
-                    if (name == animal.Name) return animal;
-                }
+                if (name == animal.Name) return animal;
             }
             return null;
         }
@@ -692,15 +688,11 @@ namespace StardewSpeak
             // canPlantThisSeedHere fertilizer test doesn't account for existing crops
             if (equippedFertilizer)
             {
-                int fertilizer = hd.fertilizer.Value;
+                string fertilizer = hd.fertilizer.Value;
                 bool emptyOrUngrownCrop = hd.crop == null || hd.crop.currentPhase.Value == 0;
-                return emptyOrUngrownCrop && fertilizer == 0;
+                return emptyOrUngrownCrop && fertilizer == "";
             }
-            int objIndex = currentItem.ParentSheetIndex;
-            Vector2 tileLocation = hd.currentTileLocation;
-            int tileX = (int)tileLocation.X;
-            int tileY = (int)tileLocation.Y;
-            return hd.canPlantThisSeedHere(objIndex, tileX, tileY, false);
+            return hd.canPlantThisSeedHere(currentItem.ItemId, false);
         }
 
         public static int DistanceBetweenTiles(int x1, int y1, int x2, int y2) 
@@ -740,7 +732,7 @@ namespace StardewSpeak
                     type = "tool",
                     isTool = true,
                     upgradeLevel = tool.UpgradeLevel,
-                    power = player.toolPower,
+                    power = player.toolPower.Value,
                     baseName = tool.BaseName,
                     inUse = player.UsingTool,
                     tileX,

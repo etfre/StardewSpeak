@@ -32,21 +32,16 @@ IS_FROZEN = getattr(sys, "frozen", False)
 
 MODELS_DIR = os.path.abspath(os.path.join(args.args.python_root, "models"))
 
-async def asleep():
-    return 6
 
 class Observer(RecognitionObserver):
-    def on_begin(self):
-        import server
-        future = asyncio.run_coroutine_threadsafe(server.request_and_update_active_menu(), server.loop)
-        # Wait for the result with an optional timeout argument
-        future.result(3)
 
-    def on_recognition(self, words):
-        logger.info("Recognized:", " ".join(words))
-
-    def on_failure(self):
-        pass
+    def on_recognition(self, words, *a, **kw):
+        import game
+        logger.info(f"Recognized: {" ".join(words)}")
+        # When speech begins, the first validation check decorated with menu_utils.valid_menu_test
+        # will request a new menu so that the correct menu grammars are active. Reset it here once
+        # all the context checks have occurred so the next speech event will function correctly.
+        game.context_variables["CURRENT_RECOGNITION_EVENT"] = None
 
 
 def add_base_user_lexicon(model_dir: str):
@@ -134,7 +129,6 @@ def main():
     except Exception as e:
         logger.warning(
             f"Unable to disable exclusive mode for default audio device: {traceback.format_exc()}",
-            level=2,
         )
     model_dir = os.path.join(MODELS_DIR, "kaldi_model")
     engine = setup_engine(300, model_dir)
@@ -144,7 +138,6 @@ def main():
     observer.register()
 
     sleep.load_sleep_wake_grammar(True)
-    stardew_context = AppContext(title="stardew")
     server.setup_async_loop()
     menus.load_all_grammars()
     any_context.load_grammar()

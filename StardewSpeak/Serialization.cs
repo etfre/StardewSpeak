@@ -1,5 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using StardewValley;
+using StardewValley.GameData.FarmAnimals;
+using StardewValley.Menus;
+using StardewValley.Tools;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,24 +21,27 @@ namespace StardewSpeak
             }
             string trackingId = animal.modData[Utils.TrackingIdKey];
             var position = new List<float> { animal.Position.X, animal.Position.Y };
-            bool isMature = (int)animal.age >= (byte)animal.ageWhenMature;
-            int currentProduce = animal.currentProduce.Value;
-            bool readyForHarvest = isMature && currentProduce > 0;
-            var center = new List<int> { animal.getStandingX(), animal.getStandingY() };
+
+            FarmAnimalData animalData = animal.GetAnimalData();
+            bool isMature = animal.age.Value < animalData.DaysToMature;
+            string currentProduce = animal.currentProduce.Value;
+            bool readyForHarvest = isMature && currentProduce  != "";
+            var center = new List<int> { (int)animal.getStandingPosition().X, (int)animal.getStandingPosition().Y };
             return new
             {
                 trackingId,
                 position,
                 center,
-                tileX = animal.getTileX(),
-                tileY = animal.getTileY(),
+                tileX = (int)animal.Tile.X,
+                tileY = (int)animal.Tile.Y,
                 wasPet = animal.wasPet.Value,
                 type = animal.type.Value,
                 name = animal.Name,
+                isAdult = animal.isAdult(),
                 isMature,
                 currentProduce,
                 readyForHarvest,
-                toolUsedForHarvest = animal.toolUsedForHarvest.Value,
+                toolUsedForHarvest = animal.GetAnimalData().HarvestTool,
                 location = SerializeLocation(animal.currentLocation),
             };
         }
@@ -47,14 +53,14 @@ namespace StardewSpeak
             }
             string trackingId = character.modData[Utils.TrackingIdKey];
             var position = new List<float> { character.Position.X, character.Position.Y };
-            var center = new List<int> { character.getStandingX(), character.getStandingY() };
+            var center = new List<int> { (int)character.getStandingPosition().X, (int)character.getStandingPosition().Y };
             return new
             {
                 name = character.Name,
                 trackingId,
                 location = SerializeLocation(character.currentLocation),
-                tileX = character.getTileX(),
-                tileY = character.getTileY(),
+                tileX = (int)character.Tile.X,
+                tileY = (int)character.Tile.Y,
                 isMonster = character.IsMonster,
                 isInvisible = character.IsInvisible,
                 facingDirection = character.FacingDirection,

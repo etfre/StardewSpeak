@@ -25,21 +25,23 @@ namespace StardewSpeak
             var position = new List<float> { playerPosition.X, playerPosition.Y };
             var facingDirection = player.FacingDirection;
             var isMoving = player.isMoving();
-            var center = new List<int> { player.getStandingX(), player.getStandingY() };
+            
+            var center = new List<int> { (int)player.getStandingPosition().X, (int)player.getStandingPosition().Y};
             var evt = Game1.CurrentEvent;
             dynamic currentEvent = null;
             if (evt != null)
             {
                 currentEvent = new { evt.skippable, evt.skipped };
             }
-
+            var tileX = player.TilePoint.X;
+            var tileY = player.TilePoint.Y;
             var status = new
             {
                 location,
                 position,
                 center,
-                tileX = player.getTileX(),
-                tileY = player.getTileY(),
+                tileX,
+                tileY,
                 canMove = player.CanMove,
                 facingDirection,
                 isMoving,
@@ -75,12 +77,12 @@ namespace StardewSpeak
             foreach (var character in charList) 
             {
                 var position = new List<float> { character.Position.X, character.Position.Y };
-                var center = new List<int> { character.getStandingX(), character.getStandingY() };
+                var center = new List<int> { (int)character.getStandingPosition().X, (int)character.getStandingPosition().Y };
                 var charObj = new
                 {
                     name = character.Name,
-                    tileX = character.getTileX(),
-                    tileY = character.getTileY(),
+                    tileX = character.Tile.X,
+                    tileY = character.Tile.Y,
                     isMonster = character.IsMonster,
                     isInvisible = character.IsInvisible,
                     facingDirection = character.FacingDirection,
@@ -95,30 +97,10 @@ namespace StardewSpeak
         public static dynamic AnimalsAtLocation(GameLocation location)
         {
             var animals = new List<dynamic>();
-            if (location is IAnimalLocation)
+            foreach (FarmAnimal animal in location.Animals.Values)
             {
-                foreach (FarmAnimal animal in (location as IAnimalLocation).Animals.Values)
-                {
-                    var position = new List<float> { animal.Position.X, animal.Position.Y };
-                    bool isMature = (int)animal.age >= (byte)animal.ageWhenMature;
-                    int currentProduce = animal.currentProduce.Value;
-                    var center = new List<int> { animal.getStandingX(), animal.getStandingY() };
-                    var animalObj = new
-                    {
-                        position,
-                        center,
-                        tileX = animal.getTileX(),
-                        tileY = animal.getTileY(),
-                        wasPet = animal.wasPet.Value,
-                        type = animal.type.Value,
-                        name = animal.Name,
-                        isMature,
-                        currentProduce,
-                        toolUsedForHarvest = animal.toolUsedForHarvest.Value,
-                    };
-                    animals.Add(animalObj);
-                } 
-            }
+                animals.Add(Serialization.SerializeAnimal(animal));
+            } 
             return animals;
         }
 
@@ -132,20 +114,16 @@ namespace StardewSpeak
         public static object LocationBuildings(GameLocation location) 
         {
             var buildings = new List<dynamic>();
-            if (location is BuildableGameLocation)
+            foreach (Building building in location.buildings)
             {
-                var buildableLocation = location as BuildableGameLocation;
-                foreach (Building building in buildableLocation.buildings)
+                var serializedBuilding = new
                 {
-                    var serializedBuilding = new
-                    {
-                        tileX = building.tileX.Value,
-                        tileY = building.tileY.Value,
-                        buildingType = building.buildingType.Value,
-                        humanDoor = building.humanDoor.Value
-                    };
-                    buildings.Add(serializedBuilding);
-                }
+                    tileX = building.tileX.Value,
+                    tileY = building.tileY.Value,
+                    buildingType = building.buildingType.Value,
+                    humanDoor = building.humanDoor.Value
+                };
+                buildings.Add(serializedBuilding);
             }
             return buildings;
         }
@@ -157,12 +135,11 @@ namespace StardewSpeak
                 if (tf is Tree)
                 {
                     var tree = tf as Tree;
-                    var tileLocation = tree.currentTileLocation;
                     features.Add(new { 
                         type = "tree",
                         treeType = tree.treeType.Value, 
-                        tileX = (int)tileLocation.X, 
-                        tileY = (int)tileLocation.Y, 
+                        tileX = (int)tree.Tile.X, 
+                        tileY = (int)tree.Tile.Y, 
                         tapped = tree.tapped.Value, 
                         stump = tree.stump.Value,
                         growthStage = tree.growthStage.Value,
@@ -171,15 +148,14 @@ namespace StardewSpeak
                 else if (tf is Grass)
                 {
                     var grass = tf as Grass;
-                    Vector2 tileLocation = grass.currentTileLocation;
                     int numberOfWeeds = grass.numberOfWeeds.Value;
                     features.Add(new
                     {
                         type = "grass",
                         grassType = grass.grassType.Value,
                         numberOfWeeds,
-                        tileX = (int)tileLocation.X,
-                        tileY = (int)tileLocation.Y,
+                        tileX = (int)grass.Tile.X,
+                        tileY = (int)grass.Tile.Y,
                     });
                 }
                 else 
@@ -198,11 +174,10 @@ namespace StardewSpeak
                 if (tf is HoeDirt)
                 {
                     var dirtTile = tf as HoeDirt;
-                    var crop = dirtTile.crop == null ? null : new { dirtTile.crop.currentPhase, dead = dirtTile.crop.dead.Value, fullyGrown = dirtTile.crop.fullyGrown.Value };
-                    int fertilizer = dirtTile.fertilizer.Value;
-                    var tileLocation = dirtTile.currentTileLocation;
-                    var tileX = (int)tileLocation.X;
-                    var tileY = (int)tileLocation.Y;
+                    var crop = dirtTile.crop == null ? null : new { currentPhase = dirtTile.crop.currentPhase.Value, dead = dirtTile.crop.dead.Value, fullyGrown = dirtTile.crop.fullyGrown.Value };
+                    string fertilizer = dirtTile.fertilizer.Value;
+                    var tileX = (int)dirtTile.Tile.X;
+                    var tileY = (int)dirtTile.Tile.Y;
                     bool canPlantThisSeedHere = Utils.CanPlantOnHoeDirt(dirtTile);
                     var readyForHarvest = dirtTile.readyForHarvest();
                     var isWatered = dirtTile.state.Value == 1;
@@ -246,8 +221,8 @@ namespace StardewSpeak
                 }
                 var serializedClump = new
                 {
-                    tileX = (int)clump.tile.X,
-                    tileY = (int)clump.tile.Y,
+                    tileX = (int)clump.Tile.X,
+                    tileY = (int)clump.Tile.Y,
                     height = clump.height.Value,
                     width = clump.width.Value,
                     objectIndex = clump.parentSheetIndex.Value,
@@ -272,7 +247,7 @@ namespace StardewSpeak
                 {
                     var tileX = (int)(chunk.position.X / Game1.tileSize);
                     var tileY = (int)(chunk.position.Y / Game1.tileSize);
-                    var isMoving = chunk.xVelocity > 0 || chunk.yVelocity > 0;
+                    var isMoving = chunk.xVelocity.Value > 0 || chunk.yVelocity.Value > 0;
                     var debrisObj = new { chunkType, debrisType, tileX, tileY, movingTowardsPlayer, isMoving };
                     debris.Add(debrisObj);
                 }
@@ -293,7 +268,7 @@ namespace StardewSpeak
                 bool readyForHarvest = o.readyForHarvest.Value;
                 bool canBeGrabbed = o.CanBeGrabbed;
                 var category = o.Category;
-                bool isForage = o.isForage(Game1.currentLocation);
+                bool isForage = o.isForage();
                 var formattedObj = new {name = o.Name, tileX, tileY, type = o.Type, isForage, readyForHarvest, canBeGrabbed, isOnScreen, parentSheetIndex = o.ParentSheetIndex, category };
                 objs.Add(formattedObj);
             }

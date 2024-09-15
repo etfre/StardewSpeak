@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+from dataclasses import dataclass
 import time
 import functools
 import math
@@ -16,7 +18,8 @@ import stream
 from stream import Stream, player_status_stream, player_items_stream
 from sdv_types import PlayerStatus, Point
 import server_requests
-from typing import Awaitable, Callable, Coroutine, Any, Generator, Iterable
+from functools import wraps
+from typing import AsyncGenerator, Awaitable, Callable, Coroutine, Any, Generator, Iterable
 
 import async_timeout
 import events
@@ -67,8 +70,12 @@ DEBRIS = (constants.WEEDS, constants.TWIG, constants.STONE)
 context_variables = {
     "ACTIVE_MENU": None,
     "GAME_EVENT": None,
+    "CURRENT_RECOGNITION_EVENT": None,
 }
 
+@dataclass
+class RecognitionEvent:
+    menu: None = None
 
 async def update_held_buttons(to_hold=(), to_release=()):
     await server.request("UPDATE_HELD_BUTTONS", {"toHold": to_hold, "toRelease": to_release})
@@ -89,14 +96,14 @@ class Path:
         turn_threshold=0.07,
         last_tile_done_threshold=0.07,
     ):
-        self._tiles: tuple[Point, ...] = ()
         tiles: list[Point] = []
         self.tile_indices: dict[Point, int] = {}
         for i, mod_tile in enumerate(mod_path):
             tile = (mod_tile["X"], mod_tile["Y"])
             tiles.append(tile)
             self.tile_indices[tile] = i
-        self.tiles: tuple[Point, ...] = tuple(tiles)
+        assert tiles
+        self._tiles: tuple[Point, ...] = tuple(tiles)
         self.location = location
         self.stop_check = stop_check
         self.stop_moving_when_done = stop_moving_when_done
@@ -122,7 +129,7 @@ class Path:
         try:
             while not is_done:
                 player_status = await status_stream.next()
-                current_location = player_status["location"]["name"]
+                current_location = player_status.location.name
                 if current_location != self.location:
                     if next_location == current_location:
                         break
@@ -143,19 +150,19 @@ class Path:
         """Return False to continue, True when done"""
         if self.stop_check is not None and self.stop_check(player_status):
             return True
-        current_tile = player_status["tileX"], player_status["tileY"]
+        current_tile = player_status.tileX, player_status.tileY
         current_tile_index = self.tile_indices[current_tile]
         try:
             target_tile = self.tiles[current_tile_index + 1]
         except IndexError:
             # Last tile, all done!
-            if player_status["isMoving"] and self.facing_tile_center(player_status, self.last_tile_done_threshold):
+            if player_status.isMoving and self.facing_tile_center(player_status, self.last_tile_done_threshold):
                 return False
             return True
         direction_to_move = direction_from_tiles(current_tile, target_tile)
         # Rule out not moving, moving in the same direction as next tile, and moving in the opposite direction
-        current_direction = player_status["facingDirection"]
-        turn_coming = player_status["isMoving"] and abs(current_direction - direction_to_move) % 2 == 1
+        current_direction = player_status.facingDirection
+        turn_coming = player_status.isMoving and abs(current_direction - direction_to_move) % 2 == 1
         if turn_coming and self.facing_tile_center(player_status, self.turn_threshold):
             return False
         start_moving([direction_to_move])
@@ -163,8 +170,8 @@ class Path:
     def facing_tile_center(self, player_status: PlayerStatus, offset_threshold: float):
         """Keep moving towards center of tile before a turn for smoother pathfinding"""
         tile_size = 64  # TODO: get this info from the mod
-        position = player_status["position"]
-        tile_x, tile_y = player_status["tileX"], player_status["tileY"]
+        position = player_status.position
+        tile_x, tile_y = player_status.tileX, player_status.tileY
         # x rounds to the nearest tile, y rounds down unless above (or at?) .75, e.g. (21.68, 17.68) becomes (22, 17) and (21.44, 17.77) becomes (21, 18).
         # Normalize so greater than 0 means right/below the center and less than 0 means left/above
         (
@@ -176,7 +183,7 @@ class Path:
         )
         assert -0.5 <= x <= 0.5
         assert -0.5 <= y <= 0.5
-        current_direction = player_status["facingDirection"]
+        current_direction = player_status.facingDirection
         # start turning when at least 43% into the tile
         offset_threshold = offset_threshold
         if current_direction == constants.NORTH:
@@ -210,11 +217,6 @@ def score_objects_by_distance(
     return start_weight * distance_from_start + current_weight * distance_from_current
 
 
-async def get_hoe_dirt():
-    hoe_dirt = await server.request("GET_HOE_DIRT")
-    return hoe_dirt or []
-
-
 async def get_resource_clump_pieces():
     clumps = await server_requests.get_resource_clumps()
     return break_into_pieces(clumps)
@@ -224,18 +226,12 @@ def break_into_pieces(items: list[sdv_types.ResourceClump]) -> list[sdv_types.Re
     pieces = []
     # break up resource clump like a boulder into one object for each tile
     for item in items:
-        start_x, start_y = item["tileX"], item["tileY"]
+        start_x, start_y = get_item_tile(item)
         for x in range(item["width"]):
             for y in range(item["height"]):
                 piece = {**item, "tileX": start_x + x, "tileY": start_y + y}
                 pieces.append(piece)
     return pieces
-
-
-async def get_diggable_tiles(test_tiles_set):
-    test_tiles = [{"tileX": x, "tileY": y} for x, y in test_tiles_set]
-    filtered = await server.request("GET_DIGGABLE_TILES", {"tiles": test_tiles})
-    return filtered
 
 
 async def gather_items_on_ground(radius: int):
@@ -244,17 +240,17 @@ async def gather_items_on_ground(radius: int):
     """
     async with player_status_stream() as pss:
         player_status = await pss.next()
-        location = player_status["location"]["name"]
-        start_tile = player_status["tileX"], player_status["tileY"]
+        location = player_status.location.name
+        start_tile = player_status.tileX, player_status.tileY
         tile_blacklist = set([start_tile])
         while True:
             items_to_gather: collections.defaultdict[sdv_types.Point, int] = collections.defaultdict(int)
             debris = await server_requests.get_debris()
             test_tiles_set: set[sdv_types.Point] = set()
             for item in debris:
-                within_radius = distance_between_points(start_tile, (item["tileX"], item["tileY"])) < radius
+                within_radius = distance_between_points(start_tile, get_item_tile(item)) < radius
                 if within_radius:
-                    debris_tile = item["tileX"], item["tileY"]
+                    debris_tile = get_item_tile(item)
                     for tile in get_adjacent_tiles(debris_tile) + (debris_tile,):
                         items_to_gather[tile] += 1
                         if tile not in tile_blacklist:
@@ -262,7 +258,7 @@ async def gather_items_on_ground(radius: int):
             if not test_tiles_set:
                 return
             player_status = await pss.next()
-            current_tile = player_status["tileX"], player_status["tileY"]
+            current_tile = player_status.tileX, player_status.tileY
             test_tiles = sort_test_tiles(test_tiles_set, start_tile, current_tile, items_to_gather)
             path, invalid = await pathfind_to_resource(test_tiles, location, pss, cutoff=250)
             if path is None:
@@ -302,7 +298,7 @@ async def pathfind_to_resource(
     tiles: list[sdv_types.Point], location: str, player_status_stream: Stream[sdv_types.PlayerStatus], cutoff=-1
 ):
     path = None
-    invalid = []
+    invalid: list[sdv_types.Point] = []
     for tile in tiles:
         try:
             path_to_take = await path_to_tile(tile[0], tile[1], location, cutoff=cutoff)
@@ -332,10 +328,11 @@ async def request_route(location: str):
     return route
 
 
-async def path_to_next_location(next_location: str, status_stream):
+async def path_to_next_location(next_location: str, status_stream: Stream[PlayerStatus]):
     player_status = await status_stream.next()
-    location = player_status["location"]["name"]
+    location = player_status.location.name
     connections = await get_location_connections()
+    logger.trace(f"connections {connections}")
     connection_to_next_loc = [c for c in connections if c["TargetName"] == next_location]
     current_tile = await get_current_tile(status_stream)
     connection_to_next_loc.sort(key=lambda cn: distance_between_points(current_tile, (cn["X"], cn["Y"])))
@@ -346,12 +343,15 @@ async def path_to_next_location(next_location: str, status_stream):
                 path = await path_to_adjacent(x, y)
                 door_direction = direction_from_tiles(path.tiles[-1], (x, y))
             else:
+                logger.debug(f"path_to_tile {x} {y} {current_tile}")
                 path = await path_to_tile(x, y, location)
                 door_direction = None
         except NavigationFailed:
             continue
         return path, door_direction
-    raise NavigationFailed(f"Cannot pathfind from {location} to {next_location}")
+    error_msg = f"Cannot pathfind from {location} to {next_location}"
+    show_hud_message(error_msg, 3)
+    raise NavigationFailed(error_msg)
 
 
 async def path_to_tile(x: int, y: int, location: str, cutoff=-1):
@@ -360,8 +360,10 @@ async def path_to_tile(x: int, y: int, location: str, cutoff=-1):
         raise NavigationFailed(f"Cannot pathfind to {x}, {y} at location {location}")
     return Path(path, location)
 
-async def pathfind_to_next_location(next_location: str, status_stream: Stream):
+
+async def pathfind_to_next_location(next_location: str, status_stream: Stream[sdv_types.PlayerStatus]):
     path, door_direction = await path_to_next_location(next_location, status_stream)
+    logger.trace(f"path to {next_location}: {path.tiles}")
     await path.travel(status_stream, next_location)
     if door_direction is not None:
         await face_direction(door_direction, status_stream, move_cursor=True)
@@ -484,13 +486,13 @@ async def face_direction(direction: int, player_status_stream: Stream[sdv_types.
         btn = directions_to_buttons[direction]
         await press_key(btn)
         try:
-            await player_status_stream.wait(lambda s: s["facingDirection"] == direction, timeout=0.1)
+            await player_status_stream.wait(lambda s: s.facingDirection == direction, timeout=0.1)
         except asyncio.TimeoutError:
             async with press_and_release(btn):
-                await player_status_stream.wait(lambda s: s["facingDirection"] == direction, timeout=5)
+                await player_status_stream.wait(lambda s: s.facingDirection == direction, timeout=5)
     if move_cursor:
         player_status = await player_status_stream.next()
-        current_tile = player_status["tileX"], player_status["tileY"]
+        current_tile = player_status.tileX, player_status.tileY
         target_tile = next_tile(current_tile, direction)
         await set_mouse_position_on_tile(target_tile)
 
@@ -546,28 +548,35 @@ def show_hud_message(msg: str, msg_type: int):
     server.send_message("SHOW_HUD_MESSAGE", {"message": msg, "msgType": msg_type})
 
 
+def get_item_tile(item):
+    try:
+        return (item.tileX, item.tileY)
+    except AttributeError:
+        return item["tileX"], item["tileY"]
+
+
 def closest_item_key(start_tile, current_tile, item, player_status):
-    target_tile = item["tileX"], item["tileY"]
+    target_tile = get_item_tile(item)
     return distance_between_points(current_tile, target_tile)
 
 
 def generic_next_item_key(
     start_tile: sdv_types.Point, current_tile: sdv_types.Point, item: Any, player_status: PlayerStatus
 ):
-    target_tile = item["tileX"], item["tileY"]
+    target_tile = get_item_tile(item)
     score = score_objects_by_distance(start_tile, current_tile, target_tile)
     return score
 
 
 def next_crop_key(start_tile, current_tile, target_tile, player_status):
     score = score_objects_by_distance(start_tile, current_tile, target_tile)
-    if direction_from_tiles(current_tile, target_tile) == player_status["facingDirection"]:
+    if direction_from_tiles(current_tile, target_tile) == player_status.facingDirection:
         score -= 0.1
     return score
 
 
 def next_debris_key(start_tile, current_tile, debris_obj, player_status):
-    target_tile = debris_obj["tileX"], debris_obj["tileY"]
+    target_tile = get_item_tile(debris_obj)
     score = score_objects_by_distance(start_tile, current_tile, target_tile)
     return score
 
@@ -597,10 +606,11 @@ def get_tool_extension(tool_power_level: int):
         return 5
     if tool_power_level == 4:
         return 6
+    raise RuntimeError(f"Unexpected tool_power_level {tool_power_level}")
 
 
 def get_tool_swing_bounding_box(
-    tool_start_tile: sdv_types.Point, tool_power_level: int, facing_direction: int
+    tool_start_tile: sdv_types.Point, tool_power_level: int, facing_direction: sdv_types.Direction
 ) -> sdv_types.Rectangle:
     side_adjust = 0 if tool_power_level <= 2 else 1
     non_extension_width_and_height = side_adjust * 2 + 1
@@ -628,9 +638,9 @@ def get_tool_swing_bounding_box(
 
 
 def calculate_modifiable_tiles(
-    tiles: sdv_types.Point, tool_upgrade_level: int, player_status: sdv_types.PlayerStatus, penalty_per_level=0.5
-    ):
-    facing_direction = player_status["facingDirection"]
+    tiles: list[sdv_types.Point], tool_upgrade_level: int, player_status: sdv_types.PlayerStatus, penalty_per_level=0.5
+):
+    facing_direction = player_status.facingDirection
     if facing_direction == constants.NORTH:
         adj_x, adj_y = 0, -1
     elif facing_direction == constants.EAST:
@@ -642,7 +652,7 @@ def calculate_modifiable_tiles(
     else:
         raise RuntimeError(f"Unexpected facing direction {facing_direction}")
 
-    tool_start_tile = player_status["tileX"] + adj_x, player_status["tileY"] + adj_y
+    tool_start_tile = player_status.tileX + adj_x, player_status.tileY + adj_y
     logger.debug(f"tool start tile {tool_start_tile}")
     assert 0 <= tool_upgrade_level <= 4
     max_tiles = -1
@@ -654,7 +664,6 @@ def calculate_modifiable_tiles(
             cp = bb.contains_point(tile)
             if cp:
                 current_tiles += 1
-        logger.debug(f"level {test_level}, bounding box {bb}, {current_tiles}")
         current_tiles -= test_level * penalty_per_level
         if current_tiles > max_tiles:
             max_tiles = current_tiles
@@ -689,7 +698,7 @@ async def do_action():
 
 async def pathfind_to_adjacent_tile_from_current(player_status_stream):
     player_status = await player_status_stream.next()
-    for x, y in get_adjacent_tiles((player_status["tileX"], player_status["tileY"])):
+    for x, y in get_adjacent_tiles((player_status.tileX, player_status.tileY)):
         try:
             return await pathfind_to_tile(x, y, player_status_stream)
         except NavigationFailed:
@@ -706,18 +715,18 @@ async def navigate_tiles[
     items_ok=lambda prev, curr: True,
     allow_action_on_same_tile=True,
     index=None,
-):
+) -> AsyncGenerator[T, Any]:
     import events
 
     async with stream.player_status_stream() as player_status_stream:
         player_status = await player_status_stream.next()
-        start_tile = player_status["tileX"], player_status["tileY"]
+        start_tile = player_status.tileX, player_status.tileY
         previous_items: list | None = None
         while True:
             items = await get_items()
             if not items:
                 return
-            current_tile = player_status["tileX"], player_status["tileY"]
+            current_tile = player_status.tileX, player_status.tileY
             sorted_items = sorted(items, key=lambda t: sort_items(start_tile, current_tile, t, player_status))
             if index is not None:
                 sorted_items: list[T] = [sorted_items[index]]
@@ -726,12 +735,13 @@ async def navigate_tiles[
             previous_items = sorted_items
             item_path: Path | None = None
             for item in sorted_items:
-                item_tile = (item["tileX"], item["tileY"])
+                item_tile = get_item_tile(item)
                 if current_tile == item_tile and not allow_action_on_same_tile:
                     await pathfind_to_adjacent_tile_from_current(player_status_stream)
                     await face_tile(player_status_stream, item_tile)
                 try:
-                    item_path = await pathfind_fn(item["tileX"], item["tileY"], player_status_stream)
+                    tileX, tileY = get_item_tile(item)
+                    item_path = await pathfind_fn(tileX, tileY, player_status_stream)
                 except NavigationFailed:
                     pass
                 else:
@@ -759,7 +769,7 @@ def is_debris(obj):
     return obj.get("name") in DEBRIS
 
 
-def next_tile(current_tile: sdv_types.Point, direction: int):
+def next_tile(current_tile: sdv_types.Point, direction: int):       
     x, y = current_tile
     if direction == constants.NORTH:
         return x, y - 1
@@ -774,7 +784,7 @@ def next_tile(current_tile: sdv_types.Point, direction: int):
 
 async def chop_tree_and_gather_resources(tree: sdv_types.Tree):
     evt = events.wait_for_event("TERRAIN_FEATURE_LIST_CHANGED")
-    tree_tile = tree["tileX"], tree["tileY"]
+    tree_tile = get_item_tile(tree)
     async with press_and_release(constants.USE_TOOL_BUTTON), stream.tool_status_stream(ticks=1) as tss:
         while not evt.done():
             tool_status = await tss.next()
@@ -789,7 +799,7 @@ async def chop_tree_and_gather_resources(tree: sdv_types.Tree):
 
 
 async def clear_object(obj, obj_getter, tool_name):
-    obj_tile = obj["tileX"], obj["tileY"]
+    obj_tile = get_item_tile(obj)
     async with stream.tool_status_stream(ticks=1) as tss, press_and_release(constants.USE_TOOL_BUTTON):
         while True:
             clumps, tool_status = await asyncio.gather(obj_getter(), tss.next())
@@ -797,7 +807,7 @@ async def clear_object(obj, obj_getter, tool_name):
                 return
             target = None
             for c in clumps:
-                if obj_tile == (c["tileX"], c["tileY"]):
+                if obj_tile == get_item_tile(c):
                     target = c
                     break
             if not target:
@@ -814,7 +824,7 @@ def find_character_by_name(name: str, characters):
 
 async def get_current_tile(_stream: Stream):
     ps = await _stream.next()
-    current_tile = ps["tileX"], ps["tileY"]
+    current_tile = get_item_tile(ps)
     return current_tile
 
 
@@ -830,7 +840,7 @@ async def write_game_state():
 
     objs = await server_requests.get_location_objects()
     log(objs, "location_objects.json")
-    hdt = await get_hoe_dirt()
+    hdt = await server_requests.get_hoe_dirt()
     log(hdt, "hoe_dirt.json")
     menu = await menu_utils.get_active_menu()
     log(menu, "menu.json")
@@ -842,15 +852,16 @@ async def get_ready_crafted():
     return ready_crafted
 
 
-def visible_wrapper(fn):
+def visible_wrapper(fn: Callable[[], Awaitable[list[sdv_types.LocationObject]]]):
     seen_tiles = set()
 
+    @wraps(fn)
     async def get_visible():
         items = await fn()
         for item in items:
             if item["isOnScreen"]:
-                seen_tiles.add((item["tileX"], item["tileY"]))
-        seen_or_visible_items = [x for x in items if (x["tileX"], x["tileY"]) in seen_tiles]
+                seen_tiles.add(get_item_tile(item))
+        seen_or_visible_items = [x for x in items if get_item_tile(x) in seen_tiles]
         return seen_or_visible_items
 
     return get_visible
@@ -974,8 +985,8 @@ async def go_outside():
         with stream.player_status_stream() as pss:
             player_status = await pss.next()
             server.log(player_status)
-            current_location = player_status["location"]
-            if not current_location["isOutdoors"]:
+            current_location = player_status.location
+            if not current_location.isOutdoors:
                 current_tile = await get_current_tile(pss)
                 outdoor_connections.sort(key=lambda t: distance_between_points(current_tile, (t["X"], t["Y"])))
                 await pathfind_to_next_location(outdoor_connections[0]["TargetName"], pss)
@@ -983,8 +994,8 @@ async def go_outside():
 
 async def get_animals(animals_stream, player_stream):
     animals, player_status = await asyncio.gather(animals_stream.next(), player_stream.next())
-    player_tile = player_status["tileX"], player_status["tileY"]
-    animals.sort(key=lambda x: distance_between_points(player_tile, (x["tileX"], x["tileY"])))
+    player_tile = player_status.tileX, player_status.tileY
+    animals.sort(key=lambda x: distance_between_points(player_tile, get_item_tile(x)))
     return animals
 
 
@@ -1067,8 +1078,13 @@ class MoveToCharacter:
 
     async def move_directly_to_character(self, target, threshold=75, timeout=4):
         req_data = {**self.get_character_builder.data, "target": target, "getPath": False}
+        player_status_builder = server.RequestBuilder("PLAYER_STATUS", response_model=sdv_types.PlayerStatus)
         char_req_builder = server.RequestBuilder(self.get_character_builder.request_type, req_data)
-        batched_builder = server.RequestBuilder.batch(server.RequestBuilder("PLAYER_STATUS"), char_req_builder)
+        batched_builder = server.RequestBuilder.batch(
+            player_status_builder, 
+            char_req_builder, 
+            response_model=tuple[sdv_types.PlayerStatus, Any]
+        )
         is_moving = False
         async with async_timeout.timeout(timeout):
             try:
@@ -1077,7 +1093,7 @@ class MoveToCharacter:
                     player_status, character = await batched_builder.request()
                     assert character["name"] == target["name"]
                     req_data["target"] = character
-                    player_pos, character_pos = player_status["center"], character["center"]
+                    player_pos, character_pos = player_status.center, character["center"]
                     if distance_between_points_diagonal(player_pos, character_pos) < threshold:
                         return
                     px, py = player_pos
@@ -1100,7 +1116,7 @@ class MoveToCharacter:
 
 async def face_tile(_stream: Stream[sdv_types.PlayerStatus], tile: Point):
     player_status = await _stream.next()
-    player_tile = player_status["tileX"], player_status["tileY"]
+    player_tile = player_status.tileX, player_status.tileY
     direction_to_face = direction_from_tiles(player_tile, tile)
     await face_direction(direction_to_face, _stream)
 
@@ -1116,7 +1132,7 @@ async def pathfind_to_tile(x, y, _stream: Stream, cutoff=-1):
 async def move_n_tiles(direction: int, n: int, player_status_stream: Stream[sdv_types.PlayerStatus]):
     status = await server_requests.get_player_status()
     await ensure_not_moving()
-    from_x, from_y = status["tileX"], status["tileY"]
+    from_x, from_y = status.tileX, status.tileY
     to_x, to_y = from_x, from_y
     if direction == constants.NORTH:
         to_y -= n
@@ -1128,7 +1144,7 @@ async def move_n_tiles(direction: int, n: int, player_status_stream: Stream[sdv_
         to_x -= n
     else:
         raise ValueError(f"Unexpected direction {direction}")
-    path = await path_to_tile(to_x, to_y, status["location"]["name"])
+    path = await path_to_tile(to_x, to_y, status.location.name)
     await path.travel(player_status_stream)
 
 

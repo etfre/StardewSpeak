@@ -59,7 +59,6 @@ namespace StardewSpeak
             helper.Events.GameLoop.UpdateTicked += GameLoop_UpdateTicked;
             helper.Events.GameLoop.UpdateTicking += GameLoop_UpdateTicking;
             helper.Events.Input.ButtonsChanged += this.OnButtonsChanged;
-            helper.Events.Player.Warped += this.OnWarped;
             helper.Events.World.TerrainFeatureListChanged += this.OnTerrainFeatureListChanged;
             helper.Events.World.ObjectListChanged += this.OnObjectListChanged;
             helper.Events.World.LargeTerrainFeatureListChanged += this.OnLargeTerrainFeatureListChanged;
@@ -136,6 +135,7 @@ namespace StardewSpeak
         }
         private void OnWarped(object sender, WarpedEventArgs e)
         {
+            Routing.Reset();
             long milliseconds = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             var oldLocation = e.OldLocation.NameOrUniqueName;
             var newLocation = e.NewLocation.NameOrUniqueName;
@@ -173,7 +173,8 @@ namespace StardewSpeak
 
         private void OnTerrainFeatureListChanged(object sender, TerrainFeatureListChangedEventArgs e)
         {
-            var removed = e.Removed.Select(x => new { x.Value.currentTileLocation });
+
+            var removed = e.Removed.Select(x => new { x.Value.Tile });
             var changedEvent = new { location = Serialization.SerializeLocation(e.Location), removed };
             this.speechEngine.SendEvent("TERRAIN_FEATURE_LIST_CHANGED", changedEvent);
         }

@@ -179,11 +179,6 @@ namespace StardewSpeak
             menu.skillBars = page.skillBars.Where(x => x.hoverText.Length > 0 && !x.name.Equals("-1")).ToList();
             menu.specialItems = page.specialItems;
         }
-        public static void Serialize_CataloguePage(dynamic menu, CataloguePage page, Point mousePosition)
-        {
-            menu.menuType = "cataloguePage";
-            
-        }
 
         public static void Serialize_SocialPage(dynamic menu, SocialPage page, Point mousePosition)
         {
@@ -192,7 +187,6 @@ namespace StardewSpeak
             menu.upArrow = (ClickableTextureComponent)Utils.GetPrivateField(page, "upButton");
             menu.slotPosition = (int)Utils.GetPrivateField(page, "slotPosition");
             menu.characterSlots = page.characterSlots.GetRange(menu.slotPosition, 5);
-            menu.names = page.names;
         }
 
         public static void Serialize_GiftLog(dynamic menu, SocialPage page, Point mousePosition)
@@ -221,7 +215,7 @@ namespace StardewSpeak
             {
                 var r = pair.Value;
                 var cmp = Utils.SerializeClickableCmp(pair.Key, mousePosition);
-                var recipe = new { r.name, r.description, itemType = r.ItemType };
+                var recipe = new { r.name, r.description, itemType = r.GetItemData().ItemType };
                 currentRecipePage.Add(new List<dynamic> { cmp, recipe });
             }
             menu.menuType = "craftingPage";
@@ -242,11 +236,6 @@ namespace StardewSpeak
             if (currentPageNumber < currentCollection.Count - 1) menu.forwardButton = page.forwardButton;
             menu.currentPage = currentPage;
             menu.tabs = page.sideTabs.Values.ToList();
-        }
-
-        public static void Serialize_FarmInfoPage(dynamic menu, FarmInfoPage page, Point mousePosition)
-        {
-            menu.menuType = "farmInfoPage";
         }
         public static void Serialize_ExitPage(dynamic menu, ExitPage page, Point mousePosition)
         {

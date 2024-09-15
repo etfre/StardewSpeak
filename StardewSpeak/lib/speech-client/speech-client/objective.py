@@ -96,9 +96,17 @@ class HoldKeyObjective(Objective):
         self.keys = keys
 
     async def run(self):
+        import menu_utils
+        current_menu = game.context_variables["ACTIVE_MENU"]
+        menu_type = current_menu['menuType'] if current_menu else None
+        logger.debug(f"Holding keys {self.keys}, menu_type is {menu_type}")
         async with game.press_and_release(self.keys):
-            # infinite loop to indicate that the objective isn't done until task is canceled
-            await server.sleep_forever()
+            while True:
+                await asyncio.sleep(1)
+                active_menu = await menu_utils.get_active_menu()
+                is_new_menu = not menu_utils.is_same_menu(current_menu, active_menu)
+                if is_new_menu:
+                    break
 
 
 class FaceDirectionObjective(Objective):
@@ -135,12 +143,12 @@ async def move_to_point(point):
     async with stream.player_status_stream() as pss:
         player_status = await pss.next()
         regex_mismatch = isinstance(point.location, re.Pattern) and not point.location.match(
-            player_status["location"]["name"]
+            player_status.location.name
         )
-        str_mismatch = isinstance(point.location, str) and point.location != player_status["location"]["name"]
+        str_mismatch = isinstance(point.location, str) and point.location != player_status.location.name
         if regex_mismatch or str_mismatch:
             raise game.NavigationFailed(
-                f'Currently in {player_status["location"]["name"]} - unable to move to point in location {point.location}'
+                f'Currently in {player_status.location.name} - unable to move to point in location {point.location}'
             )
         await game.navigate_nearest_tile(point.get_tiles, pathfind_fn=point.pathfind_fn)
         if point.on_arrival:
@@ -165,10 +173,8 @@ class WaterCropsObjective(Objective):
         pass
 
     async def get_unwatered_crops(self):
-        hoe_dirt_tiles = await game.get_hoe_dirt()
-        tiles_to_water = [
-            hdt for hdt in hoe_dirt_tiles if hdt["crop"] and not hdt["isWatered"] and hdt["needsWatering"]
-        ]
+        hoe_dirt_tiles = await server_requests.get_hoe_dirt()
+        tiles_to_water = [hdt for hdt in hoe_dirt_tiles if hdt.crop and not hdt.isWatered and hdt.needsWatering]
         return tiles_to_water
 
     async def run(self):
@@ -186,7 +192,7 @@ class WaterCropsObjective(Objective):
                 player_status, unwatered_crops = await asyncio.gather(
                     server_requests.get_player_status(), self.get_unwatered_crops()
                 )
-                unwatered_crop_tiles = [(x["tileX"], x["tileY"]) for x in unwatered_crops]
+                unwatered_crop_tiles = [(x.tileX, x.tileY) for x in unwatered_crops]
                 power_level = game.calculate_modifiable_tiles(
                     unwatered_crop_tiles, watering_can_upgrade_level, player_status
                 )
@@ -195,8 +201,8 @@ class WaterCropsObjective(Objective):
 
 class HarvestCropsObjective(Objective):
     async def get_harvestable_crops(self):
-        hoe_dirt_tiles = await game.get_hoe_dirt()
-        harvestable_crop_tiles = [hdt for hdt in hoe_dirt_tiles if hdt["crop"] and hdt["readyForHarvest"]]
+        hoe_dirt_tiles = await server_requests.get_hoe_dirt()
+        harvestable_crop_tiles = [hdt for hdt in hoe_dirt_tiles if hdt.crop and hdt.readyForHarvest]
         return harvestable_crop_tiles
 
     async def run(self):
@@ -241,8 +247,9 @@ class ClearDebrisObjective(Objective):
             tool = tools.get(required_tool["name"])
             if tool and tool["upgradeLevel"] >= required_tool["level"]:
                 clearable_debris.append(d)
+            
         if self.debris_type == constants.STONE:
-            clearable_debris = [x for x in clearable_debris if x["name"] in (constants.STONE, constants.BOULDER)]
+            clearable_debris = [x for x in clearable_debris if x["name"] in (constants.STONE, constants.BOULDER, constants.MINE_ROCK)]
         elif self.debris_type == constants.TWIG:
             clearable_debris = [
                 x for x in clearable_debris if x["name"] in (constants.TWIG, constants.HOLLOW_LOG, constants.STUMP)
@@ -287,8 +294,9 @@ class PlantSeedsOrFertilizerObjective(Objective):
         pass
 
     async def get_hoe_dirt(self):
-        hoe_dirt_tiles = await game.get_hoe_dirt()
-        return [x for x in hoe_dirt_tiles if x["canPlantThisSeedHere"]]
+        hoe_dirt_tiles = await server_requests.get_hoe_dirt()
+        logger.error(hoe_dirt_tiles)
+        return [x for x in hoe_dirt_tiles if x.canPlantThisSeedHere]
 
     async def run(self):
         async for hdt in game.navigate_tiles(
@@ -306,8 +314,8 @@ class HoePlotObjective(Objective):
         async with stream.player_status_stream() as pss:
             await game.equip_item_by_name(constants.HOE)
             player_status = await pss.next()
-        player_tile = player_status["tileX"], player_status["tileY"]
-        facing_direction = player_status["facingDirection"]
+        player_tile = player_status.tileX, player_status.tileY
+        facing_direction = player_status.facingDirection
         start_tile = game.next_tile(player_tile, facing_direction)
         plot_tiles = set()
         x_increment = -1 if game.last_faced_east_west == constants.WEST else 1
@@ -317,7 +325,7 @@ class HoePlotObjective(Objective):
             for j in range(self.n2):
                 y = start_tile[1] + j * y_increment
                 plot_tiles.add((x, y))
-        get_next_diggable = functools.partial(game.get_diggable_tiles, plot_tiles)
+        get_next_diggable = functools.partial(server_requests.get_diggable_tiles, plot_tiles)
         async with stream.tool_status_stream() as tss:
             hoe_status = await tss.next()
             assert hoe_status
@@ -332,11 +340,12 @@ class HoePlotObjective(Objective):
                 player_status, candidate_hoe_dirts = await asyncio.gather(
                     server_requests.get_player_status(), get_next_diggable()
                 )
-                candidate_hoe_dirt_tiles = [(x["tileX"], x["tileY"]) for x in candidate_hoe_dirts]
+                candidate_hoe_dirt_tiles = [(x.tileX, x.tileY) for x in candidate_hoe_dirts]
                 power_level = game.calculate_modifiable_tiles(
                     candidate_hoe_dirt_tiles, hoe_upgrade_level, player_status
                 )
                 await game.swing_tool(power_level, tool_status_stream=tss)
+
 
 class TalkToNPCObjective(Objective):
     def __init__(self, npc_name):
@@ -372,7 +381,7 @@ async def use_tool_on_animals(tool: str, animal_type=None):
 
 async def start_shopping():
     async with stream.player_status_stream() as pss:
-        loc = (await stream.next())["location"]["name"]
+        loc = (await pss.next()).location.name
         if loc == "AnimalShop":
             tile, facing_direction = (12, 16), constants.NORTH
         elif loc == "Blacksmith":
@@ -390,7 +399,7 @@ async def start_shopping():
         elif loc == "SeedShop":
             tile, facing_direction = (4, 19), constants.NORTH
         x, y = tile
-        await game.pathfind_to_tile(x, y, stream)
+        await game.pathfind_to_tile(x, y, pss)
         await game.do_action()
 
 
@@ -424,7 +433,8 @@ class DefendObjective(Objective):
                 distance_from_monster = game.distance_between_points_diagonal(player_position, closest_monster_position)
                 if distance_from_monster > 0:
                     direction_to_face = game.direction_from_positions(player_position, closest_monster_position)
-                    await game.face_direction(direction_to_face, player_stream)
+                    if direction_to_face is not None:
+                        await game.face_direction(direction_to_face, player_stream)
                 if distance_from_monster < 110:
                     await server.set_mouse_position(
                         closest_monster_position[0], closest_monster_position[1], from_viewport=True
@@ -455,6 +465,8 @@ class AttackObjective(Objective):
                 distance_from_monster = 0
                 while distance_from_monster < 110:
                     player_status, target = await batched_request_builder.request()
+                    if target is None:
+                        break
                     player_position = player_status["center"]
                     closest_monster_position = target["center"]
                     distance_from_monster = game.distance_between_points_diagonal(
@@ -462,11 +474,13 @@ class AttackObjective(Objective):
                     )
                     if distance_from_monster > 0:
                         direction_to_face = game.direction_from_positions(player_position, closest_monster_position)
-                        await game.face_direction(direction_to_face, player_stream)
+                        if direction_to_face is not None:
+                            await game.face_direction(direction_to_face, player_stream)
                     await server.set_mouse_position(
                         closest_monster_position[0], closest_monster_position[1], from_viewport=True
                     )
                     await game.swing_tool()
+                    await game.equip_melee_weapon()
                     await asyncio.sleep(0.1)
 
     def get_closest_monster(self, resp):

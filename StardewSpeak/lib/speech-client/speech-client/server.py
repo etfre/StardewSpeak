@@ -1,11 +1,9 @@
 from __future__ import annotations
-import time
-import logging
 import args
 import struct
 import traceback
 import weakref
-import functools
+import inspect
 import queue
 import sys
 import asyncio
@@ -18,7 +16,12 @@ from srabuilder import rules
 from typing import Any, Coroutine
 from asyncio.futures import Future
 import logger
-from typing import Callable
+from typing import get_args, Type, Any, Awaitable, TypeVar, get_origin
+from sdv_types import BaseModel
+import pydantic
+
+TV = TypeVar("TV", bound=BaseModel)
+
 
 class NamedPipeHandler:
 
@@ -32,6 +35,7 @@ class NamedPipeHandler:
     def write(self, msg: str):
         pass
 
+
 if args.args.named_pipe:
     named_pipe_file = open(rf"\\.\pipe\{args.args.named_pipe}Reader", "r+b", 0)
     named_pipe_file_read = open(rf"\\.\pipe\{args.args.named_pipe}Writer", "r+b", 0)
@@ -41,9 +45,10 @@ else:
 
 loop = asyncio.new_event_loop()
 
-mod_requests: dict[str, Future] = {}
+mod_requests: dict[str, tuple[Future, Any]] = {}
 
 ongoing_tasks = {}  # not connected to an objective, slide mouse, swing sword etc
+
 
 async def stop_all_ongoing_tasks():
     cancel_awaitables = [t.cancel() for t in ongoing_tasks.values()]
@@ -95,32 +100,23 @@ def graceful_exit(msg):
 
 async def request_and_update_active_menu():
     import menu_utils
+
     new_menu = await menu_utils.get_active_menu()
     await handle_new_menu(new_menu)
 
 
 async def handle_new_menu(new_menu):
     import game
+    import menu_utils
+
     current_menu = game.context_variables["ACTIVE_MENU"]
-    is_new_menu = not is_same_menu(current_menu, new_menu)
+    is_new_menu = not menu_utils.is_same_menu(current_menu, new_menu)
     game.set_context_menu(new_menu)
     if is_new_menu:
-        logger.debug(f"Got new menu {new_menu['menuType']}")
+        menu_type = new_menu['menuType'] if new_menu else None
+        logger.debug(f"Got new menu {menu_type}")
         await stop_everything()
 
-
-def is_same_menu(menu1, menu2):
-    if (menu1, menu2) == (None, None):
-        return True
-    if (menu1, menu2).count(None) == 1:
-        return False
-    if menu1["menuType"] != menu2["menuType"]:
-        return False
-    if menu1["menuType"] == "titleMenu":
-        return is_same_menu(menu1["subMenu"], menu2["subMenu"])
-    if menu1.get("onFarm") != menu2.get("onFarm"):  # carpenter menu, likely others
-        return False
-    return True
 
 
 async def populate_initial_game_event():
@@ -143,6 +139,7 @@ async def heartbeat(timeout: int):
 async def async_readline():
     # Is there a better way to read async stdin on Windows?
     q: queue.Queue[Future[str]] = queue.Queue()
+
     def _run():
         while True:
             fut = q.get()
@@ -162,24 +159,26 @@ async def async_readline():
         on_message(line)
 
 
-class RequestBuilder:
-    def __init__(self, request_type: str, data=None):
+class RequestBuilder[TV]:
+    def __init__(self, request_type: str, data=None, response_model: Type[TV] | None = None):
         self.request_type = request_type
         self.data = {} if data is None else data
+        self.response_model = response_model
 
-    def request(self, data=None):
+    def request(self, data=None) -> Awaitable[TV]:
         data = self.data if data is None else data
         self._fut = loop.create_future()
         sent_msg = send_message(self.request_type, data)
-        mod_requests[sent_msg["id"]] = self._fut
+        mod_requests[sent_msg["id"]] = self._fut, self.response_model
         return self._fut
 
     def stream(self, ticks=1):
         import stream
-        return stream.Stream("UPDATE_TICKED", data={"type": self.request_type, "ticks": ticks})
+
+        return stream.Stream("UPDATE_TICKED", data={"type": self.request_type, "ticks": ticks},model_type=self.response_model)
 
     @classmethod
-    def batch(cls, *reqs):
+    def batch[T](cls, *reqs: RequestBuilder, response_model: Type[T] | None = None) -> RequestBuilder[T]:
         batched = []
         for r in reqs:
             if isinstance(r, RequestBuilder):
@@ -187,7 +186,7 @@ class RequestBuilder:
             else:
                 msg = {"type": msg[0], "data": msg[1]}
             batched.append(msg)
-        return cls("REQUEST_BATCH", batched)
+        return cls("REQUEST_BATCH", batched, response_model=response_model)
 
 
 def request_batch(messages):
@@ -195,8 +194,8 @@ def request_batch(messages):
     return request(msg_type, messages)
 
 
-def request(msg_type, msg=None):
-    return RequestBuilder(msg_type, msg).request()
+def request[TV](msg_type: str, msg: Any = None, response_model: Type[TV] | Any = None) -> Awaitable[TV]:
+    return RequestBuilder(msg_type, msg, response_model).request()
 
 
 def send_message(msg_type: str, msg=None):
@@ -225,13 +224,13 @@ def on_message(msg_str: str):
     msg_type = msg["type"]
     msg_data = msg["data"]
     if msg_type == "RESPONSE":
-        fut = mod_requests.pop(msg_data["id"], None)
+        fut, response_model = mod_requests.pop(msg_data["id"], (None, None))
         if fut:
             resp_value = msg_data["value"]
             resp_error = msg_data["error"]
             try:
                 if resp_error is None:
-                    fut.set_result(resp_value)
+                    fut.set_result(translate_model(resp_value, response_model))
                 else:
                     exception = Exception(resp_value)
                     fut.set_exception(exception)
@@ -250,8 +249,7 @@ def on_message(msg_str: str):
             logger.debug(f"Stream {stream_id} error: {stream_value}")
             stream_obj.close()
             return
-        stream_obj.set_value(stream_value)
-        stream_obj.latest_value = stream_value
+        stream_obj.set_value(translate_model(stream_value, stream_obj.model_type))
         try:
             stream_obj.future.set_result(None)
         except asyncio.InvalidStateError:
@@ -280,21 +278,30 @@ async def mouse_click(btn="left", count=1):
         if i + 1 < count:
             await asyncio.sleep(0.1)
 
+
 async def mouse_hold(btn="left"):
     import game
+
     assert btn in ("left", "right")
     sbutton = "MOUSE_LEFT" if btn == "left" else "MOUSE_RIGHT"
     game.update_held_buttons_nowait(to_hold=(sbutton,))
 
+
 async def mouse_release(btn="left"):
     import game
+
     assert btn in ("left", "right")
     sbutton = "MOUSE_LEFT" if btn == "left" else "MOUSE_RIGHT"
     game.update_held_buttons_nowait(to_release=(sbutton,))
 
+class PydanticEncoder(json.JSONEncoder):
+    def default(self, o: Any) -> Any:
+        if isinstance(o, pydantic.BaseModel):
+            return o.model_dump(mode="json")
+        return super().default(o)
 
 def log(*a, sep=" ", level=1):
-    to_send = [x if isinstance(x, str) else json.dumps(x) for x in a]
+    to_send = [x if isinstance(x, str) else json.dumps(x, cls=PydanticEncoder) for x in a]
     return send_message("LOG", {"value": sep.join(to_send), "level": level})
 
 
@@ -339,7 +346,8 @@ class TaskWrapper:
         except asyncio.CancelledError:
             pass
 
-def read_queue(q): 
+
+def read_queue(q):
     items = [q.get()]
     while not q.empty():
         try:
@@ -348,3 +356,26 @@ def read_queue(q):
         except TypeError:
             continue
     return items
+
+def translate_model(val: Any, model: Any):
+    origin = get_origin(model)
+    if origin in (list, tuple):
+        args = get_args(model)
+        if not args:
+            return val
+        if origin is list:
+            list_model_type = args[0]
+            return [translate_model(x, list_model_type) for x in val]
+        translated = []
+        for subval, subtype in zip(val, args):
+            translated.append(translate_model(subval, subtype))
+        return tuple(translated)
+    if inspect.isclass(model):
+        is_pydantic_model = pydantic.BaseModel in model.__mro__
+        if is_pydantic_model:
+            try:
+                return model.model_validate(val)
+            except pydantic.ValidationError as e:
+                e.add_note(f"Pydantic validation error. val: {val}, model: {model}")
+                raise e
+    return val

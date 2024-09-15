@@ -3,6 +3,7 @@ import functools
 from srabuilder import rules
 import characters, locations, fishing_menu, server_requests, menu_utils, server, df_utils, game, container_menu, objective, constants, items
 import stream
+import logger
 
 mouse_directions = {
     "up": "up",
@@ -25,8 +26,8 @@ async def go_to_object(item: items.Item, index):
 async def move_and_face_previous_direction(direction: int, n: int):
     async with stream.player_status_stream() as pss:
         ps = await pss.next()
-        await game.move_n_tiles(direction, n, stream)
-        await game.face_direction(ps["facingDirection"], pss, move_cursor=True)
+        await game.move_n_tiles(direction, n, pss)
+        await game.face_direction(ps.facingDirection, pss, move_cursor=True)
 
 
 async def get_shipping_bin_tiles():
@@ -60,7 +61,7 @@ async def ladder_down():
 async def navigate_direction(direction: int):
     async with stream.player_status_stream() as pss:
         player_status = await pss.next()
-        location = player_status["location"]["name"]
+        location = player_status.location.name
         path_tiles = await server.request("PATH_TO_EDGE", {"direction": direction})
         if path_tiles:
             path = game.Path(path_tiles, location)
@@ -127,11 +128,13 @@ mapping = {
     "milk animals": objective.function_objective(objective.use_tool_on_animals, constants.MILK_PAIL),
     "start fishing": objective.function_objective(fishing_menu.start_fishing),
     "navigate <direction_nums>": objective.function_objective(navigate_direction, "direction_nums"),
+    "action": df_utils.async_action(game.do_action),
 }
 
 
 @menu_utils.valid_menu_test
 def is_active():
+    logger.info(f"is active check {menu_utils.current_menu_type()}")
     return game.get_context_menu() is None
 
 

@@ -72,8 +72,7 @@ namespace StardewSpeak
                     ModEntry.Log($"Current tiles: x: {tileX}, y: {tileY}", LogLevel.Trace);
                     ModEntry.Log($"Current mouse position: x: {mouseX}, y: {mouseY}", LogLevel.Trace);
                     var isPassable = Pathfinder.Pathfinder.isTileWalkable(location, tileX, tileY);
-
-                    var isOccupied = location.isTileOccupiedIgnoreFloors(vec);
+                    var isOccupied = location.IsTileOccupiedBy(vec);
                     var rec = new xTile.Dimensions.Location(tileX, tileY);
                     var t = player.CurrentTool;
                     Utils.WriteJson("debris.json", location.debris.ToList());

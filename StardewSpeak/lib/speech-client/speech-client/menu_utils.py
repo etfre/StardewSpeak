@@ -3,9 +3,10 @@ import server, constants
 import asyncio
 import functools
 import inspect
-from typing import Any, TypedDict
+from typing import Any, Generator, Literal, TypedDict
+import logger
 
-from sdv_types import ClickableComponent
+from sdv_types import BaseModel, ClickableComponent
 
 MENU_GRAMMAR_COUNT = 0
 
@@ -103,6 +104,13 @@ async def try_menus(try_fns, *a):
 
 def valid_menu_test(fn):
     def test_fn():
+        import game, server
+        # n
+        if game.context_variables["CURRENT_RECOGNITION_EVENT"] is None:
+            future = asyncio.run_coroutine_threadsafe(server.request_and_update_active_menu(), server.loop)
+            # Wait for the result with an optional timeout argument
+            future.result()
+            re = game.RecognitionEvent(menu=game.context_variables["ACTIVE_MENU"])
         try:
             res = fn()
         except InvalidMenuOption:
@@ -165,19 +173,23 @@ def scroll_commands(page_size=4):
 class InvalidMenuOption(Exception):
     pass
 
+class ClickableComponentInfo(BaseModel):
+    accessor: str | None = None
+    component: ClickableComponent
 
-def yield_clickable_components(item):
+
+def yield_clickable_components(item, accessor: str | None = None) -> Generator[ClickableComponentInfo, Any, Any]:
     if isinstance(item, dict):
         if item.get("type") == "clickableComponent":
             if item["visible"]:
-                yield item
+                yield ClickableComponentInfo(component=item, accessor=accessor)
         else:
             menu_type = item.get("menuType")
-            for child in item.values():
-                yield from yield_clickable_components(child)
+            for key, child in item.items():
+                yield from yield_clickable_components(child, accessor=key)
     if isinstance(item, (list, tuple)):
         for child in item:
-            yield from yield_clickable_components(child)
+            yield from yield_clickable_components(child, accessor=accessor)
 
 
 def inventory_commands():
@@ -252,7 +264,7 @@ def build_menu_grammar(mapping, menu_validator, extras=(), defaults=None):
         mapping=new_mapping,
         extras=extras,
         defaults=defaults,
-        context=df.FuncContext(mgb.is_active),
+        context=mgb.is_active,
     )
     grammar.add_rule(main_rule)
     return grammar
@@ -270,7 +282,8 @@ class MenuGrammarBuilder:
             return [menu] + old_args
 
         return format_args_with_menu
-
+    
+    @valid_menu_test
     def is_active(self):
         import game
 
@@ -306,3 +319,22 @@ def validate_menu_type(menu_type: str | None, menu: BaseMenu | None):
             raise InvalidMenuOption(f"Expecting {menu_type}, got None")
         if menu["menuType"] != menu_type:
             raise InvalidMenuOption(f"Expecting {menu_type}, got {menu['menuType']}")
+
+def is_same_menu(menu1, menu2):
+    if (menu1, menu2) == (None, None):
+        return True
+    if (menu1, menu2).count(None) == 1:
+        return False
+    if menu1["menuType"] != menu2["menuType"]:
+        return False
+    if menu1["menuType"] == "titleMenu":
+        return is_same_menu(menu1["subMenu"], menu2["subMenu"])
+    if menu1.get("onFarm") != menu2.get("onFarm"):  # carpenter menu, likely others
+        return False
+    return True
+
+def current_menu_type():
+    import game
+
+    current_menu = game.context_variables["ACTIVE_MENU"]
+    return current_menu['menuType'] if current_menu else None

@@ -1,6 +1,19 @@
 # Release notes
 
-## Unreleased
+## 0.0.14
+
+* Experimental support for the Stardew Valley 1.6 update.
+* While watering crops or hoeing dirt, the farmer will now automatically hold the tool for the appropriate length of time to target the maximum number of tiles, based on the upgrade level of the current tool.
+* Fixed issue with mining large rocks in the mines.
+* Fixed issue if you accidentally switch away from your melee weapon during the "attack" or "defend" commands.
+* "Stop" command has been replaced with "halt" due to a speech engine limitation.
+
+#### Technical changes:
+
+* Update to Python 3.12.
+* Begin to use Pydantic for validation of messages between Python and C#.
+
+## 0.0.13 (April 8, 2022)
 
 * Add skills page
 * Add social page

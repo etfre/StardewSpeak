@@ -18,7 +18,7 @@ Speech recognition begins automatically when Stardew Valley is launched. If you 
 
 All menus can (or will) be navigated by voice. As an example, to load a saved game from the title menu, say `load` to enter the saved game menu, then `game` followed by the number of the game you want to play, e.g. `game three` to load the third game. If you have more than four saved games, `scroll down` and `scroll up` will click the up and down arrows. See the [menus file](docs/menus.md) for more information and a list of available menu-specific commands. 
 
-Once in game, try saying `go to farm` to begin walking from your farmhouse interior to your farm. Saying `stop` will stop whatever your farmer is currently doing.
+Once in game, try saying `go to farm` to begin walking from your farmhouse interior to your farm. Saying `halt` will stop whatever your farmer is currently doing.
 
 ## Development
 
@@ -54,6 +54,11 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
         <td>face &lt;direction&gt;</td>
         <td>Face direction.</td>
         <td>"face east"</td>
+    </tr>
+    <tr>
+        <td>action</td>
+        <td>Check/Do Action.</td>
+        <td>"action"</td>
     </tr>
     <tr>
         <td>clear (debris | stones | rocks | twigs | wood | weeds)</td>
@@ -189,9 +194,9 @@ Commands wrapped in brackets are optional, meaning that `hello [world]` will mat
         <td>"start swinging"</td>
     </tr>
     <tr>
-        <td>stop</td>
+        <td>halt</td>
         <td>Stop current actions.</td>
-        <td>"stop"</td>
+        <td>"halt"</td>
     </tr>
     <tr>
         <td>item &lt;n&gt;</td>

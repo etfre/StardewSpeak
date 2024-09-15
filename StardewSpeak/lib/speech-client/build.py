@@ -11,7 +11,7 @@ import zipfile
 import shutil
 import sys
 
-import lark
+from typing import Sequence
 import cx_Freeze
 from cx_Freeze.common import normalize_to_list
 
@@ -187,7 +187,7 @@ def prepare_parser():
     return parser
 
 
-def parse_command_line(parser):
+def parse_command_line(parser: argparse.ArgumentParser):
     args = parser.parse_args()
     args.excludes = normalize_to_list(args.excludes)
     args.includes = normalize_to_list(args.includes)
@@ -205,7 +205,7 @@ def parse_command_line(parser):
     return args
 
 
-def zipdir(zipfile_ob: zipfile.ZipFile, folder: str, prefix: str = "", exclude=()):
+def zipdir(zipfile_ob: zipfile.ZipFile, folder: str, prefix: str = "", exclude: Sequence[str]=()):
     parent_dir = os.path.abspath(os.path.join(folder))
     for root, dirs, files in os.walk(folder):
         start_path = os.path.relpath(root, parent_dir)
@@ -217,10 +217,10 @@ def zipdir(zipfile_ob: zipfile.ZipFile, folder: str, prefix: str = "", exclude=(
             zipfile_ob.write(full_path, arcname=arcname)
 
 
-def build_release(app_root):
-    pf86 = os.environ['ProgramFiles(x86)']
-    vswhere = fr'{pf86}\Microsoft Visual Studio\Installer\vswhere.exe'
-    cmd = f'''"{vswhere}" -latest -prerelease -products * -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe'''
+def build_release(app_root: str):
+    pf86 = os.environ["ProgramFiles(x86)"]
+    vswhere = rf"{pf86}\Microsoft Visual Studio\Installer\vswhere.exe"
+    cmd = f""""{vswhere}" -latest -prerelease -products * -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe"""
     msbuild = subprocess.run(cmd, stdout=subprocess.PIPE).stdout.decode("utf-8").strip()
     sln = os.path.join(app_root, "StardewSpeak.sln")
     subprocess.run([msbuild, sln, "/p:Configuration=Release", "/t:Clean;Rebuild"])
@@ -230,7 +230,7 @@ def build_release(app_root):
     shutil.copytree(python_dist, top_level_dist)
 
 
-def build_release_zip(app_root):
+def build_release_zip(app_root: str):
     source_root = os.path.join(app_root, "StardewSpeak")
     manifest_path = os.path.join(source_root, "manifest.json")
     with open(manifest_path) as f:
@@ -238,7 +238,12 @@ def build_release_zip(app_root):
     release_dir = os.path.join(app_root, "StardewSpeak", "bin", "release")
     zip_name = os.path.join(release_dir, f'{manifest["Name"]} {manifest["Version"]}.zip')
     with zipfile.ZipFile(zip_name, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as myzip:
-        zipdir(myzip, os.path.join(release_dir, "net5.0"), prefix=os.path.join("StardewSpeak"), exclude=(os.path.join('StardewSpeak', 'StardewSpeak.deps.json')))
+        zipdir(
+            myzip,
+            os.path.join(release_dir, "net6.0"),
+            prefix=os.path.join("StardewSpeak"),
+            exclude=(os.path.join("StardewSpeak", "StardewSpeak.deps.json")),
+        )
         myzip.write(manifest_path, os.path.join("StardewSpeak", "manifest.json"))
 
 
@@ -248,7 +253,6 @@ def main():
     if "python" in steps:
         app_name = "speech-client"
         app_root = os.path.join("dist")
-        source_root = os.path.join(app_root, "speech-client")
         shutil.rmtree(app_root, ignore_errors=True)
         executables = [
             cx_Freeze.Executable(
@@ -266,28 +270,28 @@ def main():
             excludes=EXCLUDES,
             packages=args.packages,
             compress=args.compress,
-            optimizeFlag=args.optimize_flag,
+            optimize=args.optimize_flag,
             path=None,
-            targetDir=app_root,
-            includeFiles=[
+            target_dir=app_root,
+            include_files=[
                 (
-                    "Lib\site-packages\webrtcvad_wheels-2.0.10.post2.dist-info",
-                    "lib\webrtcvad_wheels-2.0.10.post2.dist-info",
+                    ".venv\\Lib\\site-packages\\webrtcvad_wheels-2.0.11.post1.dist-info",
+                    "lib\\webrtcvad_wheels-2.0.11.post1.dist-info",
                 ),
                 ("models", "models"),
                 ("bin", "bin"),
             ],
-            zipIncludes=args.zip_includes,
             silent=args.silent,
-            zipIncludePackages=args.zip_include_packages,
-            zipExcludePackages=args.zip_exclude_packages,
+            zip_include_packages=args.zip_include_packages,
+            zip_exclude_packages=args.zip_exclude_packages,
         )
-        freezer.Freeze()
+        freezer.freeze()
     app_root = os.path.abspath(os.path.join("..", "..", ".."))
     if "c#" in steps:
         build_release(app_root)
-    if 'zip' in steps:
+    if "zip" in steps:
         build_release_zip(app_root)
+
 
 if __name__ == "__main__":
     main()
